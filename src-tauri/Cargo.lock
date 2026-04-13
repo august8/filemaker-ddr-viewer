@@ -1088,7 +1088,7 @@ dependencies = [
 
 [[package]]
 name = "filemaker-ddr-viewer"
-version = "1.0.2"
+version = "1.0.0"
 dependencies = [
  "assert_matches",
  "insta",

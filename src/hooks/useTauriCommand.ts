@@ -24,6 +24,7 @@ import type {
   ValueListRow,
   CustomFunctionRow,
   FieldLocation,
+  FieldCalcRef,
   FieldRefScript,
   FieldRefLayout,
   FieldRelKeyRef,
@@ -342,6 +343,20 @@ export function useFieldRefs(
     queryKey: ["field_refs", projectId, tableName, fieldName],
     queryFn: () =>
       invoke<FieldRefScript[]>("get_field_refs", { projectId, tableName, fieldName }),
+    enabled: projectId !== null && tableName !== null && fieldName !== null,
+  });
+}
+
+// 計算式でこのフィールドを参照している他フィールド一覧
+export function useFieldCalcRefs(
+  projectId: number | null,
+  tableName: string | null,
+  fieldName: string | null
+) {
+  return useQuery({
+    queryKey: ["field_calc_refs", projectId, tableName, fieldName],
+    queryFn: () =>
+      invoke<FieldCalcRef[]>("get_field_calc_refs", { projectId, tableName, fieldName }),
     enabled: projectId !== null && tableName !== null && fieldName !== null,
   });
 }

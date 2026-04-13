@@ -233,6 +233,13 @@ export interface AllFieldRow {
   table_name: string;
 }
 
+export interface FieldCalcRef {
+  field_id: number;
+  field_name: string;
+  table_name: string;
+  table_id: number;
+}
+
 export interface FieldRefScript {
   script_id: number;
   script_name: string;
