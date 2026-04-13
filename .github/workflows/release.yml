@@ -37,8 +37,36 @@ jobs:
       - name: Build
         run: npm run tauri build
 
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s")
+          else
+            COMMITS=$(git log --pretty=format:"%s" "${PREV_TAG}..HEAD")
+          fi
+
+          FEAT="" FIX="" DOCS=""
+          while IFS= read -r line; do
+            case "$line" in
+              "feat: "*) FEAT="${FEAT}- ${line#feat: }"$'\n' ;;
+              "fix: "*)  FIX="${FIX}- ${line#fix: }"$'\n' ;;
+              "docs: "*) DOCS="${DOCS}- ${line#docs: }"$'\n' ;;
+            esac
+          done <<< "$COMMITS"
+
+          {
+            echo "body<<RELEASE_EOF"
+            [ -n "$FEAT" ] && printf "## 新機能\n%s\n" "$FEAT"
+            [ -n "$FIX"  ] && printf "## バグ修正\n%s\n" "$FIX"
+            [ -n "$DOCS" ] && printf "## ドキュメント\n%s\n" "$DOCS"
+            echo "RELEASE_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: src-tauri/target/release/filemaker-ddr-viewer.exe
-          generate_release_notes: true
+          body: ${{ steps.notes.outputs.body }}
