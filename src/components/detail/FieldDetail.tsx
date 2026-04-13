@@ -34,7 +34,7 @@ function parseSerialInfo(calc: string): string {
             : (kv["generate"] ?? "");
   return `次の値: ${kv["nextValue"] ?? "?"} / 増分: ${kv["increment"] ?? "?"} / 生成: ${gen}`;
 }
-import { useFieldRefs, useFieldLayoutRefs, useFieldRelationshipKeys, useLayoutRefDebugInfo, useScriptList, useLayoutList } from "../../hooks/useTauriCommand";
+import { useFieldRefs, useFieldCalcRefs, useFieldLayoutRefs, useFieldRelationshipKeys, useLayoutRefDebugInfo, useScriptList, useLayoutList } from "../../hooks/useTauriCommand";
 import { useAppStore } from "../../stores/appStore";
 import { BADGE_VARIANTS, CODE_BLOCK, SECTION_HEADER } from "../../styles/tokens";
 
@@ -45,7 +45,7 @@ interface Props {
 }
 
 export function FieldDetail({ field, tableName, projectId }: Props) {
-  const { selectElement } = useAppStore();
+  const { selectElement, setRightPanel } = useAppStore();
   const { data: refs = [], isLoading: refsLoading } = useFieldRefs(
     projectId,
     tableName,
@@ -57,6 +57,11 @@ export function FieldDetail({ field, tableName, projectId }: Props) {
     field.name
   );
   const { data: relKeyRefs = [], isLoading: relKeyLoading } = useFieldRelationshipKeys(
+    projectId,
+    tableName,
+    field.name
+  );
+  const { data: calcRefs = [], isLoading: calcRefsLoading } = useFieldCalcRefs(
     projectId,
     tableName,
     field.name
@@ -77,6 +82,10 @@ export function FieldDetail({ field, tableName, projectId }: Props) {
     if (layout) {
       selectElement({ kind: "layout", projectId, id: layout.id, name: layout.name });
     }
+  }
+
+  function handleCalcFieldClick(refTableId: number, refFieldId: number, refTableName: string) {
+    setRightPanel({ kind: "field", projectId, tableId: refTableId, fieldId: refFieldId, tableName: refTableName });
   }
 
   return (
@@ -239,6 +248,29 @@ export function FieldDetail({ field, tableName, projectId }: Props) {
           </dl>
         </section>
       )}
+
+      {/* 計算フィールドとして使用されている箇所 */}
+      <section>
+        <h4 className={SECTION_HEADER}>計算フィールドとして使用されている箇所</h4>
+        {calcRefsLoading ? (
+          <span className="flex items-center gap-1 text-gray-400 text-xs"><Spinner className="w-3 h-3" />読み込み中...</span>
+        ) : calcRefs.length === 0 ? (
+          <p className="text-gray-400 text-xs">他のフィールドの計算式で参照されていません</p>
+        ) : (
+          <ul className="space-y-1">
+            {calcRefs.map((ref) => (
+              <li key={ref.field_id}>
+                <button
+                  className="text-blue-600 hover:underline text-left break-all w-full"
+                  onClick={() => handleCalcFieldClick(ref.table_id, ref.field_id, ref.table_name)}
+                >
+                  {ref.table_name}::{ref.field_name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* スクリプト使用箇所 */}
       <section>

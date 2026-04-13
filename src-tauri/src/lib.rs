@@ -155,6 +155,7 @@ pub fn run() {
             commands::catalog::list_privilege_sets,
             commands::field_refs::resolve_layout_field,
             commands::field_refs::get_field_refs,
+            commands::field_refs::get_field_calc_refs,
             commands::field_refs::get_field_layout_refs,
             commands::field_refs::get_layout_ref_debug_info,
             commands::field_refs::get_field_relationship_keys,
