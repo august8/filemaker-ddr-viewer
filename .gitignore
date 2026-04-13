@@ -16,6 +16,7 @@ dist-ssr
 .claude/
 CLAUDE.md
 DEBUGGING.md
+DECISIONS.md
 
 # DDR Sample
 .DDRSample/*
