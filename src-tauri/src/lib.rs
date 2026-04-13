@@ -75,11 +75,9 @@ pub fn run() {
                 .item(&font_reset)
                 .build()?;
 
-            let open_upgrade_settings = MenuItemBuilder::with_id(
-                "open-upgrade-settings",
-                "アップグレードチェック設定...",
-            )
-            .build(app)?;
+            let open_upgrade_settings =
+                MenuItemBuilder::with_id("open-upgrade-settings", "アップグレードチェック設定...")
+                    .build(app)?;
             let edit_menu = SubmenuBuilder::new(app, "編集")
                 .item(&open_upgrade_settings)
                 .build()?;

@@ -597,7 +597,7 @@ pub struct UpgradeHit {
 #[serde(rename_all = "camelCase")]
 pub struct CheckItemConfig {
     pub id: String,
-    pub detection_type: String,   // "step_type_id" | "step_external" | "text_match" | "field_attr"
+    pub detection_type: String, // "step_type_id" | "step_external" | "text_match" | "field_attr"
     pub detection_value: String,
 }
 
@@ -778,7 +778,8 @@ pub fn run_upgrade_check(
                           WHERE p.solution_id = ?1
                           ORDER BY cf.name",
                     )?;
-                    let rows = stmt.query_map(params![solution_id], |row| row.get::<_, String>(0))?;
+                    let rows =
+                        stmt.query_map(params![solution_id], |row| row.get::<_, String>(0))?;
                     rows.collect::<Result<_, _>>()?
                 };
 
@@ -993,7 +994,11 @@ mod tests {
 
         let hits = run_upgrade_check(&db, sid, &items).unwrap();
         // 2 プロジェクトそれぞれに 1 ヒット → 合計 2 件
-        assert_eq!(hits.len(), 2, "solution 配下の全プロジェクトからヒットを返すこと");
+        assert_eq!(
+            hits.len(),
+            2,
+            "solution 配下の全プロジェクトからヒットを返すこと"
+        );
         // 各ヒットに project_id / project_name が設定されていること
         assert!(hits.iter().all(|h| !h.project_name.is_empty()));
     }

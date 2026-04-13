@@ -40,8 +40,7 @@ pub async fn search_elements(
         .map_err(|e| CommandError::Internal(e.to_string()))?;
 
     if contains == Some(true) {
-        search_contains(&db, project_id, solution_id, &query, sql_limit)
-            .map_err(CommandError::from)
+        search_contains(&db, project_id, solution_id, &query, sql_limit).map_err(CommandError::from)
     } else {
         search(&db, project_id, solution_id, &query, sql_limit).map_err(CommandError::from)
     }

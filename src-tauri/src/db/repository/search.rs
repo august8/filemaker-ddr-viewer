@@ -213,15 +213,17 @@ pub fn search_contains(
          ORDER BY name LIMIT ?{limit_pos}",
         pf = pf,
         btpf = btpf,
-        limit_pos = if matches!(scope, ScopeFilter::All) { 2 } else { 3 },
+        limit_pos = if matches!(scope, ScopeFilter::All) {
+            2
+        } else {
+            3
+        },
     );
 
     let mut stmt = db.conn.prepare(&sql)?;
 
     let rows = match scope {
-        ScopeFilter::All => {
-            stmt.query_map(params![like_pattern, limit], map_search_row)?
-        }
+        ScopeFilter::All => stmt.query_map(params![like_pattern, limit], map_search_row)?,
         ScopeFilter::Project(pid) => {
             stmt.query_map(params![like_pattern, pid, limit], map_search_row)?
         }
@@ -311,8 +313,7 @@ mod tests {
     #[test]
     fn search_nonexistent_term_returns_empty() {
         let (db, _sid, pid) = db_with_minimal();
-        let results =
-            search(&db, Some(pid), None, "xyzzy_nonexistent_term_999", 10).unwrap();
+        let results = search(&db, Some(pid), None, "xyzzy_nonexistent_term_999", 10).unwrap();
         assert!(results.is_empty());
     }
 
@@ -488,8 +489,7 @@ mod tests {
     #[test]
     fn contains_search_no_match_returns_empty() {
         let (db, _sid, pid) = db_with_minimal();
-        let results =
-            search_contains(&db, Some(pid), None, "xyzzy_nonexistent_999", 50).unwrap();
+        let results = search_contains(&db, Some(pid), None, "xyzzy_nonexistent_999", 50).unwrap();
         assert!(results.is_empty());
     }
 

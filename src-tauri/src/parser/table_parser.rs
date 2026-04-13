@@ -344,8 +344,8 @@ fn parse_auto_enter_children<R: BufRead>(
             // <Serial increment="1" nextValue="16" generate="OnCreation"/>
             Event::Empty(ref e) if e.name().as_ref() == b"Serial" => {
                 let next = get_attr(e, b"nextValue").unwrap_or_default();
-                let inc  = get_attr(e, b"increment").unwrap_or_default();
-                let gen  = get_attr(e, b"generate").unwrap_or_default();
+                let inc = get_attr(e, b"increment").unwrap_or_default();
+                let gen = get_attr(e, b"generate").unwrap_or_default();
                 type_override = Some("Serial".to_owned());
                 value = Some(format!("nextValue={next},increment={inc},generate={gen}"));
             }
@@ -423,7 +423,7 @@ fn parse_validation<R: BufRead>(
             }
             Event::Empty(ref e) if e.name().as_ref() == b"Range" => {
                 info.val_range_from = get_attr(e, b"from").ok();
-                info.val_range_to   = get_attr(e, b"to").ok();
+                info.val_range_to = get_attr(e, b"to").ok();
             }
             Event::Empty(ref e) if e.name().as_ref() == b"ValueList" => {
                 info.val_value_list = get_attr(e, b"name").ok();
