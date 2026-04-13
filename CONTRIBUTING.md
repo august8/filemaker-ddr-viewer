@@ -4,6 +4,8 @@
 
 README.md の「開発環境のセットアップ」を参照してください。
 
+`npm install` 実行時に git フック（pre-commit）が自動で設定されます。コミット前に `cargo fmt --check` と `cargo clippy` が自動実行されます。
+
 ## コーディング規約
 
 ### Rust
