@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FMPReport type="Report" version="21.0v1" creationdate="2024/01/01" creationtime="12:00:00">
+  <File name="TestDB">
+    <BaseTableCatalog>
+      <BaseTable id="1" name="Contact" color="#FFFFFF">
+        <FieldCatalog>
+          <Field id="1" dataType="Text" fieldType="Normal" name="FirstName" comment="">
+            <AutoEnter allowEditing="True" constant="" lookup="False" serial="False"/>
+            <Validation maxLength="False" notEmpty="False" unique="False"/>
+            <Storage global="False" indexLanguage="English" maxRepetition="1"/>
+          </Field>
+        </FieldCatalog>
+      </BaseTable>
+    </BaseTableCatalog>
+    <RelationshipGraph>
+      <TableList>
+        <Table id="1" name="Contact" baseTable="Contact" baseTableID="1"/>
+      </TableList>
+      <RelationshipList>
+        <Relationship id="1" name="Contact::_kf_ContactID = Project::_kf_ContactID">
+          <LeftTable id="1" name="Contact" baseTable="Contact"/>
+          <RightTable id="2" name="Project" baseTable="Project"/>
+          <JoinPredicateList>
+            <JoinPredicate id="1" type="Equal">
+              <LeftField id="5" name="_kf_ContactID" repetition="1"/>
+              <RightField id="5" name="_kf_ContactID" repetition="1"/>
+            </JoinPredicate>
+          </JoinPredicateList>
+        </Relationship>
+      </RelationshipList>
+    </RelationshipGraph>
+    <LayoutCatalog>
+      <Layout id="1" encryptionState="NotProtected" name="Contact List" tableOccurrenceName="Contact">
+        <ScriptTriggers>
+          <Trigger event="OnRecordLoad" id="1" triggerFlags="1">
+            <Script id="99" name="My Script"/>
+            <TriggerText>"My Script"</TriggerText>
+          </Trigger>
+        </ScriptTriggers>
+      </Layout>
+    </LayoutCatalog>
+    <ScriptCatalog>
+      <Script id="1" name="Hello World" runFullAccess="False" includeInMenu="False">
+        <StepList>
+          <Step id="89" name="Perform Script" enable="True">
+            <Script id="2" name="Another Script" file=""/>
+          </Step>
+          <Step id="3" name="Show Custom Dialog" enable="True"/>
+        </StepList>
+      </Script>
+    </ScriptCatalog>
+    <ValueListCatalog>
+      <ValueList id="1" name="Status Values">
+        <Source value="Custom"/>
+        <CustomValues>
+          <Text>Active</Text>
+          <Text>Inactive</Text>
+        </CustomValues>
+      </ValueList>
+    </ValueListCatalog>
+    <AccountCatalog>
+      <Account id="1" name="Admin" type="FileMaker" privilegeSet="[Full Access]" enabled="True"/>
+    </AccountCatalog>
+    <PrivilegesCatalog>
+      <PrivilegeSet id="1" name="[Full Access]" comment="Full access"/>
+    </PrivilegesCatalog>
+    <ExtendedPrivilegeCatalog/>
+    <CustomFunctionCatalog>
+      <CustomFunction id="1" name="MyFunc" parameters="param1; param2">
+        <Calculation>param1 + param2</Calculation>
+      </CustomFunction>
+    </CustomFunctionCatalog>
+    <Options/>
+  </File>
+</FMPReport>

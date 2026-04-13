@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  /* Zenn Blue パレット (#3ea8ff をプライマリに) */
+  --color-blue-50:  #eff8ff;
+  --color-blue-100: #d6eeff;
+  --color-blue-400: #6cbdff;
+  --color-blue-500: #6cbdff;
+  --color-blue-600: #3ea8ff;
+  --color-blue-700: #0f83fd;
+  --color-blue-800: #0070d8;
+
+  /* Zenn Surface / Border */
+  --color-gray-50:  #f1f5f9;
+  --color-gray-200: #d6e3ed;
+}
+
+@layer base {
+  html {
+    font-family: -apple-system, "system-ui",
+      "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+      Meiryo, sans-serif;
+    color: rgba(0, 0, 0, 0.82);
+    line-height: 1.7;
+  }
+}
