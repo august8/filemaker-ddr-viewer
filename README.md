@@ -1,5 +1,8 @@
 # FileMaker DDR Viewer
 
+[![CI](https://github.com/august8/filemaker-ddr-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/august8/filemaker-ddr-viewer/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 FileMaker Database Design Report (DDR) XML を解析・可視化するデスクトップツール。
 
 ---
