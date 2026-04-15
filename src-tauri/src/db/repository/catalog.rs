@@ -44,6 +44,7 @@ pub struct FieldRow {
     pub val_always: bool,
     pub val_error_message: Option<String>,
     pub index_type: String,
+    pub container_storage: Option<String>,
 }
 
 /// DB から取得したスクリプト行（step_count 付き）。
@@ -224,7 +225,7 @@ pub fn list_table_fields(
                 auto_enter_type, auto_enter_calc, auto_enter_allow_editing,
                 val_not_empty, val_unique, val_existing, val_max_length,
                 val_value_list, val_calc, val_range_from, val_range_to,
-                val_always, val_error_message, index_type
+                val_always, val_error_message, index_type, container_storage
            FROM fields
           WHERE project_id = ?1
             AND table_id = ?2
@@ -255,6 +256,7 @@ pub fn list_table_fields(
             val_always: row.get::<_, i64>(20)? != 0,
             val_error_message: row.get(21)?,
             index_type: row.get::<_, Option<String>>(22)?.unwrap_or_default(),
+            container_storage: row.get(23)?,
         })
     })?;
     rows.collect::<Result<Vec<_>, _>>().map_err(DbError::from)
@@ -738,7 +740,7 @@ pub fn run_upgrade_check(
                 let where_clause = match item.detection_value.as_str() {
                     "container" => "f.data_type = 'Container'",
                     "auto_enter_serial" => "f.auto_enter_type = 'Serial'",
-                    _ => return Ok(all_hits), // 未知の属性はスキップ
+                    _ => continue, // 未知の属性はスキップして次の項目へ
                 };
                 let sql = format!(
                     "SELECT f.id, f.name, bt.id, bt.name, p.id, p.name

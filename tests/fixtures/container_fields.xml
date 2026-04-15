@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- コンテナフィールドのパーステスト用フィクスチャ。
+     FileMaker 22.0.2 以降の DDR は dataType="Binary" を使用する。
+     内部格納 / 外部格納(セキュア) / 外部格納(オープン) の 3 パターンを含む。 -->
+<FMPReport type="Report" version="22.0.2" creationdate="2026/04/15" creationtime="00:00:00">
+  <File name="ContainerTest">
+    <BaseTableCatalog>
+      <BaseTable id="1" name="Files" color="#FFFFFF">
+        <FieldCatalog>
+          <!-- 内部格納: <Storage> が空要素 -->
+          <Field id="1" dataType="Binary" fieldType="Normal" name="Image" comment="">
+            <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
+              <ConstantData/>
+            </AutoEnter>
+            <Validation messagecalc="False" message="False" maxLength="False" valuelist="False" calculation="False" alwaysValidateCalculation="False" type="OnlyDuringDataEntry">
+              <NotEmpty value="False"/>
+              <Unique value="False"/>
+              <Existing value="False"/>
+            </Validation>
+            <Storage global="False" maxRepetition="1"/>
+          </Field>
+          <!-- 外部格納(セキュア): <Storage><Remote type="Secure"> -->
+          <Field id="2" dataType="Binary" fieldType="Normal" name="Image_secure" comment="">
+            <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
+              <ConstantData/>
+            </AutoEnter>
+            <Validation messagecalc="False" message="False" maxLength="False" valuelist="False" calculation="False" alwaysValidateCalculation="False" type="OnlyDuringDataEntry">
+              <NotEmpty value="False"/>
+              <Unique value="False"/>
+              <Existing value="False"/>
+            </Validation>
+            <Storage global="False" maxRepetition="1">
+              <Remote type="Secure" withFewerFolders="False" relativeToPath="ContainerTest/" relativeTo="0">
+                <Secure/>
+              </Remote>
+            </Storage>
+          </Field>
+          <!-- 外部格納(オープン): <Storage><Remote type="Open"> -->
+          <Field id="3" dataType="Binary" fieldType="Normal" name="Image_open" comment="">
+            <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
+              <ConstantData/>
+            </AutoEnter>
+            <Validation messagecalc="False" message="False" maxLength="False" valuelist="False" calculation="False" alwaysValidateCalculation="False" type="OnlyDuringDataEntry">
+              <NotEmpty value="False"/>
+              <Unique value="False"/>
+              <Existing value="False"/>
+            </Validation>
+            <Storage global="False" maxRepetition="1">
+              <Remote type="Open" relativeToPath="ContainerTest/" relativeTo="0">
+                <Location>
+                  <Calculation table="ContainerTest"><![CDATA["ContainerTest/Image2/"]]></Calculation>
+                </Location>
+              </Remote>
+            </Storage>
+          </Field>
+        </FieldCatalog>
+      </BaseTable>
+    </BaseTableCatalog>
+    <RelationshipGraph>
+      <TableList>
+        <Table id="1" name="Files" baseTable="Files" baseTableID="1"/>
+      </TableList>
+      <RelationshipList/>
+    </RelationshipGraph>
+    <LayoutCatalog/>
+    <ScriptCatalog/>
+    <ValueListCatalog/>
+    <AccountCatalog/>
+    <PrivilegesCatalog/>
+    <ExtendedPrivilegeCatalog/>
+    <CustomFunctionCatalog/>
+    <Options/>
+  </File>
+</FMPReport>

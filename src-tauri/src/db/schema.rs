@@ -8,7 +8,7 @@ use rusqlite::Connection;
 use crate::db::DbError;
 
 /// 現在のスキーマバージョン。
-pub const CURRENT_SCHEMA_VERSION: i32 = 13;
+pub const CURRENT_SCHEMA_VERSION: i32 = 14;
 
 // ---------------------------------------------------------------------------
 // 公開 API
@@ -225,6 +225,19 @@ fn migrate(conn: &Connection) -> Result<(), DbError> {
         conn.execute_batch(
             "ALTER TABLE table_occurrences ADD COLUMN source_file TEXT NOT NULL DEFAULT '';",
         )?;
+    }
+
+    // v14: fields に container_storage カラムを追加
+    let has_container_storage: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('fields') WHERE name='container_storage'",
+            [],
+            |row| row.get::<_, i64>(0),
+        )
+        .unwrap_or(0)
+        != 0;
+    if !has_container_storage {
+        conn.execute_batch("ALTER TABLE fields ADD COLUMN container_storage TEXT;")?;
     }
 
     Ok(())

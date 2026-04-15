@@ -808,6 +808,7 @@ mod tests {
             val_always: false,
             val_error_message: None,
             index_type: String::new(),
+            container_storage: None,
         }
     }
 

@@ -143,6 +143,7 @@ export interface FieldRow {
   val_always: boolean;
   val_error_message: string | null;
   index_type: string;
+  container_storage: string | null;
 }
 
 export interface ScriptRow {

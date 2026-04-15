@@ -261,9 +261,9 @@ fn insert_field_inner(
              auto_enter_type, auto_enter_calc, auto_enter_allow_editing,
              val_not_empty, val_unique, val_existing, val_max_length,
              val_value_list, val_calc, val_range_from, val_range_to,
-             val_always, val_error_message, index_type)
+             val_always, val_error_message, index_type, container_storage)
          VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,
-                 ?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24)",
+                 ?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24,?25)",
         params![
             project_id,
             table_db_id,
@@ -289,6 +289,7 @@ fn insert_field_inner(
             field.val_always as i64,
             field.val_error_message,
             field.index_type,
+            field.container_storage,
         ],
     )?;
     Ok(tx.last_insert_rowid())

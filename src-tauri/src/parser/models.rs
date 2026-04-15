@@ -98,6 +98,8 @@ pub struct Field {
     // --- Storage ---
     /// インデックス種別。"All" / "Minimal" / "None" / ""。
     pub index_type: String,
+    /// コンテナフィールドの保存方法。"Internal" / "Secure" / "Open"。非コンテナは None。
+    pub container_storage: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -120,7 +122,7 @@ impl DataType {
             "Date" => DataType::Date,
             "Time" => DataType::Time,
             "Timestamp" => DataType::Timestamp,
-            "Container" => DataType::Container,
+            "Container" | "Binary" => DataType::Container,
             other => DataType::Unknown(other.to_owned()),
         }
     }

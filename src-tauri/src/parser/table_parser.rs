@@ -115,6 +115,7 @@ fn parse_field_catalog<R: BufRead>(
             }
             Event::Empty(ref e) if e.name().as_ref() == b"Field" => {
                 let attrs = extract_field_attrs(e)?;
+                let is_container = attrs.2 == DataType::Container;
                 fields.push(Field {
                     id: attrs.0,
                     name: attrs.1,
@@ -138,6 +139,11 @@ fn parse_field_catalog<R: BufRead>(
                     val_always: false,
                     val_error_message: None,
                     index_type: String::new(),
+                    container_storage: if is_container {
+                        Some("Internal".to_owned())
+                    } else {
+                        None
+                    },
                 });
             }
             Event::Start(_) => {
@@ -183,6 +189,7 @@ fn parse_field_children<R: BufRead>(
     let mut auto_enter_calc: Option<String> = None;
     let mut auto_enter_allow_editing = true;
     let mut index_type = String::new();
+    let mut container_storage: Option<String> = None;
     // Validation
     let mut val_not_empty = false;
     let mut val_unique = false;
@@ -234,7 +241,30 @@ fn parse_field_children<R: BufRead>(
             }
             Event::Start(ref e) if e.name().as_ref() == b"Storage" => {
                 extract_storage_attrs(e, &mut is_global, &mut max_repeat, &mut index_type);
-                skip_element(reader, buf)?;
+                // <Remote> 子要素を探してコンテナ保存方法を取得
+                loop {
+                    buf.clear();
+                    match reader.read_event_into(buf)? {
+                        Event::Start(ref ce) if ce.name().as_ref() == b"Remote" => {
+                            if let Ok(t) = get_attr(ce, b"type") {
+                                container_storage = Some(t);
+                            }
+                            skip_element(reader, buf)?;
+                        }
+                        Event::Empty(ref ce) if ce.name().as_ref() == b"Remote" => {
+                            if let Ok(t) = get_attr(ce, b"type") {
+                                container_storage = Some(t);
+                            }
+                        }
+                        Event::Start(_) => {
+                            skip_element(reader, buf)?;
+                        }
+                        Event::Empty(_) => {}
+                        Event::End(_) => break, // </Storage>
+                        Event::Eof => return Err(ParseError::UnexpectedEof),
+                        _ => {}
+                    }
+                }
             }
             Event::Empty(ref e) if e.name().as_ref() == b"Storage" => {
                 extract_storage_attrs(e, &mut is_global, &mut max_repeat, &mut index_type);
@@ -250,6 +280,11 @@ fn parse_field_children<R: BufRead>(
             Event::Eof => return Err(ParseError::UnexpectedEof),
             _ => {}
         }
+    }
+
+    // コンテナフィールドで Remote がなければ内部格納
+    if data_type == DataType::Container && container_storage.is_none() {
+        container_storage = Some("Internal".to_owned());
     }
 
     Ok(Field {
@@ -275,6 +310,7 @@ fn parse_field_children<R: BufRead>(
         val_always,
         val_error_message,
         index_type,
+        container_storage,
     })
 }
 
@@ -531,6 +567,7 @@ mod tests {
     #[case("Number", DataType::Number)]
     #[case("Date", DataType::Date)]
     #[case("Container", DataType::Container)]
+    #[case("Binary", DataType::Container)] // FM22.0.2+ はコンテナを "Binary" と表記する
     fn field_data_types(#[case] type_str: &str, #[case] expected: DataType) {
         let xml = format!(
             "<BaseTable id=\"1\" name=\"T\"><FieldCatalog>\
@@ -693,5 +730,56 @@ mod tests {
         let tables = parse(xml).unwrap();
         let field = &tables[0].fields[0];
         assert_eq!(field.index_type, "All");
+    }
+
+    #[test]
+    fn container_field_from_fixture() {
+        let xml = std::fs::read_to_string("../tests/fixtures/container_fields.xml")
+            .expect("container_fields.xml が見つかりません");
+
+        let (mut reader, mut buf) = {
+            let mut r = quick_xml::Reader::from_str(&xml);
+            r.config_mut().trim_text(true);
+            let b = Vec::new();
+            (r, b)
+        };
+
+        // <BaseTableCatalog> まで進む
+        loop {
+            buf.clear();
+            match reader.read_event_into(&mut buf).unwrap() {
+                Event::Start(ref e) if e.name().as_ref() == b"BaseTableCatalog" => break,
+                Event::Eof => panic!("BaseTableCatalog が見つかりません"),
+                _ => {}
+            }
+        }
+        let tables = parse_tables(&mut reader, &mut buf).unwrap();
+        assert_eq!(tables.len(), 1);
+        let fields = &tables[0].fields;
+        assert_eq!(fields.len(), 3);
+
+        // Image: 内部格納
+        let img = fields
+            .iter()
+            .find(|f| f.name == "Image")
+            .expect("Image not found");
+        assert_eq!(img.data_type, DataType::Container);
+        assert_eq!(img.container_storage.as_deref(), Some("Internal"));
+
+        // Image_secure: 外部格納(セキュア)
+        let sec = fields
+            .iter()
+            .find(|f| f.name == "Image_secure")
+            .expect("Image_secure not found");
+        assert_eq!(sec.data_type, DataType::Container);
+        assert_eq!(sec.container_storage.as_deref(), Some("Secure"));
+
+        // Image_open: 外部格納(オープン)
+        let opn = fields
+            .iter()
+            .find(|f| f.name == "Image_open")
+            .expect("Image_open not found");
+        assert_eq!(opn.data_type, DataType::Container);
+        assert_eq!(opn.container_storage.as_deref(), Some("Open"));
     }
 }

@@ -74,8 +74,8 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
       byId[hit.item_id].push(hit);
     }
     return checkItems
-      .filter((i) => i.enabled && byId[i.id])
-      .map((i) => ({ itemId: i.id, label: labelMap[i.id] ?? i.id, hits: byId[i.id] }));
+      .filter((i) => i.enabled)
+      .map((i) => ({ itemId: i.id, label: labelMap[i.id] ?? i.id, hits: byId[i.id] ?? [] }));
   }, [hits, checkItems, labelMap]);
 
   // サマリーグリッド用データ
@@ -143,7 +143,7 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
       ) : (
         <>
           {/* サマリーグリッド */}
-          {projects.length > 1 && (
+          {groups.length > 0 && (
             <div className={`${CARD} overflow-x-auto`}>
               <p className={`${SECTION_HEADER} mb-3`}>サマリー</p>
               <table className="w-full text-xs border-collapse">
