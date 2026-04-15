@@ -106,7 +106,8 @@ describe("UpgradeCheckPanel", () => {
       { data: [], isLoading: false } as unknown as ReturnType<typeof useUpgradeCheck>
     );
     render(<UpgradeCheckPanel solutionId={1} />);
-    expect(screen.getByText("ヒットなし")).toBeInTheDocument();
+    // hits が 0 件でも有効なチェック項目はアコーディオンに表示される
+    expect(screen.getByText("0 件")).toBeInTheDocument();
   });
 
   it("csv_export_button_is_present_when_hits_exist", () => {
