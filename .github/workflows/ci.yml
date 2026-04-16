@@ -57,5 +57,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: typecheck
+        run: npx tsc --noEmit
+
       - name: test
         run: npm test

@@ -44,6 +44,7 @@ export function makeFieldRow(overrides: Partial<FieldRow> = {}): FieldRow {
     val_always: false,
     val_error_message: null,
     index_type: "",
+    container_storage: null,
     ...overrides,
   };
 }
