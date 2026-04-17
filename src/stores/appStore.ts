@@ -95,8 +95,8 @@ export type RightPanelState =
   | null;
 
 /** SelectedElement の同一性を O(1) で比較するためのキー文字列を返す。 */
-function elementKey(el: SelectedElement): string {
-  if (el === null) return "null";
+function elementKey(el: SelectedElement | undefined): string {
+  if (el == null) return "null"; // null と undefined の両方を捕捉
   switch (el.kind) {
     case "table":
     case "script":

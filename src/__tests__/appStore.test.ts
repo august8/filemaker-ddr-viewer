@@ -90,6 +90,15 @@ describe("appStore", () => {
     expect(useAppStore.getState().searchQuery).toBe("");
   });
 
+  it("selectElement_works_when_nav_history_is_empty", () => {
+    // navHistory が空（navIndex === -1）の初期状態から selectElement が正常に動作すること
+    useAppStore.setState({ navHistory: [], navIndex: -1, selectedElement: null });
+    const el = { kind: "script" as const, id: 1, name: "S", projectId: 10 };
+    useAppStore.getState().selectElement(el);
+    expect(useAppStore.getState().selectedElement).toEqual(el);
+    expect(useAppStore.getState().navHistory.length).toBeGreaterThan(0);
+  });
+
   it("selectElement_same_kind_different_id_adds_to_history", () => {
     const el1 = { kind: "script" as const, id: 1, name: "Script1", projectId: 10 };
     const el2 = { kind: "script" as const, id: 2, name: "Script2", projectId: 10 };
