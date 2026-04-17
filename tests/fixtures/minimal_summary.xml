@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<FMPReport type="Summary" version="21.0v1" creationdate="2024/01/01" creationtime="12:00:00">
+<FMPReport type="Summary" version="21.0v1" creationDate="2024/01/01" creationTime="12:00:00">
   <File link=".//minimal.xml" name="TestDB.fmp12" path="localhost">
     <BaseTables count="1"/>
     <Scripts count="1"/>

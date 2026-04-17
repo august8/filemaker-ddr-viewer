@@ -181,7 +181,8 @@ fn parse_field_children<R: BufRead>(
     buf: &mut Vec<u8>,
     attrs: FieldAttrs,
 ) -> Result<Field, ParseError> {
-    let (id, name, data_type, field_type, comment) = attrs;
+    // comment は属性（旧形式）か <Comment> 子要素（実DDR形式）のどちらかで提供される。
+    let (id, name, data_type, field_type, mut comment) = attrs;
     let mut is_global = false;
     let mut max_repeat: u32 = 1;
     let mut calculation: Option<String> = None;
@@ -271,6 +272,13 @@ fn parse_field_children<R: BufRead>(
             }
             Event::Start(ref e) if e.name().as_ref() == b"Calculation" => {
                 calculation = Some(read_text_content(reader, buf)?);
+            }
+            // <Comment>テキスト</Comment>（実DDR形式のコメント）
+            Event::Start(ref e) if e.name().as_ref() == b"Comment" => {
+                let text = read_text_content(reader, buf)?;
+                if !text.is_empty() {
+                    comment = text;
+                }
             }
             Event::Start(_) => {
                 skip_element(reader, buf)?;

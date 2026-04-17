@@ -10,7 +10,7 @@ use crate::parser::{
     relationship_parser::parse_relationships,
     script_parser::parse_scripts,
     table_parser::parse_tables,
-    version::{FmVersion, VersionAdapter},
+    version::FmVersion,
     ParseError,
 };
 
@@ -26,7 +26,6 @@ pub fn parse_ddr(xml: &str) -> Result<DdrFile, ParseError> {
     // Find <FMPReport> and extract the version attribute
     // ------------------------------------------------------------------
     let fm_version = find_fmp_report(&mut reader, &mut buf)?;
-    let _adapter = VersionAdapter::new(fm_version.clone());
 
     // ------------------------------------------------------------------
     // Find <File name="..."> inside FMPReport

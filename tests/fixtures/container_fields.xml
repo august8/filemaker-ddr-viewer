@@ -2,13 +2,14 @@
 <!-- コンテナフィールドのパーステスト用フィクスチャ。
      FileMaker 22.0.2 以降の DDR は dataType="Binary" を使用する。
      内部格納 / 外部格納(セキュア) / 外部格納(オープン) の 3 パターンを含む。 -->
-<FMPReport type="Report" version="22.0.2" creationdate="2026/04/15" creationtime="00:00:00">
+<FMPReport type="Report" version="22.0.2" creationDate="2026/04/15" creationTime="00:00:00">
   <File name="ContainerTest">
     <BaseTableCatalog>
-      <BaseTable id="1" name="Files" color="#FFFFFF">
+      <BaseTable id="1" name="Files" records="0">
         <FieldCatalog>
           <!-- 内部格納: <Storage> が空要素 -->
-          <Field id="1" dataType="Binary" fieldType="Normal" name="Image" comment="">
+          <Field id="1" dataType="Binary" fieldType="Normal" name="Image">
+            <Comment/>
             <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
               <ConstantData/>
             </AutoEnter>
@@ -20,7 +21,8 @@
             <Storage global="False" maxRepetition="1"/>
           </Field>
           <!-- 外部格納(セキュア): <Storage><Remote type="Secure"> -->
-          <Field id="2" dataType="Binary" fieldType="Normal" name="Image_secure" comment="">
+          <Field id="2" dataType="Binary" fieldType="Normal" name="Image_secure">
+            <Comment/>
             <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
               <ConstantData/>
             </AutoEnter>
@@ -36,7 +38,8 @@
             </Storage>
           </Field>
           <!-- 外部格納(オープン): <Storage><Remote type="Open"> -->
-          <Field id="3" dataType="Binary" fieldType="Normal" name="Image_open" comment="">
+          <Field id="3" dataType="Binary" fieldType="Normal" name="Image_open">
+            <Comment/>
             <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
               <ConstantData/>
             </AutoEnter>
