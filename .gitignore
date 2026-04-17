@@ -12,11 +12,16 @@ dist
 dist-ssr
 *.local
 
+#Local Files
+temp
+
+
 # Claude Code
 .claude/
 CLAUDE.md
 DEBUGGING.md
 DECISIONS.md
+IMPROVEMENTS.md
 
 # DDR Sample
 .DDRSample/*
