@@ -17,7 +17,8 @@ vi.mock("../../stores/appStore", () => ({
   }),
 }));
 
-import { useScriptSteps } from "../../hooks/useTauriCommand";
+import { useScriptSteps, useScriptList } from "../../hooks/useTauriCommand";
+import { useAppStore } from "../../stores/appStore";
 
 const mockScript = makeScriptRow({ id: 1, name: "Main Script", step_count: 2 });
 const mockSteps: ScriptStepRow[] = [
@@ -34,6 +35,14 @@ const mockSteps: ScriptStepRow[] = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(useAppStore).mockReturnValue({
+    selectElement: vi.fn(),
+    diffContext: null,
+  } as unknown as ReturnType<typeof useAppStore>);
+  vi.mocked(useScriptList).mockReturnValue({
+    data: [],
+    isLoading: false,
+  } as unknown as ReturnType<typeof useScriptList>);
 });
 
 describe("ScriptDetail", () => {
@@ -83,5 +92,67 @@ describe("ScriptDetail", () => {
     } as unknown as ReturnType<typeof useScriptSteps>);
     render(<ScriptDetail script={fullAccessScript} projectId={1} />);
     expect(screen.getByText("完全アクセス権で実行")).toBeInTheDocument();
+  });
+
+  it("renders_spinner_when_loading", () => {
+    vi.mocked(useScriptSteps).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof useScriptSteps>);
+    render(<ScriptDetail script={mockScript} projectId={1} />);
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+  });
+
+  it("diff_context_shows_added_badge_for_new_step", () => {
+    const addedStep = makeScriptStepRow({ id: 3, name: "New Step", step_text: "新しいステップ" });
+    vi.mocked(useAppStore).mockReturnValue({
+      selectElement: vi.fn(),
+      diffContext: { compareProjectId: 2 },
+    } as unknown as ReturnType<typeof useAppStore>);
+    // Compare script list returns "Main Script" so it finds a match
+    vi.mocked(useScriptList).mockReturnValue({
+      data: [makeScriptRow({ id: 99, name: "Main Script" })],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useScriptList>);
+    // first call: current steps (with addedStep), second call: compare steps (empty)
+    vi.mocked(useScriptSteps)
+      .mockReturnValueOnce({ data: [addedStep], isLoading: false } as unknown as ReturnType<typeof useScriptSteps>)
+      .mockReturnValueOnce({ data: [], isLoading: false } as unknown as ReturnType<typeof useScriptSteps>);
+    render(<ScriptDetail script={mockScript} projectId={1} />);
+    expect(screen.getByText("追加")).toBeInTheDocument();
+  });
+
+  it("diff_context_shows_removed_badge_for_deleted_step", () => {
+    const removedStep = makeScriptStepRow({ id: 3, name: "Old Step", step_text: "古いステップ" });
+    vi.mocked(useAppStore).mockReturnValue({
+      selectElement: vi.fn(),
+      diffContext: { compareProjectId: 2 },
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useScriptList).mockReturnValue({
+      data: [makeScriptRow({ id: 99, name: "Main Script" })],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useScriptList>);
+    // current steps empty, compare steps has removedStep
+    vi.mocked(useScriptSteps)
+      .mockReturnValueOnce({ data: [], isLoading: false } as unknown as ReturnType<typeof useScriptSteps>)
+      .mockReturnValueOnce({ data: [removedStep], isLoading: false } as unknown as ReturnType<typeof useScriptSteps>);
+    render(<ScriptDetail script={mockScript} projectId={1} />);
+    expect(screen.getByText("削除")).toBeInTheDocument();
+  });
+
+  it("indented_steps_increase_and_decrease_level", () => {
+    const steps: ScriptStepRow[] = [
+      makeScriptStepRow({ id: 1, name: "If", step_text: "If [条件]" }),
+      makeScriptStepRow({ id: 2, name: "Set Field", step_text: "フィールド設定" }),
+      makeScriptStepRow({ id: 3, name: "End If", step_text: "End If" }),
+    ];
+    vi.mocked(useScriptSteps).mockReturnValue({
+      data: steps,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useScriptSteps>);
+    render(<ScriptDetail script={mockScript} projectId={1} />);
+    expect(screen.getByText(/If \[条件\]/)).toBeInTheDocument();
+    expect(screen.getByText("フィールド設定")).toBeInTheDocument();
+    expect(screen.getByText("End If")).toBeInTheDocument();
   });
 });

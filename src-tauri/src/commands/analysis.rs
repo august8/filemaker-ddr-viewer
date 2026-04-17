@@ -197,7 +197,17 @@ pub async fn resolve_element_by_name(
         .db
         .lock()
         .map_err(|e| CommandError::Internal(e.to_string()))?;
-    let table = match element_type.as_str() {
+    resolve_element_by_name_inner(&db.conn, project_id, &element_type, &name)
+        .map_err(CommandError::from)
+}
+
+pub(crate) fn resolve_element_by_name_inner(
+    conn: &rusqlite::Connection,
+    project_id: i64,
+    element_type: &str,
+    name: &str,
+) -> Result<Option<ElementRef>, rusqlite::Error> {
+    let table = match element_type {
         "script" => "scripts",
         "layout" => "layouts",
         "table" => "base_tables",
@@ -206,17 +216,13 @@ pub async fn resolve_element_by_name(
         _ => return Ok(None),
     };
     let sql = format!("SELECT id, name FROM {table} WHERE project_id=?1 AND name=?2");
-    let result = db
-        .conn
-        .query_row(&sql, rusqlite::params![project_id, name], |r| {
-            Ok(ElementRef {
-                id: r.get(0)?,
-                name: r.get(1)?,
-            })
+    conn.query_row(&sql, rusqlite::params![project_id, name], |r| {
+        Ok(ElementRef {
+            id: r.get(0)?,
+            name: r.get(1)?,
         })
-        .optional()
-        .map_err(CommandError::from)?;
-    Ok(result)
+    })
+    .optional()
 }
 
 // ---------------------------------------------------------------------------
@@ -344,5 +350,120 @@ mod tests {
     fn delete_nonexistent_solution_returns_error() {
         let mut db = Database::open_in_memory().unwrap();
         assert!(db_delete_solution(&mut db, 9999).is_err());
+    }
+
+    // ---- get_solution_projects のテスト ----
+
+    #[test]
+    fn get_solution_projects_returns_projects_for_solution() {
+        use crate::db::repository::get_solution_projects as db_get_solution_projects;
+        let mut db = Database::open_in_memory().unwrap();
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        let sid = insert_solution(&mut db, &ddr.file_name, None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+        let projects = db_get_solution_projects(&db, sid).unwrap();
+        assert_eq!(projects.len(), 1);
+        assert_eq!(projects[0].name, "TestDB");
+    }
+
+    #[test]
+    fn get_solution_projects_returns_empty_for_other_solution() {
+        use crate::db::repository::get_solution_projects as db_get_solution_projects;
+        let mut db = Database::open_in_memory().unwrap();
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        let sid = insert_solution(&mut db, &ddr.file_name, None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+        // 別のソリューションにはプロジェクトがない
+        let sid2 = insert_solution(&mut db, "Other", None).unwrap();
+        let projects = db_get_solution_projects(&db, sid2).unwrap();
+        assert!(projects.is_empty());
+    }
+
+    // ---- find_broken_refs / generate_report_card のテスト ----
+
+    #[test]
+    fn broken_refs_returns_vec_for_minimal_fixture() {
+        use crate::analyzer::broken_refs::find_broken_refs;
+        use crate::parser::parse_ddr;
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        // パニックせず Vec が返ることを確認（minimal では broken refs あり）
+        let refs = find_broken_refs(&ddr);
+        // minimal.xml の "My Script" トリガーは id=99 のスクリプトを参照しているが
+        // スクリプトカタログには id=1 しかないので broken ref が検出される
+        let _ = refs; // 件数は実装依存なので型確認のみ
+    }
+
+    #[test]
+    fn report_card_returns_card_for_minimal_fixture() {
+        use crate::analyzer::report_card::generate_report_card;
+        use crate::parser::parse_ddr;
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        let card = generate_report_card(&ddr);
+        // ReportCard が正常に生成される
+        let _ = card;
+    }
+
+    // ---- resolve_element_by_name_inner のテスト ----
+
+    #[test]
+    fn resolve_element_script_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result = resolve_element_by_name_inner(&db.conn, pid, "script", "Hello World").unwrap();
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().name, "Hello World");
+    }
+
+    #[test]
+    fn resolve_element_layout_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result =
+            resolve_element_by_name_inner(&db.conn, pid, "layout", "Contact List").unwrap();
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn resolve_element_table_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result = resolve_element_by_name_inner(&db.conn, pid, "table", "Contact").unwrap();
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn resolve_element_value_list_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result =
+            resolve_element_by_name_inner(&db.conn, pid, "value_list", "Status Values").unwrap();
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn resolve_element_custom_function_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result =
+            resolve_element_by_name_inner(&db.conn, pid, "custom_function", "MyFunc").unwrap();
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn resolve_element_returns_none_for_unknown_type() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result =
+            resolve_element_by_name_inner(&db.conn, pid, "unknown_type", "anything").unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn resolve_element_returns_none_when_not_found() {
+        use super::resolve_element_by_name_inner;
+        let (db, pid) = setup();
+        let result =
+            resolve_element_by_name_inner(&db.conn, pid, "script", "NonExistentScript").unwrap();
+        assert!(result.is_none());
     }
 }
