@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useAppStore } from "../stores/appStore";
 // elementKey は内部関数のため、selectElement の挙動を通じて間接テストする
 import type { SolutionRow, ProjectRow } from "../types/ddr";
@@ -127,5 +127,177 @@ describe("appStore", () => {
     const history = useAppStore.getState().navHistory;
     // dashboard が重複して挿入されていないこと
     expect(history.filter((h) => h?.kind === "dashboard").length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// navigateBack / navigateForward
+// ---------------------------------------------------------------------------
+describe("navigation", () => {
+  const el1 = { kind: "script" as const, id: 1, name: "S1", projectId: 10 };
+  const el2 = { kind: "script" as const, id: 2, name: "S2", projectId: 10 };
+  const el3 = { kind: "table" as const, id: 3, name: "T1", projectId: 10 };
+
+  beforeEach(() => {
+    useAppStore.setState({ navHistory: [], navIndex: -1, selectedElement: null, searchQuery: "" });
+  });
+
+  it("navigateBack_does_nothing_when_history_is_empty", () => {
+    useAppStore.getState().navigateBack();
+    expect(useAppStore.getState().navIndex).toBe(-1);
+  });
+
+  it("navigateBack_does_nothing_when_at_first_entry", () => {
+    useAppStore.setState({ navHistory: [el1], navIndex: 0, selectedElement: el1 });
+    useAppStore.getState().navigateBack();
+    expect(useAppStore.getState().navIndex).toBe(0);
+    expect(useAppStore.getState().selectedElement).toEqual(el1);
+  });
+
+  it("navigateBack_moves_to_previous_entry", () => {
+    useAppStore.setState({ navHistory: [el1, el2, el3], navIndex: 2, selectedElement: el3 });
+    useAppStore.getState().navigateBack();
+    expect(useAppStore.getState().navIndex).toBe(1);
+    expect(useAppStore.getState().selectedElement).toEqual(el2);
+  });
+
+  it("navigateBack_restores_searchQuery_for_search_entry", () => {
+    const searchEl = { kind: "search" as const, query: "hello" };
+    useAppStore.setState({ navHistory: [searchEl, el1], navIndex: 1, selectedElement: el1 });
+    useAppStore.getState().navigateBack();
+    expect(useAppStore.getState().searchQuery).toBe("hello");
+    expect(useAppStore.getState().selectedElement).toEqual(searchEl);
+  });
+
+  it("navigateForward_does_nothing_when_at_last_entry", () => {
+    useAppStore.setState({ navHistory: [el1, el2], navIndex: 1, selectedElement: el2 });
+    useAppStore.getState().navigateForward();
+    expect(useAppStore.getState().navIndex).toBe(1);
+  });
+
+  it("navigateForward_moves_to_next_entry", () => {
+    useAppStore.setState({ navHistory: [el1, el2, el3], navIndex: 0, selectedElement: el1 });
+    useAppStore.getState().navigateForward();
+    expect(useAppStore.getState().navIndex).toBe(1);
+    expect(useAppStore.getState().selectedElement).toEqual(el2);
+  });
+
+  it("navigateBack_clears_diffContext", () => {
+    useAppStore.setState({
+      navHistory: [el1, el2],
+      navIndex: 1,
+      selectedElement: el2,
+      diffContext: { compareProjectId: 5 },
+    });
+    useAppStore.getState().navigateBack();
+    expect(useAppStore.getState().diffContext).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// font size
+// ---------------------------------------------------------------------------
+describe("fontSize", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    useAppStore.setState({ fontSize: 14 });
+  });
+
+  it("stepFontSize_increases_by_step", () => {
+    useAppStore.getState().stepFontSize(2);
+    expect(useAppStore.getState().fontSize).toBe(16);
+  });
+
+  it("stepFontSize_decreases_by_step", () => {
+    useAppStore.getState().stepFontSize(-2);
+    expect(useAppStore.getState().fontSize).toBe(12);
+  });
+
+  it("stepFontSize_zero_resets_to_default", () => {
+    useAppStore.setState({ fontSize: 20 });
+    useAppStore.getState().stepFontSize(0);
+    expect(useAppStore.getState().fontSize).toBe(14);
+  });
+
+  it("stepFontSize_clamps_at_max", () => {
+    useAppStore.setState({ fontSize: 23 });
+    useAppStore.getState().stepFontSize(5);
+    expect(useAppStore.getState().fontSize).toBe(24);
+  });
+
+  it("stepFontSize_clamps_at_min", () => {
+    useAppStore.setState({ fontSize: 11 });
+    useAppStore.getState().stepFontSize(-5);
+    expect(useAppStore.getState().fontSize).toBe(10);
+  });
+
+  it("setFontSize_clamps_above_max", () => {
+    useAppStore.getState().setFontSize(99);
+    expect(useAppStore.getState().fontSize).toBe(24);
+  });
+
+  it("setFontSize_clamps_below_min", () => {
+    useAppStore.getState().setFontSize(1);
+    expect(useAppStore.getState().fontSize).toBe(10);
+  });
+
+  it("setFontSize_saves_to_localStorage", () => {
+    const spy = vi.spyOn(Storage.prototype, "setItem");
+    useAppStore.getState().setFontSize(16);
+    expect(spy).toHaveBeenCalledWith("fm-ddr-font-size", "16");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// navigateFromDiff
+// ---------------------------------------------------------------------------
+describe("navigateFromDiff", () => {
+  beforeEach(() => {
+    useAppStore.setState({ navHistory: [], navIndex: -1, selectedElement: null, diffContext: null });
+  });
+
+  it("sets_diffContext_with_compareProjectId", () => {
+    const el = { kind: "table" as const, id: 1, name: "T", projectId: 10 };
+    useAppStore.getState().navigateFromDiff(el, 99);
+    expect(useAppStore.getState().diffContext).toEqual({ compareProjectId: 99 });
+    expect(useAppStore.getState().selectedElement).toEqual(el);
+  });
+
+  it("same_element_updates_diffContext_without_growing_history", () => {
+    const el = { kind: "table" as const, id: 1, name: "T", projectId: 10 };
+    useAppStore.setState({ navHistory: [el], navIndex: 0, selectedElement: el });
+    const before = useAppStore.getState().navHistory.length;
+    useAppStore.getState().navigateFromDiff(el, 42);
+    expect(useAppStore.getState().navHistory.length).toBe(before);
+    expect(useAppStore.getState().diffContext).toEqual({ compareProjectId: 42 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// setSearchQuery special cases
+// ---------------------------------------------------------------------------
+describe("setSearchQuery", () => {
+  beforeEach(() => {
+    useAppStore.setState({ searchQuery: "", selectedElement: null });
+  });
+
+  it("clears_selectedElement_when_it_is_search_kind", () => {
+    useAppStore.setState({ selectedElement: { kind: "search", query: "old" } });
+    useAppStore.getState().setSearchQuery("new");
+    expect(useAppStore.getState().selectedElement).toBeNull();
+    expect(useAppStore.getState().searchQuery).toBe("new");
+  });
+
+  it("clears_selectedElement_when_it_is_dashboard_kind", () => {
+    useAppStore.setState({ selectedElement: { kind: "dashboard" } });
+    useAppStore.getState().setSearchQuery("test");
+    expect(useAppStore.getState().selectedElement).toBeNull();
+  });
+
+  it("does_not_clear_selectedElement_for_other_kinds", () => {
+    const el = { kind: "script" as const, id: 1, name: "S", projectId: 10 };
+    useAppStore.setState({ selectedElement: el });
+    useAppStore.getState().setSearchQuery("test");
+    expect(useAppStore.getState().selectedElement).toEqual(el);
   });
 });
