@@ -402,4 +402,83 @@ mod tests {
         assert_eq!(cfs.len(), 1);
         assert_eq!(cfs[0].name, "MyFunc");
     }
+
+    #[test]
+    fn list_table_occurrences_command_returns_occurrences() {
+        let (db, pid) = setup();
+        let tos = db_list_table_occurrences(&db, pid).unwrap();
+        // minimal.xml には TableList > Table が 1 件（Contact）
+        assert_eq!(tos.len(), 1);
+        assert_eq!(tos[0].occurrence_name, "Contact");
+        assert_eq!(tos[0].base_table_name, "Contact");
+    }
+
+    #[test]
+    fn list_relationships_command_returns_relationships() {
+        let (db, pid) = setup();
+        let rels = db_list_relationships(&db, pid).unwrap();
+        assert_eq!(rels.len(), 1);
+        assert!(rels[0].name.contains("ContactID"));
+        assert_eq!(rels[0].predicates.len(), 1);
+    }
+
+    #[test]
+    fn list_accounts_command_returns_accounts() {
+        let (db, pid) = setup();
+        let accounts = db_list_accounts(&db, pid).unwrap();
+        assert_eq!(accounts.len(), 1);
+        assert_eq!(accounts[0].name, "Admin");
+    }
+
+    #[test]
+    fn list_privilege_sets_command_returns_privilege_sets() {
+        let (db, pid) = setup();
+        let ps = db_list_privilege_sets(&db, pid).unwrap();
+        assert_eq!(ps.len(), 1);
+        assert_eq!(ps[0].name, "[Full Access]");
+    }
+
+    #[test]
+    fn list_layout_objects_command_returns_empty_for_minimal() {
+        let (db, pid) = setup();
+        let layouts = db_list_layouts(&db, pid).unwrap();
+        let layout_id = layouts[0].id;
+        let objects = db_list_layout_objects(&db, layout_id).unwrap();
+        // minimal.xml にはレイアウトオブジェクトが存在しない
+        assert!(objects.is_empty());
+    }
+
+    #[test]
+    fn list_layout_object_conditions_returns_empty() {
+        let (db, pid) = setup();
+        let layouts = db_list_layouts(&db, pid).unwrap();
+        let layout_id = layouts[0].id;
+        let objects = db_list_layout_objects(&db, layout_id).unwrap();
+        // オブジェクトがないので conditions も空
+        assert!(objects.is_empty());
+        // 存在しない object_id でも空リストが返る
+        let conditions = db_list_layout_object_conditions(&db, 9999).unwrap();
+        assert!(conditions.is_empty());
+    }
+
+    #[test]
+    fn list_all_fields_returns_empty_for_empty_project() {
+        let db = Database::open_in_memory().unwrap();
+        let fields = list_all_fields_inner(&db, 9999).unwrap();
+        assert!(fields.is_empty());
+    }
+
+    #[test]
+    fn list_table_occurrences_returns_empty_for_empty_project() {
+        let db = Database::open_in_memory().unwrap();
+        let tos = db_list_table_occurrences(&db, 9999).unwrap();
+        assert!(tos.is_empty());
+    }
+
+    #[test]
+    fn list_relationships_returns_empty_for_empty_project() {
+        let db = Database::open_in_memory().unwrap();
+        let rels = db_list_relationships(&db, 9999).unwrap();
+        assert!(rels.is_empty());
+    }
 }
