@@ -278,8 +278,8 @@ type SelectedElement =
 
 ### インポート
 
-- `summary_path` が同一のインポートは既存データを自動上書き（`upsert_solution` による）
-- `summary_path = None` のインポートは重複チェックなし（レガシー用途）
+- インポートは常に `insert_solution` で新規追加される（同一 `summary_path` でも上書きではなく別エントリとして追加）
+- `summary_path = None` のインポートも同様に新規追加（重複チェックなし）
 
 ### 検索
 

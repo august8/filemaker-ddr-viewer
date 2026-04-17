@@ -1,7 +1,6 @@
 //! ソリューション・プロジェクト CRUD 操作。
 
 use rusqlite::params;
-use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 
 use crate::db::{Database, DbError};
@@ -51,35 +50,6 @@ pub fn insert_solution(
         params![name, summary_path],
     )?;
     Ok(db.conn.last_insert_rowid())
-}
-
-/// `summary_path` が提供された場合、同一パスの既存 solution を削除してから INSERT する。
-/// `summary_path` が `None` のときは通常の INSERT（重複チェックなし）。
-pub fn upsert_solution(
-    db: &mut Database,
-    name: &str,
-    summary_path: Option<&str>,
-) -> Result<i64, DbError> {
-    let Some(path) = summary_path else {
-        return insert_solution(db, name, None);
-    };
-
-    // 既存 solution_id を取得
-    let existing_id: Option<i64> = db
-        .conn
-        .query_row(
-            "SELECT id FROM solutions WHERE summary_path = ?1 LIMIT 1",
-            params![path],
-            |row| row.get(0),
-        )
-        .optional()?;
-
-    // 既存があれば削除（FTS5 + CASCADE）
-    if let Some(old_id) = existing_id {
-        delete_solution(db, old_id)?;
-    }
-
-    insert_solution(db, name, Some(path))
 }
 
 /// ID で solution を1件取得する。
@@ -336,72 +306,5 @@ mod tests {
     fn delete_project_not_found_returns_err() {
         let mut db = Database::open_in_memory().unwrap();
         assert!(delete_project(&mut db, 9999).is_err());
-    }
-
-    // ---- upsert_solution ----
-
-    #[test]
-    fn upsert_solution_creates_new_when_no_existing() {
-        let mut db = Database::open_in_memory().unwrap();
-        let id = upsert_solution(&mut db, "TestDB", Some("/path/概要.xml")).unwrap();
-        let row = get_solution(&db, id).unwrap();
-        assert_eq!(row.name, "TestDB");
-        assert_eq!(row.summary_path.as_deref(), Some("/path/概要.xml"));
-    }
-
-    #[test]
-    fn upsert_solution_replaces_existing_with_same_path() {
-        let mut db = Database::open_in_memory().unwrap();
-        let path = "/path/概要.xml";
-        upsert_solution(&mut db, "FirstImport", Some(path)).unwrap();
-        let id2 = upsert_solution(&mut db, "SecondImport", Some(path)).unwrap();
-        let all = list_solutions(&db).unwrap();
-        let matched: Vec<_> = all
-            .iter()
-            .filter(|s| s.summary_path.as_deref() == Some(path))
-            .collect();
-        assert_eq!(matched.len(), 1);
-        assert_eq!(matched[0].id, id2);
-        assert_eq!(matched[0].name, "SecondImport");
-    }
-
-    #[test]
-    fn upsert_solution_cascades_old_projects() {
-        let (mut db, _sid, pid) = db_with_minimal();
-        let path = "/tmp/test.xml";
-        let _id2 = upsert_solution(&mut db, "TestSolution", Some(path)).unwrap();
-        assert!(get_project(&db, pid).is_err());
-    }
-
-    #[test]
-    fn upsert_solution_cleans_up_search_index() {
-        let (mut db, _sid, pid) = db_with_minimal();
-        let before: i64 = db
-            .conn
-            .query_row(
-                "SELECT COUNT(*) FROM search_index WHERE project_id=?1",
-                params![pid],
-                |r| r.get(0),
-            )
-            .unwrap();
-        assert!(before > 0);
-        upsert_solution(&mut db, "TestSolution", Some("/tmp/test.xml")).unwrap();
-        let after: i64 = db
-            .conn
-            .query_row(
-                "SELECT COUNT(*) FROM search_index WHERE project_id=?1",
-                params![pid],
-                |r| r.get(0),
-            )
-            .unwrap();
-        assert_eq!(after, 0);
-    }
-
-    #[test]
-    fn upsert_solution_without_path_allows_duplicates() {
-        let mut db = Database::open_in_memory().unwrap();
-        let id1 = upsert_solution(&mut db, "TestDB", None).unwrap();
-        let id2 = upsert_solution(&mut db, "TestDB", None).unwrap();
-        assert_ne!(id1, id2);
     }
 }
