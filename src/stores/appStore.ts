@@ -94,6 +94,38 @@ export type RightPanelState =
   | { kind: "layout_object"; layoutObjectId: number; layoutId: number }
   | null;
 
+/** SelectedElement の同一性を O(1) で比較するためのキー文字列を返す。 */
+function elementKey(el: SelectedElement): string {
+  if (el === null) return "null";
+  switch (el.kind) {
+    case "table":
+    case "script":
+    case "layout":
+    case "value_list":
+    case "custom_function":
+      return `${el.kind}:${el.projectId}:${el.id}`;
+    case "all_fields":
+    case "all_tables":
+    case "all_scripts":
+    case "all_layouts":
+    case "all_value_lists":
+    case "all_custom_functions":
+    case "all_table_occurrences":
+    case "security":
+    case "relationship_graph":
+      return `${el.kind}:${el.projectId}`;
+    case "all_relationships":
+      return `${el.kind}:${el.projectId}:${el.highlightId ?? ""}`;
+    case "search":
+      return `search:${el.query}`;
+    case "upgrade_check":
+      return `upgrade_check:${el.solutionId}`;
+    case "dashboard":
+    case "diff":
+      return el.kind;
+  }
+}
+
 const FONT_SIZE_KEY = "fm-ddr-font-size";
 const DEFAULT_FONT_SIZE = 14;
 const FONT_SIZE_MIN = 10;
@@ -192,7 +224,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => {
       // 同じ要素なら履歴に積まない
       const current = state.navHistory[state.navIndex];
-      if (JSON.stringify(current) === JSON.stringify(element)) {
+      if (elementKey(current) === elementKey(element)) {
         return { selectedElement: element, searchQuery: "", diffContext: null };
       }
       // カーソルより後の履歴を切り捨てる
@@ -203,7 +235,7 @@ export const useAppStore = create<AppState>((set) => ({
         // 検索結果を表示中 → search エントリを挿入
         const searchEntry: SelectedElement = { kind: "search", query: state.searchQuery };
         const last = baseHistory[baseHistory.length - 1];
-        if (JSON.stringify(last) !== JSON.stringify(searchEntry)) {
+        if (elementKey(last) !== elementKey(searchEntry)) {
           baseHistory = [...baseHistory, searchEntry];
         }
         // 詳細パネルを表示するために searchQuery をクリア
@@ -212,7 +244,7 @@ export const useAppStore = create<AppState>((set) => ({
         // ダッシュボードを表示中 → dashboard エントリを挿入
         const dashEntry: SelectedElement = { kind: "dashboard" };
         const last = baseHistory[baseHistory.length - 1];
-        if (JSON.stringify(last) !== JSON.stringify(dashEntry)) {
+        if (elementKey(last) !== elementKey(dashEntry)) {
           baseHistory = [...baseHistory, dashEntry];
         }
       }
@@ -228,7 +260,7 @@ export const useAppStore = create<AppState>((set) => ({
   navigateFromDiff: (element, compareProjectId) =>
     set((state) => {
       const current = state.navHistory[state.navIndex];
-      if (JSON.stringify(current) === JSON.stringify(element)) {
+      if (elementKey(current) === elementKey(element)) {
         return { selectedElement: element, diffContext: { compareProjectId } };
       }
       let baseHistory = state.navHistory.slice(0, state.navIndex + 1);
@@ -236,14 +268,14 @@ export const useAppStore = create<AppState>((set) => ({
       if (state.searchQuery.trim()) {
         const searchEntry: SelectedElement = { kind: "search", query: state.searchQuery };
         const last = baseHistory[baseHistory.length - 1];
-        if (JSON.stringify(last) !== JSON.stringify(searchEntry)) {
+        if (elementKey(last) !== elementKey(searchEntry)) {
           baseHistory = [...baseHistory, searchEntry];
         }
         clearedQuery = "";
       } else if (state.selectedElement === null) {
         const dashEntry: SelectedElement = { kind: "dashboard" };
         const last = baseHistory[baseHistory.length - 1];
-        if (JSON.stringify(last) !== JSON.stringify(dashEntry)) {
+        if (elementKey(last) !== elementKey(dashEntry)) {
           baseHistory = [...baseHistory, dashEntry];
         }
       }
