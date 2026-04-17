@@ -154,14 +154,14 @@ fn parse_options(reader: &mut Reader<&[u8]>, buf: &mut Vec<u8>) -> Result<Vec<St
                 }
                 depth += 1;
             }
-            Event::Empty(ref e) => {
+            Event::Empty(ref e)
                 if in_window_triggers
-                    && (e.name().as_ref() == b"Script" || e.name().as_ref() == b"ScriptReference")
-                {
-                    if let Ok(name) = get_attr(e, b"name") {
-                        if !name.is_empty() {
-                            scripts.push(name);
-                        }
+                    && (e.name().as_ref() == b"Script"
+                        || e.name().as_ref() == b"ScriptReference") =>
+            {
+                if let Ok(name) = get_attr(e, b"name") {
+                    if !name.is_empty() {
+                        scripts.push(name);
                     }
                 }
             }

@@ -124,10 +124,10 @@ fn parse_layout_children<R: BufRead>(
         buf.clear();
         match reader.read_event_into(buf)? {
             // 実DDR形式: <Table name="顧客" id="1065089" />
-            Event::Empty(ref e) if e.name().as_ref() == b"Table" => {
-                if table_occurrence_name.is_none() {
-                    table_occurrence_name = get_attr(e, b"name").ok();
-                }
+            Event::Empty(ref e)
+                if e.name().as_ref() == b"Table" && table_occurrence_name.is_none() =>
+            {
+                table_occurrence_name = get_attr(e, b"name").ok();
             }
             Event::Start(ref e) if e.name().as_ref() == b"Table" => {
                 if table_occurrence_name.is_none() {
