@@ -27,9 +27,9 @@ pub(crate) fn get_ddr(
 ) -> Result<Arc<DdrFile>, CommandError> {
     // キャッシュから取得を試みる
     {
-        let cache = state
+        let mut cache = state
             .ddr_cache
-            .read()
+            .lock()
             .map_err(|e| CommandError::Internal(e.to_string()))?;
         if let Some(ddr) = cache.get(&project_id) {
             return Ok(Arc::clone(ddr));
@@ -63,9 +63,9 @@ pub(crate) fn get_ddr(
     // キャッシュに保存
     let mut cache = state
         .ddr_cache
-        .write()
+        .lock()
         .map_err(|e| CommandError::Internal(e.to_string()))?;
-    cache.insert(project_id, Arc::clone(&ddr_arc));
+    cache.put(project_id, Arc::clone(&ddr_arc));
 
     Ok(ddr_arc)
 }
