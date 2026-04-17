@@ -2,6 +2,7 @@
 //!
 //! `tests/ddr/<version>/BaseFile_fmp12.xml` を全バージョン分パースし、
 //! パーサーが FM17〜22 の実出力に対して正常に動作することを検証する。
+//! テーブルなしファイルのパースも検証する。
 
 use filemaker_ddr_viewer_lib::parser::parse_ddr;
 use rstest::rstest;
@@ -81,4 +82,16 @@ fn parse_real_ddr_has_tables_and_fields(#[case] version: &str) {
     assert!(!ddr.tables.is_empty(), "FM{version}: テーブルが0件");
     let total_fields: usize = ddr.tables.iter().map(|t| t.fields.len()).sum();
     assert!(total_fields > 0, "FM{version}: フィールドが0件");
+}
+
+#[test]
+fn parse_no_table_ddr_succeeds() {
+    let path = "../tests/ddr/NoTableDDR/NoTableFile_fmp12.xml";
+    let bytes = std::fs::read(path).unwrap_or_else(|e| panic!("{path}: {e}"));
+    let xml = decode_ddr_bytes(&bytes);
+    let ddr = parse_ddr(&xml).unwrap_or_else(|e| panic!("テーブルなし DDR のパース失敗: {e}"));
+    assert!(
+        ddr.tables.is_empty(),
+        "テーブルなしファイルなのにテーブルが検出された"
+    );
 }
