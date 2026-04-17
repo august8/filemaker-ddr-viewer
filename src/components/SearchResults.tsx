@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Spinner } from "./Spinner";
 import { useSearch } from "../hooks/useTauriCommand";
 import { useAppStore } from "../stores/appStore";
+import { useSearchFiltering } from "../hooks/useSearchFiltering";
 import type { SearchResult } from "../types/ddr";
 
 function escapeRegex(str: string): string {
@@ -63,7 +64,8 @@ export function SearchResults({ query }: Props) {
     searchScope,
     selectedSolution?.id ?? null,
   );
-  const [activeType, setActiveType] = useState<string | null>(null);
+  const { activeType, setActiveType, countsByType, filteredResults } =
+    useSearchFiltering(results ?? []);
   const searchStartRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -87,16 +89,6 @@ export function SearchResults({ query }: Props) {
       <div className="text-gray-400 text-sm p-4">見つかりませんでした</div>
     );
   }
-
-  // カテゴリ別件数
-  const countsByType: Record<string, number> = {};
-  for (const r of results) {
-    countsByType[r.element_type] = (countsByType[r.element_type] ?? 0) + 1;
-  }
-
-  const filteredResults = activeType
-    ? results.filter((r) => r.element_type === activeType)
-    : results;
 
   function handleClick(result: SearchResult) {
     const pid = result.project_id;

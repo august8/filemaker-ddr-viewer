@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SearchResults } from "../components/SearchResults";
+import { useSearchFiltering } from "../hooks/useSearchFiltering";
 import type { SearchResult } from "../types/ddr";
+import { SearchResults } from "../components/SearchResults";
 
 vi.mock("../hooks/useTauriCommand", () => ({
   useSearch: vi.fn(),
@@ -185,5 +187,62 @@ describe("SearchResults", () => {
       fieldId: 2,
       tableName: "Contact",
     });
+  });
+});
+
+const makeResult = (type: string, id: number): SearchResult => ({
+  project_id: 1,
+  element_type: type,
+  element_id: id,
+  name: `Item ${id}`,
+  snippet: "",
+  rank: 1.0,
+  parent_id: null,
+  parent_name: null,
+});
+
+describe("useSearchFiltering", () => {
+  const results: SearchResult[] = [
+    makeResult("script", 1),
+    makeResult("script", 2),
+    makeResult("field", 3),
+  ];
+
+  it("returns_all_results_when_no_filter", () => {
+    const { result } = renderHook(() => useSearchFiltering(results));
+    expect(result.current.filteredResults).toHaveLength(3);
+    expect(result.current.activeType).toBeNull();
+  });
+
+  it("counts_by_type_correctly", () => {
+    const { result } = renderHook(() => useSearchFiltering(results));
+    expect(result.current.countsByType["script"]).toBe(2);
+    expect(result.current.countsByType["field"]).toBe(1);
+  });
+
+  it("filters_by_type_when_activeType_set", () => {
+    const { result } = renderHook(() => useSearchFiltering(results));
+    act(() => {
+      result.current.setActiveType("script");
+    });
+    expect(result.current.filteredResults).toHaveLength(2);
+    expect(result.current.filteredResults.every((r) => r.element_type === "script")).toBe(true);
+  });
+
+  it("resets_to_all_when_activeType_set_to_null", () => {
+    const { result } = renderHook(() => useSearchFiltering(results));
+    act(() => {
+      result.current.setActiveType("script");
+    });
+    act(() => {
+      result.current.setActiveType(null);
+    });
+    expect(result.current.filteredResults).toHaveLength(3);
+  });
+
+  it("returns_empty_array_for_empty_results", () => {
+    const { result } = renderHook(() => useSearchFiltering([]));
+    expect(result.current.filteredResults).toHaveLength(0);
+    expect(result.current.countsByType).toEqual({});
   });
 });
