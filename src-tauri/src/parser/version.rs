@@ -72,6 +72,10 @@ impl std::fmt::Display for FmVersion {
 // ---------------------------------------------------------------------------
 
 /// Adapts parser behaviour to version-specific XML schema differences.
+///
+/// FM17〜22 の実 DDR を調査した結果、タグ名・構造に変化はなく追加属性のみ（`withFewerFolders`、
+/// `messageCalc` 等）であることを確認済み。現時点ではすべてのメソッドが共通値を返す。
+/// バージョン間の差異が生じた場合はここに分岐を追加する。
 pub struct VersionAdapter {
     pub version: FmVersion,
 }
@@ -82,16 +86,19 @@ impl VersionAdapter {
     }
 
     /// XML tag that contains fields inside a `<BaseTable>` element.
+    /// FM17〜22 で変化なし。
     pub fn field_catalog_tag(&self) -> &'static str {
         "FieldCatalog"
     }
 
     /// XML tag for individual script steps inside a `<Script>` element.
+    /// FM17〜22 で変化なし。
     pub fn script_step_tag(&self) -> &'static str {
         "Step"
     }
 
     /// XML tag for the list of steps inside a `<Script>` element.
+    /// FM17〜22 で変化なし。
     pub fn step_list_tag(&self) -> &'static str {
         "StepList"
     }

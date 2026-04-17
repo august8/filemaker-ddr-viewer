@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<FMPReport type="Report" version="21.0v1" creationdate="2024/01/01" creationtime="12:00:00">
+<FMPReport type="Report" version="21.0v1" creationDate="2024/01/01" creationTime="12:00:00">
   <File name="TestDB">
     <BaseTableCatalog>
-      <BaseTable id="1" name="Contact" color="#FFFFFF">
+      <BaseTable id="1" name="Contact" records="0">
         <FieldCatalog>
-          <Field id="1" dataType="Text" fieldType="Normal" name="FirstName" comment="">
-            <AutoEnter allowEditing="True" constant="" lookup="False" serial="False"/>
-            <Validation maxLength="False" notEmpty="False" unique="False"/>
-            <Storage global="False" indexLanguage="English" maxRepetition="1"/>
+          <Field id="1" dataType="Text" fieldType="Normal" name="FirstName">
+            <Comment/>
+            <AutoEnter allowEditing="True" constant="False" furigana="False" lookup="False" calculation="False">
+              <ConstantData/>
+            </AutoEnter>
+            <Validation message="False" maxLength="False" valuelist="False" calculation="False" alwaysValidateCalculation="False" type="OnlyDuringDataEntry">
+              <NotEmpty value="False"/>
+              <Unique value="False"/>
+              <Existing value="False"/>
+              <StrictValidation value="False"/>
+            </Validation>
+            <Storage autoIndex="True" index="None" indexLanguage="English" global="False" maxRepetition="1"/>
           </Field>
         </FieldCatalog>
       </BaseTable>
