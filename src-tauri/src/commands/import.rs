@@ -27,14 +27,16 @@ pub(crate) fn decode_ddr_bytes(bytes: &[u8]) -> Result<String, String> {
             .chunks_exact(2)
             .map(|c| u16::from_le_bytes([c[0], c[1]]))
             .collect();
-        String::from_utf16(&words).map_err(|e| format!("UTF-16 LE デコードエラー: {e}"))
+        String::from_utf16(&words)
+            .or_else(|_| Ok::<String, String>(String::from_utf16_lossy(&words)))
     } else if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
         // UTF-16 BE
         let words: Vec<u16> = bytes[2..]
             .chunks_exact(2)
             .map(|c| u16::from_be_bytes([c[0], c[1]]))
             .collect();
-        String::from_utf16(&words).map_err(|e| format!("UTF-16 BE デコードエラー: {e}"))
+        String::from_utf16(&words)
+            .or_else(|_| Ok::<String, String>(String::from_utf16_lossy(&words)))
     } else if bytes.len() >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
         // UTF-8 BOM
         String::from_utf8(bytes[3..].to_vec()).map_err(|e| format!("UTF-8 デコードエラー: {e}"))
@@ -306,6 +308,44 @@ mod tests {
         bytes.extend_from_slice(b"hello");
         let result = decode_ddr_bytes(&bytes).unwrap();
         assert_eq!(result, "hello");
+    }
+
+    #[test]
+    fn decode_ddr_bytes_utf16_le_invalid_surrogate_falls_back_lossy() {
+        // UTF-16 LE BOM + 孤立サロゲート 0xD800 + 'A'
+        // 0xD800 はサロゲートペアの前半のみで不正な UTF-16
+        let mut bytes: Vec<u8> = vec![0xFF, 0xFE];
+        bytes.extend_from_slice(&0xD800_u16.to_le_bytes()); // 孤立サロゲート
+        bytes.extend_from_slice(&('A' as u16).to_le_bytes());
+        // 修正前: from_utf16() がエラーを返すため Err になる
+        // 修正後: from_utf16_lossy() にフォールバックして Ok (U+FFFD + 'A') になる
+        let result = decode_ddr_bytes(&bytes);
+        assert!(
+            result.is_ok(),
+            "不正UTF-16でもlossyフォールバックでOkを返すこと"
+        );
+        let s = result.unwrap();
+        assert!(s.contains('A'), "有効な文字はそのまま含まれること");
+        assert!(
+            s.contains('\u{FFFD}'),
+            "不正サロゲートはU+FFDDに置換されること"
+        );
+    }
+
+    #[test]
+    fn decode_ddr_bytes_utf16_be_invalid_surrogate_falls_back_lossy() {
+        // UTF-16 BE BOM + 孤立サロゲート 0xDC00 + 'B'
+        let mut bytes: Vec<u8> = vec![0xFE, 0xFF];
+        bytes.extend_from_slice(&0xDC00_u16.to_be_bytes()); // 孤立サロゲート（後半のみ）
+        bytes.extend_from_slice(&('B' as u16).to_be_bytes());
+        let result = decode_ddr_bytes(&bytes);
+        assert!(
+            result.is_ok(),
+            "BE版でも不正UTF-16でlossyフォールバックすること"
+        );
+        let s = result.unwrap();
+        assert!(s.contains('B'));
+        assert!(s.contains('\u{FFFD}'));
     }
 
     #[test]
