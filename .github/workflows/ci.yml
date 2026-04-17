@@ -33,14 +33,23 @@ jobs:
         run: |
           rustup target add x86_64-pc-windows-msvc
 
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
       - name: fmt
         run: cargo fmt --check
 
       - name: clippy
         run: cargo clippy -- -D warnings
 
-      - name: test
-        run: cargo test --lib
+      - name: test with coverage
+        run: cargo llvm-cov --lib --lcov --output-path lcov.info
+
+      - name: Upload Rust coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: src-tauri/lcov.info
+          flags: rust
 
   frontend:
     name: Frontend
@@ -60,5 +69,11 @@ jobs:
       - name: typecheck
         run: npx tsc --noEmit
 
-      - name: test
-        run: npm test
+      - name: test with coverage
+        run: npm run test -- --coverage
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          flags: frontend
