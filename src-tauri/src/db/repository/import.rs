@@ -6,7 +6,7 @@ use crate::db::{Database, DbError};
 use crate::parser::models::{
     Account, CustomFunction, DataType, DdrFile, Field, FieldKind, JoinPredicate, Layout,
     LayoutFieldRef, LayoutObject, PrivilegeSet, Relationship, Script, ScriptStep, ScriptTrigger,
-    Table, TableOccurrence, ValueList, ValueListSource,
+    Table, TableOccurrence, ValueList, ValueListFieldRef, ValueListSource,
 };
 
 // ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ pub fn insert_ddr_file(
         });
     }
 
-    // 6. value lists + items
+    // 6. value lists + items + field refs
     for vl in &ddr.value_lists {
         let vl_db_id = insert_value_list_inner(&tx, project_id, vl)?;
         search_entries.push(SearchEntry {
@@ -166,6 +166,9 @@ pub fn insert_ddr_file(
                 "INSERT INTO value_list_items (value_list_id, value, position) VALUES (?1, ?2, ?3)",
                 params![vl_db_id, val, pos as i64],
             )?;
+        }
+        for field_ref in &vl.field_refs {
+            insert_value_list_field_ref_inner(&tx, vl_db_id, field_ref)?;
         }
     }
 
@@ -515,6 +518,23 @@ fn insert_value_list_inner(
         ],
     )?;
     Ok(tx.last_insert_rowid())
+}
+
+fn insert_value_list_field_ref_inner(
+    tx: &rusqlite::Transaction<'_>,
+    value_list_id: i64,
+    field_ref: &ValueListFieldRef,
+) -> Result<(), DbError> {
+    tx.execute(
+        "INSERT INTO value_list_field_refs (value_list_id, table_occurrence, field_name)
+         VALUES (?1, ?2, ?3)",
+        params![
+            value_list_id,
+            field_ref.table_occurrence,
+            field_ref.field_name
+        ],
+    )?;
+    Ok(())
 }
 
 fn insert_custom_function_inner(

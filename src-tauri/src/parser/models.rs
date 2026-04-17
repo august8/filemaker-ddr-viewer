@@ -304,6 +304,17 @@ pub struct ValueList {
     pub name: String,
     pub source: ValueListSource,
     pub custom_values: Vec<String>,
+    /// フィールドソースのバリューリストが参照するフィールド（`<PrimaryField>` / `<SecondaryField>`）。
+    pub field_refs: Vec<ValueListFieldRef>,
+}
+
+/// バリューリストが「フィールドから値を使用」に設定されている場合の参照フィールド情報。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ValueListFieldRef {
+    /// `<Field table="...">` のテーブルオカレンス名
+    pub table_occurrence: String,
+    /// `<Field name="...">` のフィールド名
+    pub field_name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

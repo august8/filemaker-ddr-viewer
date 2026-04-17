@@ -6,7 +6,7 @@ use crate::parser::{
     helpers::{get_attr, read_text_content, skip_element},
     models::{
         Account, AccountId, CustomFunction, CustomFunctionId, PrivilegeSet, PrivilegeSetId,
-        ValueList, ValueListId, ValueListSource,
+        ValueList, ValueListFieldRef, ValueListId, ValueListSource,
     },
     ParseError,
 };
@@ -33,12 +33,13 @@ pub fn parse_value_lists<R: BufRead>(
                     })
                     .unwrap_or(0);
                 let name = get_attr(e, b"name").unwrap_or_default();
-                let (source, custom_values) = parse_value_list_children(reader, buf)?;
+                let (source, custom_values, field_refs) = parse_value_list_children(reader, buf)?;
                 value_lists.push(ValueList {
                     id: ValueListId(id),
                     name,
                     source,
                     custom_values,
+                    field_refs,
                 });
             }
             Event::Empty(ref e) if e.name().as_ref() == b"ValueList" => {
@@ -54,6 +55,7 @@ pub fn parse_value_lists<R: BufRead>(
                     name,
                     source: ValueListSource::Unknown(String::new()),
                     custom_values: Vec::new(),
+                    field_refs: Vec::new(),
                 });
             }
             Event::Start(_) => {
@@ -83,9 +85,10 @@ pub fn parse_value_lists<R: BufRead>(
 fn parse_value_list_children<R: BufRead>(
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
-) -> Result<(ValueListSource, Vec<String>), ParseError> {
+) -> Result<(ValueListSource, Vec<String>, Vec<ValueListFieldRef>), ParseError> {
     let mut source = ValueListSource::Unknown(String::new());
     let mut custom_values = Vec::new();
+    let mut field_refs = Vec::new();
 
     loop {
         buf.clear();
@@ -98,6 +101,15 @@ fn parse_value_list_children<R: BufRead>(
                 custom_values = parse_custom_values(reader, buf)?;
             }
             Event::Empty(ref e) if e.name().as_ref() == b"CustomValues" => {}
+            // フィールドソース: <PrimaryField> / <SecondaryField>
+            Event::Start(ref e)
+                if e.name().as_ref() == b"PrimaryField"
+                    || e.name().as_ref() == b"SecondaryField" =>
+            {
+                if let Some(field_ref) = parse_value_list_field_ref(reader, buf)? {
+                    field_refs.push(field_ref);
+                }
+            }
             Event::Start(_) => {
                 skip_element(reader, buf)?;
             }
@@ -108,7 +120,40 @@ fn parse_value_list_children<R: BufRead>(
         }
     }
 
-    Ok((source, custom_values))
+    Ok((source, custom_values, field_refs))
+}
+
+/// `<PrimaryField>` または `<SecondaryField>` 内の `<Field table=".." name=".."/>` をパースする。
+fn parse_value_list_field_ref<R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+) -> Result<Option<ValueListFieldRef>, ParseError> {
+    let mut result = None;
+
+    loop {
+        buf.clear();
+        match reader.read_event_into(buf)? {
+            Event::Empty(ref e) if e.name().as_ref() == b"Field" => {
+                let table_occurrence = get_attr(e, b"table").unwrap_or_default();
+                let field_name = get_attr(e, b"name").unwrap_or_default();
+                if !table_occurrence.is_empty() && !field_name.is_empty() {
+                    result = Some(ValueListFieldRef {
+                        table_occurrence,
+                        field_name,
+                    });
+                }
+            }
+            Event::Start(_) => {
+                skip_element(reader, buf)?;
+            }
+            Event::Empty(_) => {}
+            Event::End(_) => break, // </PrimaryField> or </SecondaryField>
+            Event::Eof => return Err(ParseError::UnexpectedEof),
+            _ => {}
+        }
+    }
+
+    Ok(result)
 }
 
 /// Parse `<CustomValues>` content (opening tag already consumed).
@@ -446,7 +491,8 @@ mod tests {
     }
 
     #[test]
-    fn field_value_list() {
+    fn field_value_list_no_primary_field() {
+        // Source=Field だが <PrimaryField> がない場合、field_refs は空
         let xml = r#"<ValueListCatalog>
           <ValueList id="2" name="FK Values">
             <Source value="Field"/>
@@ -456,6 +502,52 @@ mod tests {
         consume_opening(&mut r, &mut buf, b"ValueListCatalog");
         let vls = parse_value_lists(&mut r, &mut buf).unwrap();
         assert_eq!(vls[0].source, ValueListSource::Field);
+        assert!(vls[0].field_refs.is_empty());
+    }
+
+    #[test]
+    fn field_value_list_with_primary_field() {
+        // 実DDR 形式: <PrimaryField><Field table=".." name=".."/></PrimaryField>
+        let xml = r#"<ValueListCatalog>
+          <ValueList id="1" name="新規値一覧">
+            <Source value="Field"/>
+            <PrimaryField show="True" sort="True">
+              <Field table="名称未設定" id="6" name="TEST"/>
+            </PrimaryField>
+            <ShowRelated value="False"/>
+          </ValueList>
+        </ValueListCatalog>"#;
+        let (mut r, mut buf) = make_reader(xml);
+        consume_opening(&mut r, &mut buf, b"ValueListCatalog");
+        let vls = parse_value_lists(&mut r, &mut buf).unwrap();
+        assert_eq!(vls[0].source, ValueListSource::Field);
+        assert_eq!(vls[0].field_refs.len(), 1);
+        assert_eq!(vls[0].field_refs[0].table_occurrence, "名称未設定");
+        assert_eq!(vls[0].field_refs[0].field_name, "TEST");
+    }
+
+    #[test]
+    fn field_value_list_with_primary_and_secondary() {
+        // Primary + Secondary の 2 フィールドを持つバリューリスト
+        let xml = r#"<ValueListCatalog>
+          <ValueList id="3" name="Two Fields">
+            <Source value="Field"/>
+            <PrimaryField show="True" sort="True">
+              <Field table="Customer" id="1" name="ID"/>
+            </PrimaryField>
+            <SecondaryField show="True">
+              <Field table="Customer" id="2" name="Name"/>
+            </SecondaryField>
+          </ValueList>
+        </ValueListCatalog>"#;
+        let (mut r, mut buf) = make_reader(xml);
+        consume_opening(&mut r, &mut buf, b"ValueListCatalog");
+        let vls = parse_value_lists(&mut r, &mut buf).unwrap();
+        assert_eq!(vls[0].field_refs.len(), 2);
+        assert_eq!(vls[0].field_refs[0].table_occurrence, "Customer");
+        assert_eq!(vls[0].field_refs[0].field_name, "ID");
+        assert_eq!(vls[0].field_refs[1].table_occurrence, "Customer");
+        assert_eq!(vls[0].field_refs[1].field_name, "Name");
     }
 
     // --- Custom Functions ---

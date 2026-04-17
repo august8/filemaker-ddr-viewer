@@ -51,7 +51,7 @@ export function UnusedFieldsList({ projectId }: Props) {
           <span className={`ml-2 ${BADGE_VARIANTS.yellow}`}>{unused.length}</span>
         </h3>
         <span className="text-xs text-gray-400">
-          ※ スクリプト内のテキスト参照は対象外
+          ※ OccName::FieldName 形式以外のベア参照は対象外
         </span>
       </div>
       <div className="space-y-2">

@@ -8,7 +8,7 @@ use rusqlite::Connection;
 use crate::db::DbError;
 
 /// 現在のスキーマバージョン。
-pub const CURRENT_SCHEMA_VERSION: i32 = 14;
+pub const CURRENT_SCHEMA_VERSION: i32 = 15;
 
 // ---------------------------------------------------------------------------
 // 公開 API
@@ -392,6 +392,15 @@ CREATE TABLE IF NOT EXISTS value_list_items (
     position      INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_value_list_items_vl ON value_list_items(value_list_id);
+
+-- バリューリストのフィールド参照（<PrimaryField> / <SecondaryField>）
+CREATE TABLE IF NOT EXISTS value_list_field_refs (
+    id            INTEGER PRIMARY KEY,
+    value_list_id INTEGER NOT NULL REFERENCES value_lists(id) ON DELETE CASCADE,
+    table_occurrence TEXT NOT NULL,
+    field_name    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_value_list_field_refs_vl ON value_list_field_refs(value_list_id);
 
 -- カスタム関数
 CREATE TABLE IF NOT EXISTS custom_functions (
