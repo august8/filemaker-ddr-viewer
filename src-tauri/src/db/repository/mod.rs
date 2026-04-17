@@ -2,7 +2,6 @@
 //!
 //! ## 主要関数
 //! - [`insert_solution`] — solution を作成し ID を返す
-//! - [`upsert_solution`] — summary_path 一致で既存削除→再挿入（上書きインポート）
 //! - [`insert_ddr_file`] — `DdrFile` をトランザクションで一括挿入
 //! - [`list_projects`] / [`delete_project`] — プロジェクト管理
 //! - [`list_solutions`] / [`delete_solution`] — ソリューション管理
@@ -19,8 +18,7 @@ mod solution;
 
 pub use solution::{
     delete_project, delete_solution, get_project, get_solution, get_solution_projects,
-    insert_solution, list_projects, list_solutions, upsert_solution, ProjectRow, SolutionRow,
-    SolutionWithProjects,
+    insert_solution, list_projects, list_solutions, ProjectRow, SolutionRow, SolutionWithProjects,
 };
 
 pub use import::{insert_ddr_file, insert_layout_object_condition};
