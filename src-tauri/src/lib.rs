@@ -4,11 +4,16 @@ pub mod db;
 pub mod parser;
 
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex, RwLock},
+    num::NonZeroUsize,
+    sync::{Arc, Mutex},
 };
 
+use lru::LruCache;
+
 use crate::{db::Database, parser::models::DdrFile};
+
+/// インメモリ DDR キャッシュの最大エントリ数。
+const DDR_CACHE_CAPACITY: usize = 10;
 
 // ---------------------------------------------------------------------------
 // アプリケーション状態
@@ -17,8 +22,8 @@ use crate::{db::Database, parser::models::DdrFile};
 /// Tauri アプリ全体で共有する状態。
 pub struct AppState {
     pub db: Mutex<Database>,
-    /// project_id → DdrFile のインメモリキャッシュ。
-    pub ddr_cache: RwLock<HashMap<i64, Arc<DdrFile>>>,
+    /// project_id → DdrFile のインメモリキャッシュ（LRU、上限 DDR_CACHE_CAPACITY 件）。
+    pub ddr_cache: Mutex<LruCache<i64, Arc<DdrFile>>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -49,7 +54,10 @@ pub fn run() {
             let db = Database::open(db_path.to_str().unwrap_or("fm_ddr.db"))?;
             app.manage(AppState {
                 db: Mutex::new(db),
-                ddr_cache: RwLock::new(HashMap::new()),
+                ddr_cache: Mutex::new(LruCache::new(
+                    NonZeroUsize::new(DDR_CACHE_CAPACITY)
+                        .expect("DDR_CACHE_CAPACITY must be non-zero"),
+                )),
             });
 
             // --------------- メニューバー構築 ---------------
@@ -170,4 +178,48 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ddr_cache_evicts_oldest_when_over_capacity() {
+        let capacity = NonZeroUsize::new(2).unwrap();
+        let mut cache: LruCache<i64, u32> = LruCache::new(capacity);
+
+        cache.put(1, 100);
+        cache.put(2, 200);
+        cache.put(3, 300); // 1 が evict される
+
+        assert!(
+            cache.get(&1).is_none(),
+            "最も古いエントリが evict されること"
+        );
+        assert_eq!(*cache.get(&2).unwrap(), 200);
+        assert_eq!(*cache.get(&3).unwrap(), 300);
+    }
+
+    #[test]
+    fn ddr_cache_get_updates_lru_order() {
+        let capacity = NonZeroUsize::new(2).unwrap();
+        let mut cache: LruCache<i64, u32> = LruCache::new(capacity);
+
+        cache.put(1, 100);
+        cache.put(2, 200);
+        cache.get(&1); // 1 を最近使用済みにする
+        cache.put(3, 300); // 2 が evict される（1 は守られる）
+
+        assert_eq!(
+            *cache.get(&1).unwrap(),
+            100,
+            "get 済みのエントリは evict されないこと"
+        );
+        assert!(
+            cache.get(&2).is_none(),
+            "アクセスしていないエントリが evict されること"
+        );
+        assert_eq!(*cache.get(&3).unwrap(), 300);
+    }
 }

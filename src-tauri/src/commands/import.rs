@@ -129,9 +129,9 @@ pub async fn import_solution(
         {
             let mut cache = state
                 .ddr_cache
-                .write()
+                .lock()
                 .map_err(|e| CommandError::Internal(e.to_string()))?;
-            cache.insert(project_id, Arc::clone(&ddr_arc));
+            cache.put(project_id, Arc::clone(&ddr_arc));
         }
     }
 
@@ -183,9 +183,9 @@ pub async fn import_ddr(
     {
         let mut cache = state
             .ddr_cache
-            .write()
+            .lock()
             .map_err(|e| CommandError::Internal(e.to_string()))?;
-        cache.insert(project_id, Arc::clone(&ddr_arc));
+        cache.put(project_id, Arc::clone(&ddr_arc));
     }
 
     // 5. ProjectRow を返す
