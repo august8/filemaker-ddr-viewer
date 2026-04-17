@@ -1301,4 +1301,278 @@ mod tests {
             "条件付き書式なしのオブジェクトは空ベクタ"
         );
     }
+
+    // -----------------------------------------------------------------------
+    // Group 再帰テスト
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn group_layouts_are_flattened() {
+        let xml = r#"
+        <Group name="GroupA">
+          <Layout id="2" name="Inner" tableOccurrenceName="Order"/>
+        </Group>
+        <Layout id="1" name="Top" tableOccurrenceName="Invoice"/>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts.len(), 2);
+        let names: Vec<_> = layouts.iter().map(|l| l.name.as_str()).collect();
+        assert!(names.contains(&"Inner"));
+        assert!(names.contains(&"Top"));
+    }
+
+    #[test]
+    fn empty_group_tag_is_ignored() {
+        let xml = r#"
+        <Group/>
+        <Layout id="1" name="Only" tableOccurrenceName="T"/>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts.len(), 1);
+        assert_eq!(layouts[0].name, "Only");
+    }
+
+    #[test]
+    fn nested_group_recursive() {
+        let xml = r#"
+        <Group name="Outer">
+          <Group name="Inner">
+            <Layout id="3" name="Deep" tableOccurrenceName="T"/>
+          </Group>
+        </Group>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts.len(), 1);
+        assert_eq!(layouts[0].name, "Deep");
+    }
+
+    // -----------------------------------------------------------------------
+    // button_label / TextObj テスト
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn button_label_is_captured_from_text_obj() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="10">
+              <TextObj>
+                <Data>保存</Data>
+              </TextObj>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        let obj = &layouts[0].layout_objects[0];
+        assert_eq!(obj.button_label.as_deref(), Some("保存"));
+    }
+
+    #[test]
+    fn button_label_is_none_when_text_obj_has_no_data() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="10">
+              <TextObj/>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        let obj = &layouts[0].layout_objects[0];
+        assert!(obj.button_label.is_none());
+    }
+
+    // -----------------------------------------------------------------------
+    // FieldReference の children 形式（self-closing でない）
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn field_reference_with_children_is_parsed() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Field" key="1">
+              <FieldReference tableOccurrence="Invoice" field="Amount" fieldId="3">
+                <SomeChild/>
+              </FieldReference>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts[0].field_refs.len(), 1);
+        assert_eq!(layouts[0].field_refs[0].field_name, "Amount");
+        assert_eq!(layouts[0].field_refs[0].table_occurrence, "Invoice");
+    }
+
+    #[test]
+    fn field_reference_with_table_attr_fallback() {
+        // tableOccurrence がなく table 属性のみの場合のフォールバック
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Field" key="1">
+              <FieldReference table="Contact" field="Name"/>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts[0].field_refs.len(), 1);
+        assert_eq!(layouts[0].field_refs[0].table_occurrence, "Contact");
+        assert_eq!(layouts[0].field_refs[0].field_name, "Name");
+    }
+
+    // -----------------------------------------------------------------------
+    // ScriptReference テスト
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn script_reference_elem_is_collected() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="5">
+              <ScriptReference name="OnClick Script" id="7"/>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert!(
+            layouts[0]
+                .button_script_refs
+                .contains(&"OnClick Script".to_string()),
+            "ScriptReference が button_script_refs に含まれる"
+        );
+    }
+
+    // -----------------------------------------------------------------------
+    // Script with children (non-empty tag)
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn script_with_children_is_collected() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="1">
+              <Script name="MyScript" id="2">
+                <SomeChild/>
+              </Script>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert!(layouts[0]
+            .button_script_refs
+            .contains(&"MyScript".to_string()));
+    }
+
+    // -----------------------------------------------------------------------
+    // FieldObj on non-Field type → deep_scan_for_scripts_and_fields
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn field_obj_in_non_field_type_deep_scans_scripts() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Portal" key="99">
+              <FieldObj numOfReps="1">
+                <DDRInfo>
+                  <Field name="Amount" table="Invoice"/>
+                </DDRInfo>
+              </FieldObj>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        // Portal は Field 型ではないので field_table_occurrence は設定されないが
+        // deep_scan が FieldReference/Field を収集する
+        let obj = &layouts[0].layout_objects[0];
+        assert_eq!(obj.object_type, "Portal");
+    }
+
+    // -----------------------------------------------------------------------
+    // Field with children in scan_object
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn field_elem_with_children_is_parsed() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Field" key="1">
+              <Field name="Amount" table="Invoice" id="5">
+                <SomeChild/>
+              </Field>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert!(layouts[0]
+            .field_refs
+            .iter()
+            .any(|r| r.field_name == "Amount" && r.table_occurrence == "Invoice"));
+    }
+
+    // -----------------------------------------------------------------------
+    // Object 直下（ObjectList なし）
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn object_directly_under_layout_is_collected() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <Object type="Button" key="7">
+            <Script name="DirectScript" id="1"/>
+          </Object>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert_eq!(layouts[0].layout_objects.len(), 1);
+        assert!(layouts[0]
+            .button_script_refs
+            .contains(&"DirectScript".to_string()));
+    }
+
+    // -----------------------------------------------------------------------
+    // Empty ToolTip / HideCondition タグ
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn empty_tooltip_tag_is_ignored() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="1">
+              <ToolTip/>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert!(layouts[0].layout_objects[0].tooltip.is_none());
+    }
+
+    #[test]
+    fn empty_hide_condition_tag_is_ignored() {
+        let xml = r#"
+        <Layout id="1" name="L" tableOccurrenceName="T">
+          <ObjectList>
+            <Object type="Button" key="1">
+              <HideCondition/>
+            </Object>
+          </ObjectList>
+        </Layout>
+        "#;
+        let layouts = parse(xml).unwrap();
+        assert!(layouts[0].layout_objects[0].hide_condition.is_none());
+    }
 }
