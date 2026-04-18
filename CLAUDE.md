@@ -32,6 +32,7 @@ filemaker-ddr-viewer/
 │       ├── lib.rs                  # Tauriアプリ初期化・プラグイン登録
 │       ├── commands/               # Tauri IPCコマンド（#[tauri::command]）
 │       │   ├── mod.rs
+│       │   ├── error.rs            # CommandError 型定義
 │       │   ├── import.rs           # DDRインポート
 │       │   ├── search.rs           # 検索API（FTS5）
 │       │   ├── analysis.rs         # 参照解析・壊れた参照
@@ -48,7 +49,9 @@ filemaker-ddr-viewer/
 │       │   ├── layout_parser.rs    # LayoutCatalog
 │       │   ├── relationship_parser.rs
 │       │   ├── catalog_parser.rs   # ValueList/Account/Privilege等
-│       │   └── version.rs          # FMバージョン検出・正規化
+│       │   ├── version.rs          # FMバージョン検出・正規化
+│       │   ├── helpers.rs          # パース共通ユーティリティ
+│       │   └── summary_parser.rs   # 概要.xml サマリーパーサー
 │       ├── analyzer/               # 解析エンジン
 │       │   ├── mod.rs
 │       │   ├── reference_graph.rs  # petgraph参照グラフ構築
@@ -57,10 +60,6 @@ filemaker-ddr-viewer/
 │       │   ├── call_chain.rs       # スクリプト呼び出しチェーン
 │       │   ├── report_card.rs      # システム健全性レポート
 │       │   └── diff_engine.rs      # DDR差分比較
-│       ├── search/                 # tantivy 全文検索（未使用、FTS5 で代替）
-│       │   ├── mod.rs
-│       │   ├── indexer.rs          # インデックス構築
-│       │   └── query.rs            # 検索クエリ実行
 │       └── db/                     # SQLiteデータ層
 │           ├── mod.rs
 │           ├── schema.rs           # テーブル定義・マイグレーション
@@ -85,11 +84,25 @@ filemaker-ddr-viewer/
 │   │   ├── ReportCard.tsx
 │   │   ├── BrokenRefsList.tsx
 │   │   ├── OrphanScriptsList.tsx
+│   │   ├── UnusedFieldsList.tsx
 │   │   ├── DiffView.tsx
+│   │   ├── DiffCard.tsx
 │   │   ├── RightPanel.tsx
+│   │   ├── StatusBar.tsx
+│   │   ├── Spinner.tsx
+│   │   ├── ErrorBoundary.tsx
 │   │   └── detail/
 │   │       ├── TableDetail.tsx
 │   │       ├── FieldDetail.tsx
+│   │       ├── field/              # FieldDetail のサブコンポーネント群
+│   │       │   ├── FieldAutoEnter.tsx
+│   │       │   ├── FieldBasicProperties.tsx
+│   │       │   ├── FieldCalcReferences.tsx
+│   │       │   ├── FieldLayoutReferences.tsx
+│   │       │   ├── FieldRelationshipReferences.tsx
+│   │       │   ├── FieldScriptReferences.tsx
+│   │       │   ├── FieldStorage.tsx
+│   │       │   └── FieldValidationRules.tsx
 │   │       ├── ScriptDetail.tsx
 │   │       ├── LayoutDetail.tsx
 │   │       ├── LayoutObjectDetail.tsx
@@ -109,7 +122,10 @@ filemaker-ddr-viewer/
 │   │       ├── UpgradeSettingsPanel.tsx
 │   │       ├── CallChainTree.tsx
 │   │       └── WhereUsed.tsx
-│   ├── hooks/useTauriCommand.ts
+│   ├── hooks/
+│   │   ├── useTauriCommand.ts
+│   │   └── useSearchFiltering.ts
+│   ├── styles/tokens.ts
 │   ├── stores/appStore.ts
 │   └── types/ddr.ts
 │
@@ -150,7 +166,9 @@ filemaker-ddr-viewer/
 
 ```
 1. main から作業ブランチを切る（必須）
+   - **ファイルに一切触れる前に** ブランチを切ること。編集してからブランチを切るのは禁止
    - ブランチ名は feat/xxx、fix/xxx、refactor/xxx 等
+   - ドキュメント修正・小さな変更であっても例外なし
    - main への直接コミット・プッシュは絶対禁止
 
 2. 必要な場合のみ ADR を作成する（docs/decisions/NNNN-slug.md）
