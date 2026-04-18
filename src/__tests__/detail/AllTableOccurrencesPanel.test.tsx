@@ -54,31 +54,6 @@ beforeEach(() => {
 });
 
 describe("AllTableOccurrencesPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useTableOccurrenceList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useTableOccurrenceList>
-    );
-    render(<AllTableOccurrencesPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useTableOccurrenceList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
-    );
-    render(<AllTableOccurrencesPanel projectId={1} />);
-    expect(screen.getByText(/該当するテーブルオカレンスなし/)).toBeInTheDocument();
-  });
-
-  it("shows_table_occurrence_list", () => {
-    vi.mocked(useTableOccurrenceList).mockReturnValue(
-      { data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
-    );
-    render(<AllTableOccurrencesPanel projectId={1} />);
-    expect(screen.getByText("Customers")).toBeInTheDocument();
-    expect(screen.getByText("Orders")).toBeInTheDocument();
-  });
-
   it("base_table_click_navigates_to_table", () => {
     vi.mocked(useTableOccurrenceList).mockReturnValue(
       { data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>

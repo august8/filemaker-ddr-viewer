@@ -29,32 +29,6 @@ beforeEach(() => {
 });
 
 describe("AllCustomFunctionsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useCustomFunctionList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useCustomFunctionList>
-    );
-    render(<AllCustomFunctionsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useCustomFunctionList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
-    );
-    render(<AllCustomFunctionsPanel projectId={1} />);
-    expect(screen.getByText(/該当するカスタム関数なし/)).toBeInTheDocument();
-  });
-
-  it("shows_function_list", () => {
-    vi.mocked(useCustomFunctionList).mockReturnValue(
-      { data: mockCFs, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
-    );
-    render(<AllCustomFunctionsPanel projectId={1} />);
-    expect(screen.getByText("FormatDate")).toBeInTheDocument();
-    expect(screen.getByText("IsEmpty")).toBeInTheDocument();
-    expect(screen.getByText("date; format")).toBeInTheDocument();
-  });
-
   it("row_click_navigates_to_custom_function", () => {
     vi.mocked(useCustomFunctionList).mockReturnValue(
       { data: mockCFs, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>

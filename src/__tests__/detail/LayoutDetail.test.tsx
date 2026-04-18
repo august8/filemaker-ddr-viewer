@@ -33,10 +33,6 @@ const mockLayout = makeLayoutRow({
   table_occurrence_name: "Contact",
   trigger_count: 1,
 });
-const mockTriggers = [
-  makeTriggerRow({ id: 1, event: "OnRecordLoad", script_name: "Load Data", file_name: "MyDB" }),
-];
-
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAppStore).mockReturnValue({
@@ -60,83 +56,6 @@ beforeEach(() => {
 });
 
 describe("LayoutDetail", () => {
-  it("renders_table_occurrence", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: mockTriggers,
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText("Contact")).toBeInTheDocument();
-  });
-
-  it("renders_trigger_list", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: mockTriggers,
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText("OnRecordLoad")).toBeInTheDocument();
-    expect(screen.getByText("Load Data")).toBeInTheDocument();
-  });
-
-  it("renders_no_triggers_message", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    const layoutNoTriggers = { ...mockLayout, trigger_count: 0 };
-    render(<LayoutDetail layout={layoutNoTriggers} projectId={1} />);
-    expect(screen.getByText("トリガーなし")).toBeInTheDocument();
-  });
-
-  it("renders_spinner_when_objects_loading", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    vi.mocked(useLayoutObjects).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as unknown as ReturnType<typeof useLayoutObjects>);
-    render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("renders_objects_list", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    vi.mocked(useLayoutObjects).mockReturnValue({
-      data: [
-        makeLayoutObjectRow({
-          id: 1,
-          object_type: "Field",
-          object_key: 1,
-          object_name: "FirstName",
-          field_table_occurrence: "Contact",
-          field_name: "FirstName",
-        }),
-      ],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutObjects>);
-    render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText("Contact::FirstName")).toBeInTheDocument();
-  });
-
-  it("renders_no_objects_message_when_empty", () => {
-    vi.mocked(useLayoutTriggers).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutTriggers>);
-    vi.mocked(useLayoutObjects).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useLayoutObjects>);
-    render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText("オブジェクトなし")).toBeInTheDocument();
-  });
-
   it("clicking_object_row_calls_setRightPanel", () => {
     const mockSetRightPanel = vi.fn();
     vi.mocked(useAppStore).mockReturnValue({

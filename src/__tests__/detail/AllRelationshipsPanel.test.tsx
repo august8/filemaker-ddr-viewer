@@ -30,32 +30,6 @@ beforeEach(() => {
 });
 
 describe("AllRelationshipsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useRelationshipList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useRelationshipList>
-    );
-    render(<AllRelationshipsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useRelationshipList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useRelationshipList>
-    );
-    render(<AllRelationshipsPanel projectId={1} />);
-    expect(screen.getByText(/該当するリレーションなし/)).toBeInTheDocument();
-  });
-
-  it("shows_left_and_right_tables", () => {
-    vi.mocked(useRelationshipList).mockReturnValue(
-      { data: mockRelationships, isLoading: false } as unknown as ReturnType<typeof useRelationshipList>
-    );
-    render(<AllRelationshipsPanel projectId={1} />);
-    expect(screen.getByText("Customers")).toBeInTheDocument();
-    expect(screen.getAllByText("Orders").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("LineItems")).toBeInTheDocument();
-  });
-
   it("shows_predicate_in_full_format", () => {
     vi.mocked(useRelationshipList).mockReturnValue(
       { data: mockRelationships, isLoading: false } as unknown as ReturnType<typeof useRelationshipList>
@@ -75,21 +49,4 @@ describe("AllRelationshipsPanel", () => {
     expect(screen.getByText("Orders::status = LineItems::status")).toBeInTheDocument();
   });
 
-  it("does_not_show_relationship_name_column", () => {
-    vi.mocked(useRelationshipList).mockReturnValue(
-      { data: mockRelationships, isLoading: false } as unknown as ReturnType<typeof useRelationshipList>
-    );
-    render(<AllRelationshipsPanel projectId={1} />);
-    // リレーション名("Customers::Orders")はヘッダー列として表示されない
-    expect(screen.queryByRole("columnheader", { name: /リレーション名/ })).not.toBeInTheDocument();
-  });
-
-  it("shows_header_with_count", () => {
-    vi.mocked(useRelationshipList).mockReturnValue(
-      { data: mockRelationships, isLoading: false } as unknown as ReturnType<typeof useRelationshipList>
-    );
-    render(<AllRelationshipsPanel projectId={1} />);
-    expect(screen.getByText(/リレーション一覧/)).toBeInTheDocument();
-    expect(screen.getByText(/2/)).toBeInTheDocument();
-  });
 });

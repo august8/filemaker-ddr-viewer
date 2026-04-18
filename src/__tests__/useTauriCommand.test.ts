@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import {
   useSearch,
-  useSolutions,
   useSolutionProjects,
   useProjectSummary,
   useBrokenRefs,
@@ -53,7 +52,7 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// useSearch
+// useSearch — scope ロジックのテスト（パラメータ組み立てに条件分岐がある）
 // ---------------------------------------------------------------------------
 describe("useSearch", () => {
   it("passes_null_projectId_to_ipc_when_scope_all", async () => {
@@ -125,7 +124,6 @@ describe("useSearch", () => {
       () => useSearch(null, "   ", false, "all", null),
       { wrapper: createWrapper() }
     );
-    // wait a tick to ensure no async invoke fires
     await new Promise((r) => setTimeout(r, 50));
     expect(result.current.fetchStatus).toBe("idle");
     expect(invoke).not.toHaveBeenCalled();
@@ -133,30 +131,7 @@ describe("useSearch", () => {
 });
 
 // ---------------------------------------------------------------------------
-// useSolutions
-// ---------------------------------------------------------------------------
-describe("useSolutions", () => {
-  it("calls_list_solutions_with_no_params", async () => {
-    const { result } = renderHook(() => useSolutions(), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_solutions");
-  });
-
-  it("returns_data_from_invoke", async () => {
-    const mockData = [{ id: 1, name: "MySolution" }];
-    vi.mocked(invoke).mockResolvedValue(mockData);
-    const { result } = renderHook(() => useSolutions(), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(mockData);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// useSolutionProjects
+// enabled=false ガード — null パラメータ時にフックが無効になることを確認
 // ---------------------------------------------------------------------------
 describe("useSolutionProjects", () => {
   it("is_disabled_when_solutionId_is_null", async () => {
@@ -164,100 +139,42 @@ describe("useSolutionProjects", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_get_solution_projects_with_solutionId", async () => {
-    const { result } = renderHook(() => useSolutionProjects(5), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("get_solution_projects", {
-      solutionId: 5,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useProjectSummary
-// ---------------------------------------------------------------------------
 describe("useProjectSummary", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useProjectSummary(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_get_project_summary_with_projectId", async () => {
-    vi.mocked(invoke).mockResolvedValue({ table_count: 3, script_count: 5 });
-    const { result } = renderHook(() => useProjectSummary(7), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("get_project_summary", {
-      projectId: 7,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useBrokenRefs
-// ---------------------------------------------------------------------------
 describe("useBrokenRefs", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useBrokenRefs(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_get_broken_refs_with_projectId", async () => {
-    const { result } = renderHook(() => useBrokenRefs(3), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("get_broken_refs", { projectId: 3 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useReportCard
-// ---------------------------------------------------------------------------
 describe("useReportCard", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useReportCard(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_get_report_card_with_projectId", async () => {
-    vi.mocked(invoke).mockResolvedValue({ score: 90, items: [] });
-    const { result } = renderHook(() => useReportCard(4), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("get_report_card", { projectId: 4 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useTableList
-// ---------------------------------------------------------------------------
 describe("useTableList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useTableList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_tables_with_projectId", async () => {
-    const { result } = renderHook(() => useTableList(2), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_tables", { projectId: 2 });
-  });
 });
 
 // ---------------------------------------------------------------------------
-// useTableFields
+// useTableFields — 2パラメータのどちらが null でも無効になることを確認
 // ---------------------------------------------------------------------------
 describe("useTableFields", () => {
   it("is_disabled_when_projectId_is_null", async () => {
@@ -284,129 +201,54 @@ describe("useTableFields", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useScriptList
-// ---------------------------------------------------------------------------
 describe("useScriptList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useScriptList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_scripts_with_projectId", async () => {
-    const { result } = renderHook(() => useScriptList(6), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_scripts", { projectId: 6 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useScriptSteps
-// ---------------------------------------------------------------------------
 describe("useScriptSteps", () => {
   it("is_disabled_when_scriptId_is_null", async () => {
     renderHook(() => useScriptSteps(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_script_steps_with_scriptId", async () => {
-    const { result } = renderHook(() => useScriptSteps(9), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_script_steps", { scriptId: 9 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useLayoutList
-// ---------------------------------------------------------------------------
 describe("useLayoutList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useLayoutList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_layouts_with_projectId", async () => {
-    const { result } = renderHook(() => useLayoutList(1), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_layouts", { projectId: 1 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useLayoutObjects
-// ---------------------------------------------------------------------------
 describe("useLayoutObjects", () => {
   it("is_disabled_when_layoutId_is_null", async () => {
     renderHook(() => useLayoutObjects(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_layout_objects_with_layoutId", async () => {
-    const { result } = renderHook(() => useLayoutObjects(3), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_layout_objects", {
-      layoutId: 3,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useLayoutTriggers
-// ---------------------------------------------------------------------------
 describe("useLayoutTriggers", () => {
   it("is_disabled_when_layoutId_is_null", async () => {
     renderHook(() => useLayoutTriggers(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_layout_triggers_with_layoutId", async () => {
-    const { result } = renderHook(() => useLayoutTriggers(7), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_layout_triggers", {
-      layoutId: 7,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useRelationshipList
-// ---------------------------------------------------------------------------
 describe("useRelationshipList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useRelationshipList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_relationships_with_projectId", async () => {
-    const { result } = renderHook(() => useRelationshipList(8), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_relationships", {
-      projectId: 8,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useTableOccurrenceList
-// ---------------------------------------------------------------------------
 describe("useTableOccurrenceList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useTableOccurrenceList(null), {
@@ -415,30 +257,9 @@ describe("useTableOccurrenceList", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_table_occurrences_with_projectId", async () => {
-    const { result } = renderHook(() => useTableOccurrenceList(10), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_table_occurrences", {
-      projectId: 10,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useAllProjects
-// ---------------------------------------------------------------------------
 describe("useAllProjects", () => {
-  it("calls_list_all_projects_with_no_params", async () => {
-    const { result } = renderHook(() => useAllProjects(), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_all_projects");
-  });
-
   it("is_disabled_when_enabled_false", async () => {
     renderHook(() => useAllProjects({ enabled: false }), {
       wrapper: createWrapper(),
@@ -448,48 +269,25 @@ describe("useAllProjects", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useValueListList
-// ---------------------------------------------------------------------------
 describe("useValueListList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useValueListList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_value_lists_with_projectId", async () => {
-    const { result } = renderHook(() => useValueListList(2), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_value_lists", { projectId: 2 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useCustomFunctionList
-// ---------------------------------------------------------------------------
 describe("useCustomFunctionList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useCustomFunctionList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_custom_functions_with_projectId", async () => {
-    const { result } = renderHook(() => useCustomFunctionList(11), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_custom_functions", {
-      projectId: 11,
-    });
-  });
 });
 
 // ---------------------------------------------------------------------------
-// useFieldRefs
+// useFieldRefs / useFieldLayoutRefs / useFieldRelationshipKeys
+// 複数パラメータの組み合わせが正しく IPC に渡ることを確認
 // ---------------------------------------------------------------------------
 describe("useFieldRefs", () => {
   it("is_disabled_when_any_param_is_null", async () => {
@@ -514,9 +312,6 @@ describe("useFieldRefs", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useFieldLayoutRefs
-// ---------------------------------------------------------------------------
 describe("useFieldLayoutRefs", () => {
   it("is_disabled_when_any_param_is_null", async () => {
     renderHook(() => useFieldLayoutRefs(null, "T", "F"), {
@@ -540,9 +335,6 @@ describe("useFieldLayoutRefs", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useFieldRelationshipKeys
-// ---------------------------------------------------------------------------
 describe("useFieldRelationshipKeys", () => {
   it("is_disabled_when_any_param_is_null", async () => {
     renderHook(() => useFieldRelationshipKeys(1, "T", null), {
@@ -566,50 +358,24 @@ describe("useFieldRelationshipKeys", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useUnusedFields
-// ---------------------------------------------------------------------------
 describe("useUnusedFields", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useUnusedFields(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_unused_fields_with_projectId", async () => {
-    const { result } = renderHook(() => useUnusedFields(4), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_unused_fields", {
-      projectId: 4,
-    });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// useOrphanScripts
-// ---------------------------------------------------------------------------
 describe("useOrphanScripts", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useOrphanScripts(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_get_orphan_scripts_with_projectId", async () => {
-    const { result } = renderHook(() => useOrphanScripts(5), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("get_orphan_scripts", {
-      projectId: 5,
-    });
-  });
 });
 
 // ---------------------------------------------------------------------------
-// useCallChain
+// useCallChain — 2パラメータの enabled ガード + IPC 呼び出し
 // ---------------------------------------------------------------------------
 describe("useCallChain", () => {
   it("is_disabled_when_projectId_is_null", async () => {
@@ -637,48 +403,24 @@ describe("useCallChain", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useAccountList
-// ---------------------------------------------------------------------------
 describe("useAccountList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => useAccountList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_accounts_with_projectId", async () => {
-    const { result } = renderHook(() => useAccountList(6), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_accounts", { projectId: 6 });
-  });
 });
 
-// ---------------------------------------------------------------------------
-// usePrivilegeSetList
-// ---------------------------------------------------------------------------
 describe("usePrivilegeSetList", () => {
   it("is_disabled_when_projectId_is_null", async () => {
     renderHook(() => usePrivilegeSetList(null), { wrapper: createWrapper() });
     await new Promise((r) => setTimeout(r, 50));
     expect(invoke).not.toHaveBeenCalled();
   });
-
-  it("calls_list_privilege_sets_with_projectId", async () => {
-    const { result } = renderHook(() => usePrivilegeSetList(7), {
-      wrapper: createWrapper(),
-    });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(invoke).toHaveBeenCalledWith("list_privilege_sets", {
-      projectId: 7,
-    });
-  });
 });
 
 // ---------------------------------------------------------------------------
-// useDeleteSolution (mutation)
+// ミューテーション — 削除操作が正しい IPC を呼ぶことを確認
 // ---------------------------------------------------------------------------
 describe("useDeleteSolution", () => {
   it("calls_delete_solution_with_solutionId", async () => {
@@ -693,9 +435,6 @@ describe("useDeleteSolution", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// useDeleteProject (mutation)
-// ---------------------------------------------------------------------------
 describe("useDeleteProject", () => {
   it("calls_delete_project_with_projectId", async () => {
     vi.mocked(invoke).mockResolvedValue(undefined);

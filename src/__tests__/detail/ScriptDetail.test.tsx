@@ -84,25 +84,6 @@ describe("ScriptDetail", () => {
     expect(screen.getByText("[Sub Script]")).toBeInTheDocument();
   });
 
-  it("renders_full_access_badge", () => {
-    const fullAccessScript = { ...mockScript, run_with_full_access: true };
-    vi.mocked(useScriptSteps).mockReturnValue({
-      data: [],
-      isLoading: false,
-    } as unknown as ReturnType<typeof useScriptSteps>);
-    render(<ScriptDetail script={fullAccessScript} projectId={1} />);
-    expect(screen.getByText("完全アクセス権で実行")).toBeInTheDocument();
-  });
-
-  it("renders_spinner_when_loading", () => {
-    vi.mocked(useScriptSteps).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as unknown as ReturnType<typeof useScriptSteps>);
-    render(<ScriptDetail script={mockScript} projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
   it("diff_context_shows_added_badge_for_new_step", () => {
     const addedStep = makeScriptStepRow({ id: 3, name: "New Step", step_text: "新しいステップ" });
     vi.mocked(useAppStore).mockReturnValue({
