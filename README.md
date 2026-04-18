@@ -6,8 +6,6 @@
 
 FileMaker Database Design Report (DDR) XML を解析・可視化するデスクトップツール。
 
-> **注**: 現在も機能改善・作り込みの途中です。v1.x として開発を進めていましたが、まだ個人利用の段階のため v0.1.0 からやり直しています。
-
 ---
 
 ## 機能一覧
@@ -159,6 +157,8 @@ filemaker-ddr-viewer/
 |---|---|
 | `ARCHITECTURE.md` | モジュール構成・DB スキーマ・IPC コマンド一覧 |
 | `CONTRIBUTING.md` | コーディング規約・テスト・PR の出し方 |
+| `docs/decisions/` | 設計判断記録（ADR） |
+| `CHANGELOG.md` | バージョン履歴 |
 
 ---
 
