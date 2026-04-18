@@ -17,9 +17,7 @@ import { useAppStore } from "../stores/appStore";
 const mockSelectElement = vi.fn();
 
 const mockSummary: ProjectSummary = {
-  project_id: 1,
-  name: "My Project",
-  fm_version: "19",
+  project: { id: 1, name: "My Project", file_path: null, fm_version: "19", imported_at: "2024-01-01" },
   table_count: 5,
   field_count: 42,
   script_count: 10,
@@ -28,6 +26,8 @@ const mockSummary: ProjectSummary = {
   relationship_count: 4,
   value_list_count: 3,
   custom_function_count: 2,
+  account_count: 1,
+  privilege_set_count: 2,
 };
 
 beforeEach(() => {

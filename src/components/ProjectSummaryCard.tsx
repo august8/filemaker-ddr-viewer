@@ -35,9 +35,9 @@ export function ProjectSummaryCard({ projectId }: Props) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-gray-800">{summary.name}</h2>
+        <h2 className="font-semibold text-gray-800">{summary.project.name}</h2>
         <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">
-          FM {summary.fm_version}
+          FM {summary.project.fm_version}
         </span>
       </div>
       <div className="grid grid-cols-4 gap-3">
