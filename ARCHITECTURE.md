@@ -1,315 +1,190 @@
-# FM DDR Analyzer — アーキテクチャ
+# アーキテクチャ
+
+## 技術スタック
+
+| レイヤー | 技術 |
+|---------|------|
+| デスクトップ | Tauri 2.x（OS ネイティブ WebView） |
+| バックエンド | Rust（全ビジネスロジック） |
+| フロントエンド | React 19 + TypeScript + Vite + TailwindCSS |
+| XML 解析 | quick-xml + serde |
+| 全文検索 | FTS5（SQLite 組み込み） |
+| データ保存 | rusqlite (SQLite, bundled) |
+| グラフ解析 | petgraph |
+| フロントエンド可視化 | D3.js + dagre-d3 |
+| 状態管理 | zustand |
+| サーバー状態 | @tanstack/react-query（Tauri IPC 経由） |
 
 ---
 
-## 1. システム全体構成
+## プロジェクト構成
 
 ```
-Tauri 2.x
-  ├── Rust バックエンド (src-tauri/src/)
-  │     parser/ → db/ → analyzer/ → commands/
-  └── React フロントエンド (src/)
-        types/ → hooks/ → stores/ → components/
+filemaker-ddr-viewer/
+├── src/                            # React フロントエンド
+│   ├── App.tsx
+│   ├── components/
+│   │   ├── navigation/CategoryTree.tsx
+│   │   └── detail/                 # 各詳細パネル
+│   ├── hooks/useTauriCommand.ts    # 全 invoke() はここに集約
+│   ├── stores/appStore.ts          # グローバル状態（zustand）
+│   └── types/ddr.ts                # 型定義
+├── src-tauri/src/
+│   ├── commands/                   # Tauri IPC コマンド
+│   ├── parser/                     # DDR XML パーサー
+│   ├── db/                         # SQLite データ層
+│   ├── analyzer/                   # 解析エンジン
+│   └── search/                     # tantivy 全文検索（未使用、FTS5 で代替）
+├── tests/fixtures/                 # テスト用 DDR XML サンプル（FM17〜22）
+└── docs/decisions/                 # 設計判断記録（ADR）
 ```
 
-### データフロー
+---
+
+## データフロー
 
 ```
-DDR XML ファイル
-  → parser::parse_ddr()          # quick-xml ストリーミングパース
-  → DdrFile (インメモリ)
-  → db::repository::insert_ddr_file()  # SQLite 永続化
-  → search_index (FTS5)          # 検索インデックス構築
-  → Tauri IPC (invoke)
+概要.xml（DDR）
+  → parser::parse_ddr()              quick-xml ストリーミングパース
+  → DdrFile（インメモリ構造体）
+  → db::repository::insert_ddr_file() SQLite 永続化 + FTS5 インデックス構築
+  → Tauri IPC（invoke）
   → React コンポーネント
 ```
 
 ---
 
-## 2. DB スキーマ設計の重要な判断
+## バックエンドモジュール
 
-### 2.1 ID の扱い（バグ修正履歴あり）
+| モジュール | 役割 |
+|-----------|------|
+| `parser/` | DDR XML をストリーミングパースして `DdrFile` 構造体に変換。FM14〜最新に対応 |
+| `db/schema.rs` | SQLite スキーマ定義・マイグレーション |
+| `db/repository/` | CRUD・FTS5 検索・solution/project 管理 |
+| `commands/import.rs` | `概要.xml` 起点の一括インポート・単体 DDR ファイルのインポート |
+| `commands/search.rs` | FTS5 全文検索（name + content 全カラム） |
+| `commands/analysis.rs` | ProjectSummary・BrokenRefs・ReportCard |
+| `commands/catalog.rs` | エンティティ一覧取得（`list_*` コマンド群） |
+| `commands/field_refs.rs` | フィールド参照解析 |
+| `commands/callchain.rs` | コールチェーン・Callers・孤立スクリプト検出 |
+| `commands/diff.rs` | 2 プロジェクト間の差分比較 |
+| `analyzer/broken_refs.rs` | PerformScript / ScriptTrigger の壊れた参照検出 |
+| `analyzer/orphans.rs` | 未使用スクリプト検出 |
+| `analyzer/call_chain.rs` | DFS + 循環参照検出 |
+| `analyzer/report_card.rs` | 健全性レポート（Info / Warning / Error） |
+| `analyzer/diff_engine.rs` | 名前ベース差分比較（テーブルはフィールド単位で詳細比較） |
 
-**決定**: `search_index.element_id` には **DBのauto-increment ID** を保存する。FM内部IDは使わない。
+---
 
-**理由**:
-- FM内部ID（`table.id.0` 等）は FM が XML 内に付与する整数
-- DB auto-increment ID はSQLiteが付与する整数
-- 両者は一致しない。FM ID でindexを作ると、フロントエンドの `scripts.find(s => s.id === element_id)` が失敗する
-- `list_scripts` が返す `ScriptRow.id` は DB ID
+## フロントエンドモジュール
 
-**実装**:
-- `insert_field_inner` → `Result<i64>` (DB ID返却)
-- `insert_custom_function_inner` → `Result<i64>` (DB ID返却)
-- `insert_ddr_file` 内で `Vec<SearchEntry>` に DB ID を収集してからバルク INSERT
+| コンポーネント / ファイル | 役割 |
+|--------------------------|------|
+| `App.tsx` | 3 ペインレイアウト・リサイズ・ナビゲーション |
+| `MainContent.tsx` | メインエリアのルーティング（`selectedElement.kind` で切り替え） |
+| `navigation/CategoryTree.tsx` | サイドバーツリー |
+| `SearchBar.tsx` / `SearchResults.tsx` | 全文検索・カテゴリフィルター・クリック遷移 |
+| `SolutionList.tsx` | ソリューション一覧・削除 |
+| `ImportButton.tsx` | `概要.xml` インポート |
+| `ProjectSummaryCard.tsx` | 要素数サマリー |
+| `ReportCard.tsx` | 健全性レポート |
+| `BrokenRefsList.tsx` | 壊れた参照一覧 |
+| `OrphanScriptsList.tsx` | 孤立スクリプト一覧 |
+| `detail/TableDetail.tsx` | テーブル詳細・フィールド一覧 |
+| `detail/FieldDetail.tsx` | フィールド詳細・Where Used |
+| `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
+| `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
+| `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
+| `detail/AllFieldsPanel.tsx` | 全フィールド横断一覧・絞り込み |
+| `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
+| `detail/CallChainTree.tsx` | コールチェーンツリー |
+| `detail/WhereUsed.tsx` | 参照元一覧 |
+| `detail/SecurityPanel.tsx` | アカウント・権限セット |
+| `detail/UpgradeCheckPanel.tsx` / `UpgradeSettingsPanel.tsx` | アップグレードチェック |
+| `DiffView.tsx` | 差分比較ビュー |
+| `stores/appStore.ts` | グローバル状態（zustand） |
+| `hooks/useTauriCommand.ts` | 全 Tauri IPC フック |
 
-### 2.2 FTS5 search_index の設計
+---
+
+## 状態管理
+
+`src/stores/appStore.ts`（zustand）が以下のグローバル状態を管理する。
+
+| state | 型 | 用途 |
+|-------|----|------|
+| `selectedProject` | `ProjectRow \| null` | 現在選択中のプロジェクト |
+| `selectedElement` | `SelectedElement \| null` | メインパネルに表示する要素 |
+| `searchQuery` | `string` | 検索バーのテキスト |
+| `rightPanel` | `RightPanelState \| null` | 右パネルに表示する要素 |
+| `navHistory` | `SelectedElement[]` | ←→ ナビゲーション履歴 |
+| `navIndex` | `number` | 履歴内の現在位置 |
+| `fontSize` | `number` | フォントサイズ（localStorage 永続化） |
+
+`selectedElement` は `searchQuery` より表示優先度が高い。検索結果をクリックして詳細に遷移した後、`←` ボタンで `selectedElement` を null にすると自然に検索結果画面に戻れる。
+
+---
+
+## DB 設計のポイント
+
+### ID の扱い
+
+`search_index.element_id` には SQLite の auto-increment ID（DB ID）を保存する。FileMaker が XML に付与する内部 ID（`fm_id`）とは別物で一致しない。`list_scripts` 等が返す `ScriptRow.id` は DB ID であり、検索結果のナビゲーション時に使用する。
+
+### FTS5 search_index
 
 ```sql
 CREATE VIRTUAL TABLE search_index USING fts5(
     project_id UNINDEXED,
-    element_type UNINDEXED,  -- "table","field","script","layout","value_list","custom_function"
-    element_id UNINDEXED,    -- DB auto-increment ID（FM IDではない）
+    element_type UNINDEXED,  -- "table" | "field" | "script" | "layout" | ...
+    element_id UNINDEXED,    -- DB auto-increment ID
     name,                    -- 検索対象: 要素名
-    content,                 -- 検索対象: 計算式・コメント等
+    content,                 -- 検索対象: 計算式・ステップ内容・述語等
     tokenize='unicode61'
 );
 ```
 
-**重要な決定: 全カラム検索（name + content）**
+`content` に格納するもの:
 
-`build_fts_query` はカラム指定なしの `"word"*` 形式で生成する。
-`name`（要素名）と `content`（計算式・ステップ内容・TO名・リレーション述語等）の両方を検索する。
-
-**経緯**:
-- 初版では `name:"word"*` で name のみ検索していた
-- スクリプトステップ内容・カスタム関数の計算式・TO名・リレーション述語を `content` に格納し、
-  横断検索できるようにしたため全カラム検索に変更
-
-```rust
-// 現在の実装: 全カラム検索（name + content）
-format!("\"{escaped}\"*")
-```
-
-**search_index の content に格納するもの**:
-- `script`: 全ステップの `step_text` を結合
-- `field`: `comment` + `calculation`
-- `layout`: `table_occurrence_name`
-- `relationship`: predicates の述語文字列
-- `table_occurrence`: `base_table_name`
-- `custom_function`: `parameters` + `calculation`
-- `value_list`: `custom_values` の全値
-
-### 2.3 フィールド検索結果の親テーブル解決
-
-検索結果でフィールドをクリックした際、そのフィールドが属するテーブルを特定するため、
-`search()` の SQL に LEFT JOIN を追加している。
-
-```sql
-WITH fts AS (SELECT ... FROM search_index WHERE ...)
-SELECT f.*,
-       fld.table_id,          -- parent_id: base_tables の DB ID
-       bt.name AS table_name  -- parent_name: テーブル名
-FROM fts f
-LEFT JOIN fields fld ON f.element_type = 'field' AND fld.id = f.element_id
-LEFT JOIN base_tables bt ON bt.id = fld.table_id
-```
-
-- `fld.id = f.element_id`：DB ID 同士の JOIN（FM IDではない）
-- フィールド以外の要素では `parent_id`/`parent_name` は NULL
-
----
-
-## 3. 検索・ナビゲーションの設計
-
-### 3.1 SearchResults コンポーネントのフィルター
-
-```
-検索結果 → カテゴリフィルターチップ → 絞り込み表示
-```
-
-- `activeType: string | null` のローカル state で管理
-- フィルターは DB に問い合わせず、取得済み結果をフロントエンドで絞り込む
-- `filteredResults = activeType ? results.filter(r => r.element_type === activeType) : results`
-
-### 3.2 検索結果クリック時のナビゲーション
-
-| element_type | 動作 |
+| element_type | content の内容 |
 |---|---|
-| table | `selectElement({ kind:"table", id })` |
-| script | `selectElement({ kind:"script", id })` |
-| layout | `selectElement({ kind:"layout", id })` |
-| value_list | `selectElement({ kind:"value_list", id })` |
-| custom_function | `selectElement({ kind:"custom_function", id })` |
-| field | `selectElement({ kind:"table", id: parent_id })` + `setRightPanel({ kind:"field", fieldId, tableId })` |
+| `script` | 全ステップの `step_text` を結合 |
+| `field` | `comment` + `calculation` |
+| `layout` | `table_occurrence_name` |
+| `relationship` | 述語文字列（`A::x = B::y` 形式） |
+| `table_occurrence` | `base_table_name` |
+| `custom_function` | `parameters` + `calculation` |
+| `value_list` | カスタム値の全テキスト |
 
-フィールドはメインパネルに親テーブル詳細を表示しつつ、右パネルにフィールド詳細を出す。
+検索クエリはカラム指定なしの前方一致（`"word"*`）で `name` と `content` を横断検索する。日本語は `unicode61` トークナイザで文字単位に分割される。
 
-**重要**: `projectId` は `result.project_id`（`SearchResult` が保持）から取得する。
-`selectedProject?.id` は使わない。全体・ソリューションスコープでは選択プロジェクトと
-異なるプロジェクトの結果が含まれるため、結果自身が持つ `project_id` が正確。
+### フィールド検索結果の親テーブル解決
 
-### 3.3 App.tsx の表示優先順位
-
-```
-selectedElement が設定されている → 詳細画面
-searchQuery が空でない         → SearchResults
-それ以外                       → ダッシュボード（ProjectSummary + ReportCard 等）
-```
-
-**決定**: `selectedElement` を `searchQuery` より優先する
-
-**理由**:
-- 検索結果をクリックして詳細に遷移した後、検索クエリを消さずに残す
-- ブラウザバック相当の「←」ボタンで `selectedElement` を null に戻すと
-  自然に検索結果画面に戻れる
-
-### 3.4 リストデータの常時フェッチ
-
-`useScriptList`, `useLayoutList`, `useValueListList`, `useCustomFunctionList` は
-`projectId` が非 null なら **常時フェッチ**する（`selectedElement.kind` による条件なし）。
-
-**理由**:
-- 検索結果クリック直後、データがロードされる前に `scripts.find(...)` が `[]` を返すと
-  詳細画面が一瞬表示されず SearchResults に戻る「フラッシュ」が発生する
-- プロジェクト選択時点でデータをキャッシュしておくことで即時表示できる
-- `isLoading` フラグで「読み込み中...」を表示し、ロード完了まで fallthrough しない
+フィールドの検索結果クリック時に親テーブルを特定するため、`search()` クエリで `fields` テーブルと `base_tables` テーブルを LEFT JOIN して `table_id` と `table_name` を付与している。
 
 ---
 
-## 4. フロントエンドの状態管理
+## 既知の制約
 
-### 4.1 appStore（zustand）
-
-| state | 型 | 用途 |
-|---|---|---|
-| `selectedProject` | `ProjectRow \| null` | 現在選択中のプロジェクト |
-| `selectedElement` | `SelectedElement \| null` | メインパネルに表示する要素 |
-| `searchQuery` | `string` | 検索バーのテキスト（常時同期）|
-| `rightPanel` | `RightPanelState \| null` | 右パネルに表示する要素 |
-| `navHistory` | `SelectedElement[]` | ←→ナビゲーション履歴 |
-| `navIndex` | `number` | 現在位置 |
-| `fontSize` | `number` | フォントサイズ（localStorage 永続化）|
-
-### 4.2 SelectedElement の種類
-
-```typescript
-type SelectedElement =
-  | { kind: "all_fields"; projectId }              // フィールド横断一覧
-  | { kind: "table"; projectId; id; name }         // テーブル詳細
-  | { kind: "script"; projectId; id; name }        // スクリプト詳細
-  | { kind: "layout"; projectId; id; name }        // レイアウト詳細
-  | { kind: "value_list"; projectId; id; name }    // バリューリスト詳細
-  | { kind: "custom_function"; projectId; id; name } // カスタム関数詳細
-  | { kind: "all_tables"; projectId }              // テーブル一覧パネル
-  | { kind: "all_scripts"; projectId }             // スクリプト一覧パネル
-  | { kind: "all_layouts"; projectId }             // レイアウト一覧パネル
-  | { kind: "all_value_lists"; projectId }         // バリューリスト一覧パネル
-  | { kind: "all_custom_functions"; projectId }    // カスタム関数一覧パネル
-  | { kind: "all_table_occurrences"; projectId }   // TOパネル（TO/Rel はパネル方式）
-  | { kind: "all_relationships"; projectId }       // リレーション一覧パネル
-  | { kind: "dashboard" }                          // ダッシュボード（ProjectSummary等）
-  | { kind: "diff" }                               // 差分比較ビュー
-  | { kind: "search"; query: string }              // 検索状態
-  | { kind: "security"; projectId }                // セキュリティ
-  | { kind: "relationship_graph"; projectId }      // リレーショングラフ
-  | { kind: "upgrade_check"; solutionId }          // アップグレードチェック
-  | { kind: "upgrade_settings" }                  // アップグレードチェック設定
-  | null
-```
+- **インポートの重複チェックなし**: 同一の `概要.xml` を複数回インポートすると別エントリとして追加される
+- **検索の日本語分割**: `unicode61` トークナイザは文字単位で分割するため、「顧客登録」で検索すると「顧客」「登録」を両方含む名前がヒットする
+- **区切り線スクリプト**: FM のスクリプト区切り線は `name="-"` として取り込まれる。壊れた参照・孤立スクリプトの検出対象から除外済み
 
 ---
 
-## 5. 実装済み機能一覧
-
-### バックエンド（Rust）
-
-| モジュール | 機能 | 状態 |
-|---|---|---|
-| `parser/` | DDR XML ストリーミングパース（FM14〜最新） | ✅ |
-| `db/schema.rs` | SQLite スキーマ定義・マイグレーション | ✅ |
-| `db/repository/` | CRUD・FTS5検索・solution/project管理（サブモジュール構成）| ✅ |
-| `db/repository/solution.rs` | SolutionRow/ProjectRow型・solution/project CRUD | ✅ |
-| `db/repository/import.rs` | insert_ddr_file・insert_layout_object_condition | ✅ |
-| `db/repository/catalog.rs` | list_* クエリ群・全Row型定義 | ✅ |
-| `db/repository/search.rs` | SearchResult型・FTS5全カラム検索 | ✅ |
-| `commands/import.rs` | 概要.xml 起点の一括インポート・単体インポート | ✅ |
-| `commands/search.rs` | FTS5 全文検索（name+content 全カラム） | ✅ |
-| `commands/analysis.rs` | ProjectSummary・BrokenRefs・ReportCard・solution/project管理 | ✅ |
-| `commands/catalog.rs` | list_* エンティティ一覧取得コマンド群 | ✅ |
-| `commands/field_refs.rs` | フィールド参照解析（get_field_refs等） | ✅ |
-| `commands/callchain.rs` | CallChain・Callers・OrphanScripts | ✅ |
-| `commands/diff.rs` | 2プロジェクト間の差分比較 | ✅ |
-| `analyzer/broken_refs.rs` | PerformScript/ScriptTrigger の壊れた参照検出 | ✅ |
-| `analyzer/orphans.rs` | 未使用スクリプト検出 | ✅ |
-| `analyzer/call_chain.rs` | DFS + 循環検出 | ✅ |
-| `analyzer/report_card.rs` | 健全性レポート（Info/Warning/Error） | ✅ |
-| `analyzer/diff_engine.rs` | 名前ベース差分比較（テーブルはフィールド単位 detail） | ✅ |
-
-### フロントエンド（React）
-
-| コンポーネント / ファイル | 機能 | 状態 |
-|---|---|---|
-| `App.tsx` | 3ペイン レイアウト・リサイズ・ナビゲーション | ✅ |
-| `components/MainContent.tsx` | メインエリアのルーティング（15 case switch） | ✅ |
-| `navigation/CategoryTree.tsx` | サイドバーツリー | ✅ |
-| `SearchBar.tsx` | 検索バー | ✅ |
-| `SearchResults.tsx` | 検索結果・カテゴリフィルター・クリック遷移 | ✅ |
-| `SolutionList.tsx` | ソリューション一覧・削除 | ✅ |
-| `ImportButton.tsx` | 概要.xml インポート | ✅ |
-| `ProjectSummaryCard.tsx` | 要素数サマリー（数値クリックで対応パネルへ遷移） | ✅ |
-| `ReportCard.tsx` | 健全性レポート（クリックで詳細遷移） | ✅ |
-| `BrokenRefsList.tsx` | 壊れた参照一覧（クリックで詳細遷移） | ✅ |
-| `OrphanScriptsList.tsx` | 孤立スクリプト一覧 | ✅ |
-| `detail/TableDetail.tsx` | テーブル詳細・フィールド一覧 | ✅ |
-| `detail/FieldDetail.tsx` | フィールド詳細・Where Used | ✅ |
-| `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・CallChain | ✅ |
-| `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト | ✅ |
-| `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 | ✅ |
-| `detail/AllFieldsPanel.tsx` | 全フィールド横断一覧 | ✅ |
-| `detail/AllTablesPanel.tsx` | テーブル一覧パネル（CategoryTree → クリック遷移） | ✅ |
-| `detail/AllScriptsPanel.tsx` | スクリプト一覧パネル | ✅ |
-| `detail/AllLayoutsPanel.tsx` | レイアウト一覧パネル | ✅ |
-| `detail/AllValueListsPanel.tsx` | バリューリスト一覧パネル | ✅ |
-| `detail/AllCustomFunctionsPanel.tsx` | カスタム関数一覧パネル | ✅ |
-| `detail/AllTableOccurrencesPanel.tsx` | テーブルオカレンス一覧パネル | ✅ |
-| `detail/AllRelationshipsPanel.tsx` | リレーション一覧パネル | ✅ |
-| `detail/SecurityPanel.tsx` | セキュリティ（アカウント・権限セット）| ✅ |
-| `detail/UpgradeCheckPanel.tsx` | アップグレードチェック結果一覧 | ✅ |
-| `detail/UpgradeSettingsPanel.tsx` | アップグレードチェック設定（ビルトイン/カスタム項目） | ✅ |
-| `StatusBar.tsx` | ステータスバー（要素数・検索時間）| ✅ |
-| `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG + pan/zoom）| ✅ |
-| `detail/ValueListDetail.tsx` | バリューリスト詳細 | ✅ |
-| `detail/CustomFunctionDetail.tsx` | カスタム関数詳細 | ✅ |
-| `detail/CallChainTree.tsx` | コールチェーン ツリー表示 | ✅ |
-| `detail/WhereUsed.tsx` | 参照元一覧 | ✅ |
-| `RightPanel.tsx` | 右パネルコンテナ | ✅ |
-| `DiffView.tsx` | 変更差分フルパネルビュー（サイドバー「差分比較」から表示） | ✅ |
-
----
-
-## 6. 未実装・今後の課題
-
-現在すべて実装済み。
-
----
-
-## 7. 既知の制約・注意点
-
-### インポート
-
-- インポートは常に `insert_solution` で新規追加される（同一 `summary_path` でも上書きではなく別エントリとして追加）
-- `summary_path = None` のインポートも同様に新規追加（重複チェックなし）
-
-### 検索
-
-- `name` + `content` の全カラムが検索対象（スクリプトステップ内容・計算式・TO名・述語等も含む）
-- FTS5 は前方一致プレフィックス検索（`"word"*`）
-- 日本語は `tokenize='unicode61'` で文字単位分割される
-  → 「顧客登録」で検索すると「顧客」「登録」に分割されて両方含む名前がヒットする
-
-### 区切り線スクリプト
-
-- FM のスクリプト区切り線は `name="-"` として取り込まれる
-- `broken_refs` / `orphans` の検出対象から除外済み
-
----
-
-## 8. Tauri IPC コマンド一覧
+## Tauri IPC コマンド一覧
 
 | コマンド名 | ファイル | 引数 | 戻り値 |
 |---|---|---|---|
 | `import_solution` | import.rs | `summary_path: String` | `SolutionWithProjects` |
 | `import_ddr` | import.rs | `file_path: String` | `ProjectRow` |
-| `list_solutions` | analysis.rs | - | `Vec<SolutionRow>` |
+| `list_solutions` | analysis.rs | — | `Vec<SolutionRow>` |
 | `get_solution_projects` | analysis.rs | `solution_id` | `Vec<ProjectRow>` |
 | `delete_solution` | analysis.rs | `solution_id` | `()` |
-| `list_projects` | analysis.rs | - | `Vec<ProjectRow>` |
 | `delete_project` | analysis.rs | `project_id` | `()` |
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |
 | `get_report_card` | analysis.rs | `project_id` | `ReportCard` |
-| `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `ElementRef?` |
 | `search_elements` | search.rs | `project_id, query, limit?` | `Vec<SearchResult>` |
 | `list_tables` | catalog.rs | `project_id` | `Vec<TableRow>` |
 | `list_table_fields` | catalog.rs | `project_id, table_id` | `Vec<FieldRow>` |
@@ -329,14 +204,10 @@ type SelectedElement =
 | `list_privilege_sets` | catalog.rs | `project_id` | `Vec<PrivilegeSetRow>` |
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |
-| `resolve_layout_field` | field_refs.rs | `project_id, occurrence_name, field_name` | `FieldLocation?` |
-| `get_layout_ref_debug_info` | field_refs.rs | `project_id` | `LayoutRefDebugInfo` |
 | `get_call_chain` | callchain.rs | `project_id, script_id` | `CallChainNode` |
 | `get_callers` | callchain.rs | `project_id, script_id` | `Vec<i64>` |
 | `get_orphan_scripts` | callchain.rs | `project_id` | `Vec<OrphanScript>` |
 | `compare_projects` | diff.rs | `project_id_a, project_id_b` | `DiffResult` |
 | `compare_solutions` | diff.rs | `solution_id_a, solution_id_b` | `DiffResult` |
-| `list_all_projects` | diff.rs | - | `Vec<ProjectWithSolution>` |
-| `get_upgrade_check` | analysis.rs | `solution_id, check_items: Vec<CheckItemConfig>` | `Vec<UpgradeHit>` |
-
----
+| `list_all_projects` | diff.rs | — | `Vec<ProjectWithSolution>` |
+| `get_upgrade_check` | analysis.rs | `solution_id, check_items` | `Vec<UpgradeHit>` |
