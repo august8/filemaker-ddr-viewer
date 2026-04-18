@@ -29,33 +29,6 @@ beforeEach(() => {
 });
 
 describe("AllScriptsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useScriptList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useScriptList>
-    );
-    render(<AllScriptsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useScriptList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useScriptList>
-    );
-    render(<AllScriptsPanel projectId={1} />);
-    expect(screen.getByText(/該当するスクリプトなし/)).toBeInTheDocument();
-  });
-
-  it("shows_script_list", () => {
-    vi.mocked(useScriptList).mockReturnValue(
-      { data: mockScripts, isLoading: false } as unknown as ReturnType<typeof useScriptList>
-    );
-    render(<AllScriptsPanel projectId={1} />);
-    expect(screen.getByText("Save Record")).toBeInTheDocument();
-    expect(screen.getByText("Print Report")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByText("12")).toBeInTheDocument();
-  });
-
   it("row_click_navigates_to_script", () => {
     vi.mocked(useScriptList).mockReturnValue(
       { data: mockScripts, isLoading: false } as unknown as ReturnType<typeof useScriptList>

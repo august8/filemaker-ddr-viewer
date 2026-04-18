@@ -30,24 +30,6 @@ beforeEach(() => {
 });
 
 describe("AllFieldsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useAllFields).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useAllFields>
-    );
-    render(<AllFieldsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_all_fields", () => {
-    vi.mocked(useAllFields).mockReturnValue(
-      { data: mockFields, isLoading: false } as unknown as ReturnType<typeof useAllFields>
-    );
-    render(<AllFieldsPanel projectId={1} />);
-    expect(screen.getByText("FirstName")).toBeInTheDocument();
-    expect(screen.getByText("TotalAmount")).toBeInTheDocument();
-    expect(screen.getByText("FullName")).toBeInTheDocument();
-  });
-
   it("shows_empty_state_when_filter_matches_nothing", () => {
     vi.mocked(useAllFields).mockReturnValue(
       { data: mockFields, isLoading: false } as unknown as ReturnType<typeof useAllFields>

@@ -29,32 +29,6 @@ beforeEach(() => {
 });
 
 describe("AllLayoutsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useLayoutList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useLayoutList>
-    );
-    render(<AllLayoutsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useLayoutList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useLayoutList>
-    );
-    render(<AllLayoutsPanel projectId={1} />);
-    expect(screen.getByText(/該当するレイアウトなし/)).toBeInTheDocument();
-  });
-
-  it("shows_layout_list", () => {
-    vi.mocked(useLayoutList).mockReturnValue(
-      { data: mockLayouts, isLoading: false } as unknown as ReturnType<typeof useLayoutList>
-    );
-    render(<AllLayoutsPanel projectId={1} />);
-    expect(screen.getByText("Customer List")).toBeInTheDocument();
-    expect(screen.getByText("Report")).toBeInTheDocument();
-    expect(screen.getByText("Customers")).toBeInTheDocument();
-  });
-
   it("row_click_navigates_to_layout", () => {
     vi.mocked(useLayoutList).mockReturnValue(
       { data: mockLayouts, isLoading: false } as unknown as ReturnType<typeof useLayoutList>

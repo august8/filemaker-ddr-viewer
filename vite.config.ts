@@ -23,7 +23,20 @@ export default defineConfig(async () => ({
       provider: "v8",
       reporter: ["text", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/__tests__/**", "src/test-setup.ts", "src/main.tsx"],
+      exclude: [
+        "src/__tests__/**",
+        "src/test-setup.ts",
+        "src/main.tsx",
+        // D3描画・純ルーティングコンポーネント（単体テストに意味がない）
+        "src/components/detail/RelationshipGraphPanel.tsx",
+        "src/components/RightPanel.tsx",
+      ],
+      thresholds: {
+        statements: 55,
+        branches: 48,
+        functions: 50,
+        lines: 55,
+      },
     },
   },
 }));

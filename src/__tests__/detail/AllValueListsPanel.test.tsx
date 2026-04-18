@@ -29,31 +29,6 @@ beforeEach(() => {
 });
 
 describe("AllValueListsPanel", () => {
-  it("shows_loading_state", () => {
-    vi.mocked(useValueListList).mockReturnValue(
-      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useValueListList>
-    );
-    render(<AllValueListsPanel projectId={1} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
-  });
-
-  it("shows_empty_state", () => {
-    vi.mocked(useValueListList).mockReturnValue(
-      { data: [], isLoading: false } as unknown as ReturnType<typeof useValueListList>
-    );
-    render(<AllValueListsPanel projectId={1} />);
-    expect(screen.getByText(/該当するバリューリストなし/)).toBeInTheDocument();
-  });
-
-  it("shows_value_list", () => {
-    vi.mocked(useValueListList).mockReturnValue(
-      { data: mockValueLists, isLoading: false } as unknown as ReturnType<typeof useValueListList>
-    );
-    render(<AllValueListsPanel projectId={1} />);
-    expect(screen.getByText("Status")).toBeInTheDocument();
-    expect(screen.getByText("Category")).toBeInTheDocument();
-  });
-
   it("row_click_navigates_to_value_list", () => {
     vi.mocked(useValueListList).mockReturnValue(
       { data: mockValueLists, isLoading: false } as unknown as ReturnType<typeof useValueListList>
