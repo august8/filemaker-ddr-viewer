@@ -26,9 +26,7 @@ export interface SolutionWithProjects {
 }
 
 export interface ProjectSummary {
-  project_id: number;
-  name: string;
-  fm_version: string;
+  project: ProjectRow;
   table_count: number;
   field_count: number;
   script_count: number;
@@ -37,6 +35,8 @@ export interface ProjectSummary {
   relationship_count: number;
   value_list_count: number;
   custom_function_count: number;
+  account_count: number;
+  privilege_set_count: number;
 }
 
 export interface SearchResult {
