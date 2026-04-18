@@ -11,7 +11,7 @@
 | 全文検索 | FTS5（SQLite 組み込み） |
 | データ保存 | rusqlite (SQLite, bundled) |
 | グラフ解析 | petgraph |
-| フロントエンド可視化 | D3.js + dagre-d3 |
+| フロントエンド可視化 | dagre（レイアウト計算）+ ネイティブ SVG |
 | 状態管理 | zustand |
 | サーバー状態 | @tanstack/react-query（Tauri IPC 経由） |
 
@@ -156,9 +156,9 @@ filemaker-ddr-viewer/
 
 ```sql
 CREATE VIRTUAL TABLE search_index USING fts5(
-    project_id UNINDEXED,
-    element_type UNINDEXED,  -- "table" | "field" | "script" | "layout" | ...
-    element_id UNINDEXED,    -- DB auto-increment ID
+    project_id   UNINDEXED,
+    element_type,            -- "table" | "field" | "script" | "layout" | ...（インデックス対象）
+    element_id   UNINDEXED,  -- DB auto-increment ID
     name,                    -- 検索対象: 要素名
     content,                 -- 検索対象: 計算式・ステップ内容・述語等
     tokenize='unicode61'
@@ -208,9 +208,9 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |
 | `get_report_card` | analysis.rs | `project_id` | `ReportCard` |
-| `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `ElementRef` |
+| `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `Option<ElementRef>` |
 | `get_upgrade_check` | analysis.rs | `solution_id, check_items` | `Vec<UpgradeHit>` |
-| `search_elements` | search.rs | `project_id, query, limit?` | `Vec<SearchResult>` |
+| `search_elements` | search.rs | `project_id?, solution_id?, query, limit?, contains?` | `Vec<SearchResult>` |
 | `list_tables` | catalog.rs | `project_id` | `Vec<TableRow>` |
 | `list_table_fields` | catalog.rs | `project_id, table_id` | `Vec<FieldRow>` |
 | `list_all_fields` | catalog.rs | `project_id` | `Vec<AllFieldRow>` |
@@ -230,7 +230,7 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
 | `get_field_calc_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldCalcRef>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |
-| `resolve_layout_field` | field_refs.rs | `project_id, to_name, field_name` | `FieldLocation` |
+| `resolve_layout_field` | field_refs.rs | `project_id, occurrence_name, field_name` | `Option<FieldLocation>` |
 | `get_field_relationship_keys` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRelKeyRef>` |
 | `list_unused_fields` | field_refs.rs | `project_id` | `Vec<UnusedFieldRow>` |
 | `get_layout_ref_debug_info` | field_refs.rs | `project_id, layout_id` | デバッグ情報 |
