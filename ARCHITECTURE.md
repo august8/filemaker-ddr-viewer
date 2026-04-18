@@ -68,6 +68,7 @@ filemaker-ddr-viewer/
 | `commands/field_refs.rs` | フィールド参照解析 |
 | `commands/callchain.rs` | コールチェーン・Callers・孤立スクリプト検出 |
 | `commands/diff.rs` | 2 プロジェクト間の差分比較 |
+| `analyzer/reference_graph.rs` | petgraph で参照グラフを構築 |
 | `analyzer/broken_refs.rs` | PerformScript / ScriptTrigger の壊れた参照検出 |
 | `analyzer/orphans.rs` | 未使用スクリプト検出 |
 | `analyzer/call_chain.rs` | DFS + 循環参照検出 |
@@ -90,6 +91,11 @@ filemaker-ddr-viewer/
 | `ReportCard.tsx` | 健全性レポート |
 | `BrokenRefsList.tsx` | 壊れた参照一覧 |
 | `OrphanScriptsList.tsx` | 孤立スクリプト一覧 |
+| `UnusedFieldsList.tsx` | 未使用フィールド一覧 |
+| `DiffCard.tsx` | 差分比較カード（DiffView のサブコンポーネント） |
+| `StatusBar.tsx` | 下部ステータスバー |
+| `Spinner.tsx` | ローディングスピナー |
+| `ErrorBoundary.tsx` | React エラーバウンダリ |
 | `detail/TableDetail.tsx` | テーブル詳細・フィールド一覧 |
 | `detail/FieldDetail.tsx` | フィールド詳細・Where Used |
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
@@ -101,9 +107,12 @@ filemaker-ddr-viewer/
 | `detail/WhereUsed.tsx` | 参照元一覧 |
 | `detail/SecurityPanel.tsx` | アカウント・権限セット |
 | `detail/UpgradeCheckPanel.tsx` / `UpgradeSettingsPanel.tsx` | アップグレードチェック |
+| `detail/field/FieldBasicProperties.tsx` 他 | FieldDetail のサブコンポーネント群（FieldAutoEnter / FieldCalcReferences / FieldLayoutReferences / FieldRelationshipReferences / FieldScriptReferences / FieldStorage / FieldValidationRules） |
 | `DiffView.tsx` | 差分比較ビュー |
 | `stores/appStore.ts` | グローバル状態（zustand） |
 | `hooks/useTauriCommand.ts` | 全 Tauri IPC フック |
+| `hooks/useSearchFiltering.ts` | 検索フィルタリングロジック |
+| `styles/tokens.ts` | デザイントークン定数 |
 
 ---
 
@@ -113,13 +122,23 @@ filemaker-ddr-viewer/
 
 | state | 型 | 用途 |
 |-------|----|------|
+| `solutions` | `SolutionRow[]` | ソリューション一覧 |
+| `selectedSolution` | `SolutionRow \| null` | 現在選択中のソリューション |
 | `selectedProject` | `ProjectRow \| null` | 現在選択中のプロジェクト |
-| `selectedElement` | `SelectedElement \| null` | メインパネルに表示する要素 |
+| `selectedElement` | `SelectedElement` | メインパネルに表示する要素（`null` を含むユニオン型） |
 | `searchQuery` | `string` | 検索バーのテキスト |
-| `rightPanel` | `RightPanelState \| null` | 右パネルに表示する要素 |
+| `rightPanel` | `RightPanelState` | 右パネルに表示する要素（`null` を含むユニオン型） |
 | `navHistory` | `SelectedElement[]` | ←→ ナビゲーション履歴 |
 | `navIndex` | `number` | 履歴内の現在位置 |
 | `fontSize` | `number` | フォントサイズ（localStorage 永続化） |
+| `showAbout` | `boolean` | バージョン情報ダイアログ表示フラグ |
+| `showUpgradeSettings` | `boolean` | アップグレード設定ダイアログ表示フラグ |
+| `diffState` | `DiffStateData` | 差分比較の選択状態 |
+| `diffContext` | `{ compareProjectId: number } \| null` | 差分からのナビゲーション時の比較元 project_id |
+| `searchDuration` | `number \| null` | 直近検索の所要時間（ms） |
+| `searchContains` | `boolean` | 部分一致検索モード |
+| `searchScope` | `"all" \| "solution" \| "project"` | 検索スコープ |
+| `checkItems` | `CheckItem[]` | アップグレードチェック設定（localStorage 永続化） |
 
 `selectedElement` は `searchQuery` より表示優先度が高い。検索結果をクリックして詳細に遷移した後、`←` ボタンで `selectedElement` を null にすると自然に検索結果画面に戻れる。
 
@@ -178,13 +197,17 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 |---|---|---|---|
 | `import_solution` | import.rs | `summary_path: String` | `SolutionWithProjects` |
 | `import_ddr` | import.rs | `file_path: String` | `ProjectRow` |
+| `write_text_file` | import.rs | `path: String, content: String` | `()` |
 | `list_solutions` | analysis.rs | — | `Vec<SolutionRow>` |
 | `get_solution_projects` | analysis.rs | `solution_id` | `Vec<ProjectRow>` |
 | `delete_solution` | analysis.rs | `solution_id` | `()` |
+| `list_projects` | analysis.rs | — | `Vec<ProjectRow>` |
 | `delete_project` | analysis.rs | `project_id` | `()` |
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |
 | `get_report_card` | analysis.rs | `project_id` | `ReportCard` |
+| `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `ElementRef` |
+| `get_upgrade_check` | analysis.rs | `solution_id, check_items` | `Vec<UpgradeHit>` |
 | `search_elements` | search.rs | `project_id, query, limit?` | `Vec<SearchResult>` |
 | `list_tables` | catalog.rs | `project_id` | `Vec<TableRow>` |
 | `list_table_fields` | catalog.rs | `project_id, table_id` | `Vec<FieldRow>` |
@@ -203,11 +226,15 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 | `list_accounts` | catalog.rs | `project_id` | `Vec<AccountRow>` |
 | `list_privilege_sets` | catalog.rs | `project_id` | `Vec<PrivilegeSetRow>` |
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
+| `get_field_calc_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldCalcRef>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |
+| `resolve_layout_field` | field_refs.rs | `project_id, to_name, field_name` | `FieldLocation` |
+| `get_field_relationship_keys` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRelKeyRef>` |
+| `list_unused_fields` | field_refs.rs | `project_id` | `Vec<UnusedFieldRow>` |
+| `get_layout_ref_debug_info` | field_refs.rs | `project_id, layout_id` | デバッグ情報 |
 | `get_call_chain` | callchain.rs | `project_id, script_id` | `CallChainNode` |
 | `get_callers` | callchain.rs | `project_id, script_id` | `Vec<i64>` |
 | `get_orphan_scripts` | callchain.rs | `project_id` | `Vec<OrphanScript>` |
 | `compare_projects` | diff.rs | `project_id_a, project_id_b` | `DiffResult` |
 | `compare_solutions` | diff.rs | `solution_id_a, solution_id_b` | `DiffResult` |
 | `list_all_projects` | diff.rs | — | `Vec<ProjectWithSolution>` |
-| `get_upgrade_check` | analysis.rs | `solution_id, check_items` | `Vec<UpgradeHit>` |
