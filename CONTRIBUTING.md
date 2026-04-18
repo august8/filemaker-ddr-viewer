@@ -1,103 +1,93 @@
-# Contributing to FM DDR Analyzer
+# Contributing to FileMaker DDR Viewer
+
+## 前提条件
+
+- [Rust](https://www.rust-lang.org/tools/install)（stable、`rustup` 経由を推奨）
+- [Node.js](https://nodejs.org/) v18 以上
+- [Tauri の依存関係](https://v2.tauri.app/start/prerequisites/)（Windows の場合は WebView2 が必要）
 
 ## 開発環境のセットアップ
 
-README.md の「開発環境のセットアップ」を参照してください。
+```bash
+git clone https://github.com/august8/filemaker-ddr-viewer.git
+cd filemaker-ddr-viewer
+npm install        # 依存関係インストール + lefthook（pre-commit フック）を自動設定
+npm run tauri dev  # アプリ起動（ホットリロード）
+```
 
-`npm install` 実行時に git フック（pre-commit）が自動で設定されます。コミット前に `cargo fmt --check` と `cargo clippy` が自動実行されます。
+## ブランチ運用
+
+```
+main          ← 常にリリース可能な状態
+  ├── feat/xxx    機能追加
+  ├── fix/xxx     バグ修正
+  └── refactor/xxx リファクタリング
+```
+
+- `main` への直接コミット・プッシュは禁止（バージョンバンプ・typo 修正等の軽微な変更を除く）
+- 作業はブランチを切って PR を出す
+
+## コミットメッセージ
+
+[Conventional Commits](https://www.conventionalcommits.org/) に従います。
+
+```
+feat: 新機能の追加
+fix: バグ修正
+refactor: 動作を変えないリファクタリング
+test: テストの追加・修正
+docs: ドキュメントのみの変更
+chore: ビルド設定・依存関係等の変更
+ci: CI 設定の変更
+```
 
 ## コーディング規約
 
 ### Rust
 
-- **エラー処理**: `thiserror` で独自エラー型を定義。`unwrap()` は本番コードで禁止（テストのみ許可）
-- **命名規則**: Rust 標準（snake_case 関数/変数、PascalCase 型、SCREAMING_SNAKE_CASE 定数）
-- **モジュール**: 各モジュールは `mod.rs` で公開インターフェースを明示。内部実装は非公開
-- **型安全**: `String` ではなく newtype パターンを活用（例: `struct ElementId(i64)`）
-- **シリアライズ**: フロントエンド向けの型は必ず `#[derive(Serialize, Deserialize)]`
-- **clippy**: `cargo clippy -- -D warnings` をパスすること
-- **fmt**: `cargo fmt --check` をパスすること
+- エラー処理は `thiserror` で独自エラー型を定義する。`unwrap()` は本番コードで禁止（テストのみ許可）
+- フロントエンドに渡す型は `#[derive(Serialize, Deserialize)]` を付ける
+- `cargo clippy -- -D warnings` と `cargo fmt` を必ずパスすること（lefthook で自動チェックされる）
 
-### TypeScript/React
+### TypeScript / React
 
-- **strict モード**: tsconfig.json で `strict: true`
-- **コンポーネント**: 関数コンポーネント + hooks のみ。class component 禁止
-- **状態管理**: グローバル状態は zustand、サーバー状態は @tanstack/react-query
-- **Tauri IPC**: `invoke()` 呼び出しは必ず `hooks/` にラップし、コンポーネントから直接呼ばない
-- **lint**: ESLint + Prettier
+- 関数コンポーネント + hooks のみ。class component は使わない
+- `invoke()` の呼び出しは `src/hooks/useTauriCommand.ts` にまとめ、コンポーネントから直接呼ばない
+- グローバル状態は zustand、サーバー状態は @tanstack/react-query を使う
 
 ## テスト
 
-全ての新規コードにはテストが必須です。
+新規コードにはテストを書いてください。
 
-### Rust テスト
+### Rust
 
 ```bash
 cd src-tauri
-cargo test                    # 全テスト実行
-cargo test -- --nocapture     # println 出力表示
-cargo test parser::           # パーサーモジュールのみ
+cargo test              # 全テスト
+cargo test parser::     # モジュール指定
 ```
 
-単体テストは各 `.rs` ファイル末尾に配置します:
+- 単体テストは各 `.rs` ファイル末尾の `#[cfg(test)] mod tests { ... }` に書く
+- 統合テストは `src-tauri/tests/` に配置する
+- DB を使うテストは `Connection::open_in_memory()` を使う
 
-```rust
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_basic() { /* ... */ }
-}
-```
-
-統合テストは `src-tauri/tests/` に配置してください。
-
-テスト用 SQLite は必ず `Connection::open_in_memory()` を使用してください。
-
-### フロントエンド テスト
+### フロントエンド
 
 ```bash
-npm run test           # Vitest 実行
-npm run test -- --watch   # ウォッチモード
+npm run test             # Vitest（全テスト）
+npm run test -- --watch  # ウォッチモード
+npm run test -- --coverage  # カバレッジ
 ```
 
-Tauri IPC のモックには `@tauri-apps/api/mocks` の `mockIPC()` を使用してください。
+- コンポーネントテストは React Testing Library + Vitest で書く
+- Tauri IPC のモックは `vi.mock("@tauri-apps/api/core")` を使う
+- ロジック（状態遷移・条件分岐）を優先してテストする。UI の描画確認テストは書かない
 
-### カバレッジ目標
+## PR の出し方
 
-| レイヤー | 目標 |
-|---------|------|
-| parser/ | 90%+ |
-| analyzer/ | 85%+ |
-| search/ | 80%+ |
-| db/ | 80%+ |
-| commands/ | 70%+ |
-| React components | 70%+ |
+1. ブランチを切って実装・テストを行う
+2. `cargo clippy`・`cargo fmt`・`npm run test`・`npm run lint` が通ることを確認する（lefthook が pre-commit で自動実行）
+3. PR を作成する。タイトルはコミットメッセージと同じ形式で書く
+4. CI が通ったらメンテナーがレビュー・マージする
 
-## コード品質チェック
-
-PR を出す前に以下を実行してください:
-
-```bash
-# Rust
-cd src-tauri
-cargo test
-cargo clippy -- -D warnings
-cargo fmt --check
-
-# フロントエンド
-npm run test
-npm run lint
-```
-
-## 設計判断について
-
-大きな変更を加える場合は、先に Issue を立てて設計を議論してから実装することを推奨します。
-
-## 注意事項
-
-- 新しいモジュールを追加したら、`mod.rs` にエクスポートを追加する
-- Tauri IPC コマンドを追加したら、`lib.rs` の `invoke_handler` に登録する
-- フロントエンドの型定義（`types/ddr.ts`）は Rust 側の型と同期を維持する
-- テストフィクスチャは `tests/fixtures/` に集約する
+大きな変更を加える場合は、先に Issue で設計を議論してから実装することを推奨します。
