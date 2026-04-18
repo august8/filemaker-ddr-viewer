@@ -130,7 +130,17 @@ filemaker-ddr-viewer/
 │   └── types/ddr.ts
 │
 ├── tests/
-│   └── fixtures/                   # テスト用DDR XMLサンプル
+│   ├── ddr/                        # バージョン別DDR XMLサンプル（FM17〜22、統合テスト用）
+│   │   ├── 17.0.7.700/
+│   │   ├── 18.0.3.317/
+│   │   ├── 19.6.3.302/
+│   │   ├── 20.3.2.201/
+│   │   ├── 21.1.2.200/
+│   │   └── 22.0.6.601/
+│   └── fixtures/                   # 小さな単体テスト用XML（minimal.xml等）
+│
+├── src-tauri/tests/
+│   └── integration_ddr.rs          # 統合テスト
 │
 ├── package.json
 ├── vite.config.ts

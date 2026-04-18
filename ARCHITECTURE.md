@@ -33,9 +33,11 @@ filemaker-ddr-viewer/
 │   ├── commands/                   # Tauri IPC コマンド
 │   ├── parser/                     # DDR XML パーサー
 │   ├── db/                         # SQLite データ層
-│   ├── analyzer/                   # 解析エンジン
-│   └── search/                     # tantivy 全文検索（未使用、FTS5 で代替）
-├── tests/fixtures/                 # テスト用 DDR XML サンプル（FM17〜22）
+│   └── analyzer/                   # 解析エンジン
+├── src-tauri/tests/
+│   └── integration_ddr.rs          # 統合テスト
+├── tests/ddr/                      # バージョン別 DDR XML サンプル（FM17〜22、統合テスト用）
+├── tests/fixtures/                 # 小さな単体テスト用 XML（minimal.xml 等）
 └── docs/decisions/                 # 設計判断記録（ADR）
 ```
 
