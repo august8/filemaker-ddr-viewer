@@ -12,8 +12,8 @@ OSS として公開中: https://github.com/august8/filemaker-ddr-viewer
 - **バックエンド**: Rust（全てのビジネスロジック）
 - **フロントエンド**: React 19 + TypeScript + Vite + TailwindCSS
 - **XML解析**: quick-xml + serde
-- **全文検索**: tantivy
-- **データ保存**: rusqlite (SQLite, bundled) + FTS5
+- **全文検索**: FTS5（SQLite 組み込み）※ `search/` に tantivy 実装が残っているが未使用
+- **データ保存**: rusqlite (SQLite, bundled)
 - **グラフ解析**: petgraph
 - **並列処理**: rayon
 - **フロントエンド可視化**: D3.js + dagre-d3
@@ -94,22 +94,13 @@ filemaker-ddr-viewer/
 │   └── types/ddr.ts
 │
 ├── tests/
-│   ├── fixtures/                   # テスト用DDR XMLサンプル
-│   └── e2e/                        # E2Eテスト
+│   └── fixtures/                   # テスト用DDR XMLサンプル
 │
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
 └── CLAUDE.md                       # このファイル
 ```
-
-## エラー解析セッションの場合
-
-ユーザーからエラー報告（エラーメッセージ＋スタックトレース）を受け取って解析する場合は、
-**実装セッションの必須チェックより先に `DEBUGGING.md` を読むこと。**
-エラーの分類・再現手順・調査パターンがまとめられている。
-
----
 
 ## セッション開始時の必須チェック
 
@@ -166,12 +157,6 @@ filemaker-ddr-viewer/
    - CI（fmt / clippy / test）が通ることを確認してから PR を作成する
    - main へのマージはユーザーが CI 確認後に実施する
 ```
-
-**ブランチを分けることが、ユーザーがフィードバックを与える機会を保証する手段である。**
-フェーズ1での中断承認待ちは廃止したが、その代わりにブランチ分離・PR レビューを必須とする。
-
-過去に content カラム全検索のバグが「設計時に議論済みだったのに実装時に忘れた」という
-事態が発生した。ADR ドキュメントファーストで防ぐ。
 
 ---
 
@@ -277,29 +262,6 @@ npm run test -- --coverage    # カバレッジ
 | 統合テスト | `src-tauri/tests/` | 毎コミット |
 | フロントエンドテスト | `src/__tests__/` | 毎コミット |
 | スナップショットテスト | `src-tauri/src/**/snapshots/` | 毎コミット |
-| E2Eテスト | `tests/e2e/` | リリース前 |
-
-## ビルド & 開発コマンド
-
-```bash
-# 開発
-npm run tauri dev             # 開発サーバー起動（ホットリロード）
-
-# ビルド
-npm run tauri build           # プロダクションビルド
-
-# Rust
-cd src-tauri
-cargo build                   # Rustバックエンドビルド
-cargo test                    # Rustテスト
-cargo clippy -- -D warnings   # lint
-cargo fmt --check             # フォーマットチェック
-
-# フロントエンド
-npm run test                  # Vitest
-npm run lint                  # ESLint
-npm run build                 # Viteビルド
-```
 
 ## DDR XML 基本情報
 
@@ -322,7 +284,7 @@ npm run build                 # Viteビルド
 ```
 
 ### バージョン対応
-- FM14〜最新（2024/Claris）のDDR XMLに対応
+- FM17〜最新（Claris FileMaker）のDDR XMLに対応
 - `<FMPReport>` の `version` 属性からバージョン判定
 - `parser/version.rs` の `VersionAdapter` でバージョン差異を正規化
 
@@ -334,18 +296,6 @@ npm run build                 # Viteビルド
 - `CalculationField` — 計算式内の参照
 - `RelationshipField` — リレーションキーフィールド
 - `CustomFunctionCall` — カスタム関数呼び出し
-
-## ブランチ運用
-
-```
-main          ← 常にリリース可能な状態。CI が通っていること
-  └── feat/xxx    ← 機能開発
-  └── fix/xxx     ← バグ修正
-```
-
-- ある程度の変更はブランチを切ってから作業し、完了したら main に merge する
-- 小さなバグ修正・typo 修正は main 直接でも可
-- リリースは main に `v1.x.x` タグを push すると自動ビルド・Releases アップロードされる
 
 ## 作業進行時の注意
 

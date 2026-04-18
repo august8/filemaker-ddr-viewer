@@ -58,7 +58,7 @@ filemaker-ddr-viewer/
 
 | モジュール | 役割 |
 |-----------|------|
-| `parser/` | DDR XML をストリーミングパースして `DdrFile` 構造体に変換。FM14〜最新に対応 |
+| `parser/` | DDR XML をストリーミングパースして `DdrFile` 構造体に変換。FM17〜最新に対応 |
 | `db/schema.rs` | SQLite スキーマ定義・マイグレーション |
 | `db/repository/` | CRUD・FTS5 検索・solution/project 管理 |
 | `commands/import.rs` | `概要.xml` 起点の一括インポート・単体 DDR ファイルのインポート |
