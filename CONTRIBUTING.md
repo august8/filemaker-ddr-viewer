@@ -75,7 +75,7 @@ cargo test parser::     # モジュール指定
 
 ```bash
 npm run test             # Vitest（全テスト）
-npm run test -- --watch  # ウォッチモード
+npm run test:watch       # ウォッチモード
 npm run test -- --coverage  # カバレッジ
 ```
 

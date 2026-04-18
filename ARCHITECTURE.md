@@ -95,7 +95,7 @@ filemaker-ddr-viewer/
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
 | `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
 | `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
-| `detail/AllFieldsPanel.tsx` | 全フィールド横断一覧・絞り込み |
+| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel） |
 | `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |

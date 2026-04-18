@@ -33,8 +33,10 @@ filemaker-ddr-viewer/
 │       ├── commands/               # Tauri IPCコマンド（#[tauri::command]）
 │       │   ├── mod.rs
 │       │   ├── import.rs           # DDRインポート
-│       │   ├── search.rs           # 検索API
+│       │   ├── search.rs           # 検索API（FTS5）
 │       │   ├── analysis.rs         # 参照解析・壊れた参照
+│       │   ├── catalog.rs          # エンティティ一覧取得（list_*コマンド群）
+│       │   ├── field_refs.rs       # フィールド参照解析
 │       │   ├── callchain.rs        # コールチェーン
 │       │   └── diff.rs             # DDR差分比較
 │       ├── parser/                 # DDR XMLパーサー
@@ -55,20 +57,26 @@ filemaker-ddr-viewer/
 │       │   ├── call_chain.rs       # スクリプト呼び出しチェーン
 │       │   ├── report_card.rs      # システム健全性レポート
 │       │   └── diff_engine.rs      # DDR差分比較
-│       ├── search/                 # tantivy検索エンジン
+│       ├── search/                 # tantivy 全文検索（未使用、FTS5 で代替）
 │       │   ├── mod.rs
 │       │   ├── indexer.rs          # インデックス構築
 │       │   └── query.rs            # 検索クエリ実行
 │       └── db/                     # SQLiteデータ層
 │           ├── mod.rs
 │           ├── schema.rs           # テーブル定義・マイグレーション
-│           └── repository.rs       # CRUD操作
+│           └── repository/         # CRUD操作
+│               ├── mod.rs
+│               ├── import.rs       # DDRデータ挿入
+│               ├── catalog.rs      # エンティティ取得
+│               ├── search.rs       # FTS5検索
+│               └── solution.rs     # ソリューション・プロジェクト管理
 │
 ├── src/                            # React フロントエンド
 │   ├── App.tsx
 │   ├── main.tsx
 │   ├── components/
 │   │   ├── navigation/CategoryTree.tsx   # サイドバーツリー
+│   │   ├── MainContent.tsx         # メインエリアルーティング
 │   │   ├── SearchBar.tsx
 │   │   ├── SearchResults.tsx
 │   │   ├── SolutionList.tsx
@@ -77,6 +85,7 @@ filemaker-ddr-viewer/
 │   │   ├── ReportCard.tsx
 │   │   ├── BrokenRefsList.tsx
 │   │   ├── OrphanScriptsList.tsx
+│   │   ├── DiffView.tsx
 │   │   ├── RightPanel.tsx
 │   │   └── detail/
 │   │       ├── TableDetail.tsx
@@ -84,9 +93,20 @@ filemaker-ddr-viewer/
 │   │       ├── ScriptDetail.tsx
 │   │       ├── LayoutDetail.tsx
 │   │       ├── LayoutObjectDetail.tsx
+│   │       ├── AllTablesPanel.tsx
 │   │       ├── AllFieldsPanel.tsx
+│   │       ├── AllScriptsPanel.tsx
+│   │       ├── AllLayoutsPanel.tsx
+│   │       ├── AllTableOccurrencesPanel.tsx
+│   │       ├── AllRelationshipsPanel.tsx
+│   │       ├── AllValueListsPanel.tsx
+│   │       ├── AllCustomFunctionsPanel.tsx
 │   │       ├── ValueListDetail.tsx
 │   │       ├── CustomFunctionDetail.tsx
+│   │       ├── RelationshipGraphPanel.tsx  # D3/dagre グラフ（coverage除外）
+│   │       ├── SecurityPanel.tsx
+│   │       ├── UpgradeCheckPanel.tsx
+│   │       ├── UpgradeSettingsPanel.tsx
 │   │       ├── CallChainTree.tsx
 │   │       └── WhereUsed.tsx
 │   ├── hooks/useTauriCommand.ts
@@ -121,7 +141,6 @@ filemaker-ddr-viewer/
 ```
 
 **このチェックを省略すると、古い情報をもとに実装して手戻りが発生する。**
-過去に「フロントエンドが未実装」というメモリが残ったまま作業を続けた事例がある。
 
 ---
 
@@ -208,7 +227,7 @@ mod tests {
     // rstest でパラメータ化テスト
     #[rstest]
     #[case("tests/fixtures/minimal.xml", 3)]
-    #[case("tests/fixtures/large_scripts.xml", 150)]
+    #[case("tests/fixtures/minimal_summary.xml", 5)]
     fn test_parse_scripts(#[case] path: &str, #[case] expected_count: usize) {
         let content = std::fs::read_to_string(path).unwrap();
         let result = parse_scripts(&content).unwrap();
@@ -233,13 +252,13 @@ mod tests {
 
 ```bash
 npm run test                  # Vitest実行
-npm run test -- --watch       # ウォッチモード
+npm run test:watch            # ウォッチモード
 npm run test -- --coverage    # カバレッジ
 ```
 
 **コンポーネントテスト**: React Testing Library + Vitest
 
-**Tauri IPC モック**: `@tauri-apps/api/mocks` の `mockIPC()` を使用
+**Tauri IPC モック**: `vi.mock("@tauri-apps/api/core")` を使用
 
 ### カバレッジ目標
 
@@ -247,7 +266,6 @@ npm run test -- --coverage    # カバレッジ
 |---------|------|---------|
 | parser/ | 90%+ | 全XMLセクション、バージョン差異、エッジケース |
 | analyzer/ | 85%+ | 壊れた参照検出、循環参照、コールチェーン |
-| search/ | 80%+ | インデックス構築、クエリ正確性 |
 | db/ | 80%+ | CRUD操作、マイグレーション |
 | commands/ | 70%+ | IPC入出力の型チェック |
 | stores/ + hooks/ | 80%+ | ロジック層（状態遷移・enabled ガード・スコープ計算） |
