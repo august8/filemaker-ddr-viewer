@@ -4,6 +4,7 @@ description: タスク全体を把握・設計するプランニングエージ�
 model: claude-sonnet-4-6
 tools:
   - Read
+  - Write
   - Glob
   - Grep
   - WebSearch
@@ -45,9 +46,11 @@ tools:
 
 ### 4. 出力形式
 
-以下の形式でプランを出力する:
+プランを `.claude/plan-current.md` に書き出し、**かつ**同じ内容をそのまま出力する。
 
-```
+`.claude/plan-current.md` のフォーマット:
+
+```markdown
 ## ブランチ名
 feat/xxx
 
@@ -71,6 +74,8 @@ feat/xxx
 ## 再利用できる既存コード
 - src-tauri/src/xxx.rs の `fn yyy()`: （説明）
 ```
+
+このファイルは impl-agent が読み込み後に自動削除する。gitignore済みのため誤ってコミットされることはない。
 
 ## 禁止事項
 

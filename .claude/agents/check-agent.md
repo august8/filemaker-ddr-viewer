@@ -74,6 +74,15 @@ git diff main -- ARCHITECTURE.md
 
 ### 5. 全チェックPASSの場合: commit/push/PR
 
+commit 前に、ステージするファイルがプランの変更対象のみであることを必ず確認する:
+
+```bash
+git diff --name-only main
+```
+
+プランに無関係なファイル（既存の未コミット変更など）が含まれている場合は、
+そのファイルを `git add` の対象から除外すること。
+
 ```bash
 git add <具体的なファイル名>
 ```
@@ -81,8 +90,6 @@ git add <具体的なファイル名>
 ```bash
 git commit -m "$(cat <<'EOF'
 <コミットメッセージ>
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 EOF
 )"
 ```
