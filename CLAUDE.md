@@ -12,7 +12,7 @@ OSS として公開中: https://github.com/august8/filemaker-ddr-viewer
 - **バックエンド**: Rust（全てのビジネスロジック）
 - **フロントエンド**: React 19 + TypeScript + Vite + TailwindCSS
 - **XML解析**: quick-xml + serde
-- **全文検索**: FTS5（SQLite 組み込み）※ Cargo.toml に tantivy が残っているが未使用
+- **全文検索**: FTS5（SQLite 組み込み）
 - **データ保存**: rusqlite (SQLite, bundled)
 - **グラフ解析**: petgraph
 - **フロントエンド可視化**: dagre（レイアウト計算）+ ネイティブ SVG
@@ -148,6 +148,46 @@ filemaker-ddr-viewer/
 └── CLAUDE.md                       # このファイル
 ```
 
+## エージェントワークフロー
+
+このプロジェクトでは `.claude/agents/` の3エージェントで作業を進める。
+各エージェントの詳細ルール（禁止事項・チェック手順等）はそれぞれの `.md` を参照。
+
+| エージェント | ファイル | 役割 |
+|-------------|---------|------|
+| plan-agent | `.claude/agents/plan-agent.md` | 調査・設計・承認（読み取り専用） |
+| impl-agent | `.claude/agents/impl-agent.md` | ブランチ作成・TDD実装（commit/push禁止） |
+| check-agent | `.claude/agents/check-agent.md` | CI確認・commit/push/PR作成 |
+
+### 典型的なフロー
+
+> **注意**: エージェントワークフローを使うときは**プランモードで会話を開始しない**。
+> プランモードはサブエージェントにも伝播し、impl-agent・check-agentが動けなくなる。
+> 各エージェントのsystem promptが役割制限を担うため、オーケストレーター側のプランモードは不要。
+
+```
+1. @plan-agent <タスク内容>
+   → プラン（ブランチ名・変更ファイル・テスト仕様）を出力
+
+2. プランを確認・承認する
+
+3. @impl-agent <プランの内容をそのまま渡す>
+   → 完了報告（変更ファイル・テスト結果）を出力
+
+4. @check-agent
+   → PASS: PR作成まで実行 / FAIL: 差し戻しレポートを出力
+   → FAILの場合は @impl-agent <差し戻しレポート> で再実行
+```
+
+### 最重要ルール（エージェント共通）
+
+- **main への直接 commit/push は絶対禁止**
+- **ブランチ名**: `feat/`, `fix/`, `refactor/`, `docs/`, `test/` のいずれかで始める
+- **TDD**: テストを先に書いてREDを確認してから実装する
+- **ファイルに触れる前にブランチを切る**（ブランチを切る前の編集は禁止）
+
+---
+
 ## セッション開始時の必須チェック
 
 **新しいセッションを開始したら、何も実装・提案する前に以下を必ず実行する。**
@@ -176,15 +216,14 @@ filemaker-ddr-viewer/
 
 ```
 1. プランモードで作業範囲を確認・承認する（必須）
-   - EnterPlanMode を使い、作業対象・確認箇所を全て列挙する
+   → plan-agent に委任するか、EnterPlanMode で手動で行う
    - 調査が必要なものはここで全て洗い出し、漏れなく確認する
    - ユーザーの承認を得てからプランモードを抜ける
    - 承認なしにファイル編集・実装に進むことは禁止
 
 2. main から作業ブランチを切る（必須）
-   - **ファイルに一切触れる前に** ブランチを切ること。編集してからブランチを切るのは禁止
-   - ブランチ名は feat/xxx、fix/xxx、refactor/xxx 等
-   - ドキュメント修正・小さな変更であっても例外なし
+   → impl-agent が自動で行う（手動の場合も同じルールに従う）
+   - ファイルに一切触れる前にブランチを切ること
    - main への直接コミット・プッシュは絶対禁止
 
 3. 必要な場合のみ ADR を作成する（docs/decisions/NNNN-slug.md）
@@ -194,20 +233,18 @@ filemaker-ddr-viewer/
      - DB スキーマ・IPC 設計・パーサー構造など後から覆しにくい決定
    - **書かなくてよいもの**: バグ修正・ライブラリ更新・コードを読めば自明な実装方針
    - ファイル名は `NNNN-slug.md`（連番）。NNNN は docs/decisions/ の最大番号 + 1
-   - 外部との設計議論が必要な場合は gh issue create で Issue も立てる
 
 4. テストを書いてから実装する（TDD）
-   - テストコードで仕様を表現する
-   - cargo test / npm run test を実行して Green を確認する
+   → impl-agent が自動で行う（詳細は `.claude/agents/impl-agent.md` 参照）
 
 5. ADR を作成した場合、実装完了後にステータスを Proposed → Accepted に更新する
    - docs/decisions/README.md のインデックスも追加する
 
 6. ARCHITECTURE.md を最終確認・更新する
-   - 実装で判明した追加の制約・注意点を反映する
+   → check-agent が更新漏れを検出する
 
 7. PR を作成して完了とする
-   - CI（fmt / clippy / test）が通ることを確認してから PR を作成する
+   → check-agent が CI確認後にPR作成まで実行する
    - main へのマージはユーザーが CI 確認後に実施する
 ```
 
