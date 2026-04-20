@@ -10,8 +10,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  rust:
-    name: Rust
+  rust-check:
+    name: Rust (check)
     runs-on: windows-latest
     defaults:
       run:
@@ -33,14 +33,39 @@ jobs:
         run: |
           rustup target add x86_64-pc-windows-msvc
 
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
       - name: fmt
         run: cargo fmt --check
 
       - name: clippy
         run: cargo clippy -- -D warnings
+
+      - name: test
+        run: cargo test --lib
+
+  rust-coverage:
+    name: Rust (coverage)
+    runs-on: windows-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Tauri dependencies
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: test with coverage
         run: cargo llvm-cov --lib --lcov --output-path lcov.info
