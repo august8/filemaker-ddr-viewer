@@ -19,8 +19,10 @@ temp
 coverage/
 
 
-# Claude Code
-.claude/
+# Claude Code (settings.local.json はローカル専用のため除外、agents/ と settings.json はバージョン管理)
+.claude/*
+!.claude/agents/
+!.claude/settings.json
 
 # DDR Sample
 .DDRSample/*
