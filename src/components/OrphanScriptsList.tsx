@@ -1,4 +1,5 @@
-import { useOrphanScripts, useScriptList } from "../hooks/useTauriCommand";
+import { useOrphanScripts } from "../hooks/analysis";
+import { useScriptList } from "../hooks/script";
 import { useAppStore } from "../stores/appStore";
 import { BADGE_VARIANTS } from "../styles/tokens";
 import { Spinner } from "./Spinner";

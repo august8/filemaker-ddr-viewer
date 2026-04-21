@@ -13,7 +13,7 @@ import { StatusBar } from "./components/StatusBar";
 import { UpgradeSettingsPanel } from "./components/detail/UpgradeSettingsPanel";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAppStore } from "./stores/appStore";
-import { useTableFields } from "./hooks/useTauriCommand";
+import { useTableFields } from "./hooks/table";
 import "./index.css";
 
 const queryClient = new QueryClient({

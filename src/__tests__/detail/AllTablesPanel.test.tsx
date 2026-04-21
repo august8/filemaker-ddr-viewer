@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllTablesPanel } from "../../components/detail/AllTablesPanel";
 import { makeTableRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/table", () => ({
   useTableList: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useTableList } from "../../hooks/useTauriCommand";
+import { useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 
 const mockTables = [

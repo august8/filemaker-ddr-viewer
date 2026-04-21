@@ -2,35 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
-import {
-  useSearch,
-  useSolutionProjects,
-  useProjectSummary,
-  useBrokenRefs,
-  useReportCard,
-  useTableList,
-  useTableFields,
-  useScriptList,
-  useScriptSteps,
-  useLayoutList,
-  useLayoutObjects,
-  useLayoutTriggers,
-  useRelationshipList,
-  useTableOccurrenceList,
-  useAllProjects,
-  useDeleteSolution,
-  useDeleteProject,
-  useValueListList,
-  useCustomFunctionList,
-  useFieldRefs,
-  useFieldLayoutRefs,
-  useFieldRelationshipKeys,
-  useUnusedFields,
-  useOrphanScripts,
-  useCallChain,
-  useAccountList,
-  usePrivilegeSetList,
-} from "../hooks/useTauriCommand";
+import { useSearch } from "../hooks/search";
+import { useSolutionProjects, useProjectSummary, useAllProjects, useDeleteSolution, useDeleteProject } from "../hooks/solutions";
+import { useBrokenRefs, useReportCard, useUnusedFields, useOrphanScripts } from "../hooks/analysis";
+import { useTableList, useTableFields, useRelationshipList, useTableOccurrenceList } from "../hooks/table";
+import { useScriptList, useScriptSteps, useCallChain } from "../hooks/script";
+import { useLayoutList, useLayoutObjects, useLayoutTriggers } from "../hooks/layout";
+import { useValueListList, useCustomFunctionList } from "../hooks/catalog";
+import { useFieldRefs, useFieldLayoutRefs, useFieldRelationshipKeys } from "../hooks/fieldRefs";
+import { useAccountList, usePrivilegeSetList } from "../hooks/security";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),

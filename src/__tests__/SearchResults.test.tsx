@@ -6,7 +6,7 @@ import { useSearchFiltering } from "../hooks/useSearchFiltering";
 import type { SearchResult } from "../types/ddr";
 import { SearchResults } from "../components/SearchResults";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/search", () => ({
   useSearch: vi.fn(),
 }));
 
@@ -22,7 +22,7 @@ vi.mock("../stores/appStore", () => ({
   })),
 }));
 
-import { useSearch } from "../hooks/useTauriCommand";
+import { useSearch } from "../hooks/search";
 
 const mockResults: SearchResult[] = [
   { project_id: 1, element_type: "script", element_id: 1, name: "My Script", snippet: "some snippet", rank: 1.0, parent_id: null, parent_name: null },

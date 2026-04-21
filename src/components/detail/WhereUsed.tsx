@@ -1,5 +1,5 @@
 // src/components/detail/WhereUsed.tsx
-import { useCallers, useScriptList } from "../../hooks/useTauriCommand";
+import { useCallers, useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 
 interface Props {

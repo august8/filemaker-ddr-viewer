@@ -1,5 +1,5 @@
 import { useAppStore } from "../stores/appStore";
-import { useProjectSummary } from "../hooks/useTauriCommand";
+import { useProjectSummary } from "../hooks/solutions";
 
 export function StatusBar() {
   const { selectedProject, searchQuery, searchDuration } = useAppStore();

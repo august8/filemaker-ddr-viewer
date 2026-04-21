@@ -1,6 +1,6 @@
 // src/components/detail/TableDetail.tsx
 import { useMemo } from "react";
-import { useTableFields, useTableList } from "../../hooks/useTauriCommand";
+import { useTableFields, useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 import type { FieldRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";

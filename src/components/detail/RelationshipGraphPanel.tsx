@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import dagre from "dagre";
-import { useTableOccurrenceList, useRelationshipList } from "../../hooks/useTauriCommand";
+import { useTableOccurrenceList, useRelationshipList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 import type { TableOccurrenceRow, RelationshipRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { SolutionList } from "../components/SolutionList";
 import type { SolutionRow } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/solutions", () => ({
   useSolutions: vi.fn(),
   useDeleteSolution: vi.fn(),
   useSolutionProjects: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock("../components/navigation/CategoryTree", () => ({
   CategoryTree: () => null,
 }));
 
-import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject } from "../hooks/useTauriCommand";
+import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 
 const mockSolutions: SolutionRow[] = [

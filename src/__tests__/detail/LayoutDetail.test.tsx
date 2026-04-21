@@ -3,11 +3,13 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LayoutDetail } from "../../components/detail/LayoutDetail";
 import { makeLayoutRow, makeTriggerRow, makeLayoutObjectRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/layout", () => ({
   useLayoutTriggers: vi.fn(),
   useLayoutObjects: vi.fn(),
-  useScriptList: vi.fn(),
   useLayoutList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../../hooks/script", () => ({
+  useScriptList: vi.fn(),
 }));
 
 vi.mock("../../stores/appStore", () => ({
@@ -19,12 +21,8 @@ vi.mock("../../stores/appStore", () => ({
   })),
 }));
 
-import {
-  useLayoutTriggers,
-  useLayoutObjects,
-  useScriptList,
-  useLayoutList,
-} from "../../hooks/useTauriCommand";
+import { useLayoutTriggers, useLayoutObjects, useLayoutList } from "../../hooks/layout";
+import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 
 const mockLayout = makeLayoutRow({

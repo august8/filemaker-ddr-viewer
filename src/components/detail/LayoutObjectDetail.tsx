@@ -2,12 +2,8 @@
 import React, { useMemo } from "react";
 import { CODE_BLOCK } from "../../styles/tokens";
 import { Spinner } from "../Spinner";
-import {
-  useLayoutObjects,
-  useLayoutObjectConditions,
-  useLayoutList,
-  useResolveLayoutField,
-} from "../../hooks/useTauriCommand";
+import { useLayoutObjects, useLayoutObjectConditions, useLayoutList } from "../../hooks/layout";
+import { useResolveLayoutField } from "../../hooks/fieldRefs";
 import { useAppStore } from "../../stores/appStore";
 import type { LayoutObjectRow } from "../../types/ddr";
 

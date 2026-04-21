@@ -1,5 +1,5 @@
 // src/components/detail/ValueListDetail.tsx
-import { useValueListItems } from "../../hooks/useTauriCommand";
+import { useValueListItems } from "../../hooks/catalog";
 import type { ValueListRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 

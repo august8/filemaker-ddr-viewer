@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { UpgradeCheckPanel } from "../../components/detail/UpgradeCheckPanel";
 import type { UpgradeHit } from "../../types/ddr";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/analysis", () => ({
   useUpgradeCheck: vi.fn(),
 }));
 
@@ -22,7 +22,7 @@ vi.mock("../../stores/appStore", () => ({
 vi.mock("@tauri-apps/plugin-dialog", () => ({ save: vi.fn().mockResolvedValue(null) }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
-import { useUpgradeCheck } from "../../hooks/useTauriCommand";
+import { useUpgradeCheck } from "../../hooks/analysis";
 
 const mockHits: UpgradeHit[] = [
   {

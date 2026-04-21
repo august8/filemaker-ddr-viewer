@@ -3,9 +3,13 @@ import { render, screen } from "@testing-library/react";
 import { BrokenRefsList } from "../components/BrokenRefsList";
 import type { BrokenRef } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/analysis", () => ({
   useBrokenRefs: vi.fn(),
+}));
+vi.mock("../hooks/script", () => ({
   useScriptList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../hooks/layout", () => ({
   useLayoutList: vi.fn(() => ({ data: [], isLoading: false })),
 }));
 
@@ -13,7 +17,7 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(() => ({ selectElement: vi.fn() })),
 }));
 
-import { useBrokenRefs } from "../hooks/useTauriCommand";
+import { useBrokenRefs } from "../hooks/analysis";
 
 const mockBrokenRefs: BrokenRef[] = [
   { kind: "performScript", source_name: "Script A", target_script_name: "Missing Script" },

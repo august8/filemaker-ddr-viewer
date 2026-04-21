@@ -3,11 +3,11 @@ import { render, screen } from "@testing-library/react";
 import { AllRelationshipsPanel } from "../../components/detail/AllRelationshipsPanel";
 import { makeRelationshipRow, makePredicateRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/table", () => ({
   useRelationshipList: vi.fn(),
 }));
 
-import { useRelationshipList } from "../../hooks/useTauriCommand";
+import { useRelationshipList } from "../../hooks/table";
 
 const mockRelationships = [
   makeRelationshipRow({

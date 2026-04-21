@@ -1,5 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { useImportSolution } from "../hooks/useTauriCommand";
+import { useImportSolution } from "../hooks/solutions";
 import { Spinner } from "./Spinner";
 
 export function ImportButton() {

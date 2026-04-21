@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
-import { useAllProjects } from "../hooks/useTauriCommand";
+import { useAllProjects } from "../hooks/solutions";
 
 // @tauri-apps/api/core の invoke をモック
 vi.mock("@tauri-apps/api/core", () => ({

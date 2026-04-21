@@ -3,12 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { SecurityPanel } from "../components/detail/SecurityPanel";
 import type { AccountRow, PrivilegeSetRow } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/security", () => ({
   useAccountList: vi.fn(),
   usePrivilegeSetList: vi.fn(),
 }));
 
-import { useAccountList, usePrivilegeSetList } from "../hooks/useTauriCommand";
+import { useAccountList, usePrivilegeSetList } from "../hooks/security";
 
 const mockAccounts: AccountRow[] = [
   { id: 1, fm_id: 1, name: "Admin", privilege_set: "[Full Access]", enabled: true },

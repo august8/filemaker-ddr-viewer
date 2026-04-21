@@ -1,4 +1,6 @@
-import { useBrokenRefs, useScriptList, useLayoutList } from "../hooks/useTauriCommand";
+import { useBrokenRefs } from "../hooks/analysis";
+import { useScriptList } from "../hooks/script";
+import { useLayoutList } from "../hooks/layout";
 import { useAppStore } from "../stores/appStore";
 import type { BrokenRef } from "../types/ddr";
 import { BADGE_VARIANTS, LIST_ROW } from "../styles/tokens";

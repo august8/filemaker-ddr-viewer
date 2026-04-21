@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useRelationshipList } from "../../hooks/useTauriCommand";
+import { useRelationshipList } from "../../hooks/table";
 import type { RelationshipRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 

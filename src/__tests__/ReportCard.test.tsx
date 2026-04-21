@@ -3,9 +3,13 @@ import { render, screen } from "@testing-library/react";
 import { ReportCard } from "../components/ReportCard";
 import type { ReportCard as ReportCardType } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/analysis", () => ({
   useReportCard: vi.fn(),
+}));
+vi.mock("../hooks/script", () => ({
   useScriptList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../hooks/layout", () => ({
   useLayoutList: vi.fn(() => ({ data: [], isLoading: false })),
 }));
 
@@ -13,7 +17,7 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(() => ({ selectElement: vi.fn() })),
 }));
 
-import { useReportCard } from "../hooks/useTauriCommand";
+import { useReportCard } from "../hooks/analysis";
 
 describe("ReportCard", () => {
   it("renders_nothing_when_no_project", () => {

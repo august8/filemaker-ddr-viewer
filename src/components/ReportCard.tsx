@@ -1,4 +1,6 @@
-import { useReportCard, useScriptList, useLayoutList } from "../hooks/useTauriCommand";
+import { useReportCard } from "../hooks/analysis";
+import { useScriptList } from "../hooks/script";
+import { useLayoutList } from "../hooks/layout";
 import { useAppStore } from "../stores/appStore";
 import type { Severity, ReportIssue } from "../types/ddr";
 import { BADGE_VARIANTS } from "../styles/tokens";

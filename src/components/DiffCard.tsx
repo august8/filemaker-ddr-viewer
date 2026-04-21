@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useAllProjects, useCompareSolutions } from "../hooks/useTauriCommand";
+import { useAllProjects } from "../hooks/solutions";
+import { useCompareSolutions } from "../hooks/diff";
 import { useAppStore } from "../stores/appStore";
 import type { DiffItem, DiffKind } from "../types/ddr";
 import { Spinner } from "./Spinner";

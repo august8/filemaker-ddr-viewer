@@ -3,27 +3,30 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CategoryTree } from "../../components/navigation/CategoryTree";
 import { makeTableRow, makeScriptRow, makeLayoutRow, makeValueListRow, makeCustomFunctionRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/table", () => ({
   useTableList: vi.fn(),
-  useScriptList: vi.fn(),
-  useLayoutList: vi.fn(),
-  useValueListList: vi.fn(),
-  useCustomFunctionList: vi.fn(),
   useTableOccurrenceList: vi.fn(() => ({ data: [] })),
   useRelationshipList: vi.fn(() => ({ data: [] })),
+}));
+vi.mock("../../hooks/script", () => ({
+  useScriptList: vi.fn(),
+}));
+vi.mock("../../hooks/layout", () => ({
+  useLayoutList: vi.fn(),
+}));
+vi.mock("../../hooks/catalog", () => ({
+  useValueListList: vi.fn(),
+  useCustomFunctionList: vi.fn(),
 }));
 
 vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import {
-  useTableList,
-  useScriptList,
-  useLayoutList,
-  useValueListList,
-  useCustomFunctionList,
-} from "../../hooks/useTauriCommand";
+import { useTableList } from "../../hooks/table";
+import { useScriptList } from "../../hooks/script";
+import { useLayoutList } from "../../hooks/layout";
+import { useValueListList, useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 
 const mockTables = [

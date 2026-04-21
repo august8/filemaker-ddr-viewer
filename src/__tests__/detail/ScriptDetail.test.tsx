@@ -4,7 +4,7 @@ import { ScriptDetail } from "../../components/detail/ScriptDetail";
 import { makeScriptRow, makeScriptStepRow } from "../testFixtures";
 import type { ScriptStepRow } from "../../types/ddr";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/script", () => ({
   useScriptSteps: vi.fn(),
   useCallers: vi.fn(() => ({ data: [], isLoading: false })),
   useScriptList: vi.fn(() => ({ data: [], isLoading: false })),
@@ -17,7 +17,7 @@ vi.mock("../../stores/appStore", () => ({
   }),
 }));
 
-import { useScriptSteps, useScriptList } from "../../hooks/useTauriCommand";
+import { useScriptSteps, useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 
 const mockScript = makeScriptRow({ id: 1, name: "Main Script", step_count: 2 });

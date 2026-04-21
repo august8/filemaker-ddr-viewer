@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllCustomFunctionsPanel } from "../../components/detail/AllCustomFunctionsPanel";
 import { makeCustomFunctionRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/catalog", () => ({
   useCustomFunctionList: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useCustomFunctionList } from "../../hooks/useTauriCommand";
+import { useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 
 const mockCFs = [

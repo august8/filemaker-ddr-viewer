@@ -1,6 +1,6 @@
 // src/components/detail/AllFieldsPanel.tsx
 import { useState, useMemo } from "react";
-import { useAllFields } from "../../hooks/useTauriCommand";
+import { useAllFields } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
 

@@ -1,4 +1,4 @@
-import { useFieldRelationshipKeys } from "../../../hooks/useTauriCommand";
+import { useFieldRelationshipKeys } from "../../../hooks/fieldRefs";
 import { useAppStore } from "../../../stores/appStore";
 import { Spinner } from "../../Spinner";
 import { BADGE_VARIANTS, SECTION_HEADER } from "../../../styles/tokens";
