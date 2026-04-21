@@ -162,4 +162,54 @@ mod tests {
         let orphans = crate::analyzer::orphans::find_orphan_scripts(&ddr);
         assert!(orphans.len() <= ddr.scripts.len());
     }
+
+    #[test]
+    fn find_callers_returns_empty_for_root_script() {
+        // minimal.xml: Script id=1 "Hello World" は誰にも呼ばれていない
+        let ddr = setup_ddr();
+        let callers = find_callers(&ddr, ScriptId(1));
+        assert!(
+            callers.is_empty(),
+            "呼び出し元がないスクリプトの呼び出し元は空であること"
+        );
+    }
+
+    #[test]
+    fn find_callers_returns_empty_for_nonexistent_script() {
+        // 存在しないスクリプト ID の呼び出し元は空
+        let ddr = setup_ddr();
+        let callers = find_callers(&ddr, ScriptId(99999));
+        assert!(
+            callers.is_empty(),
+            "存在しない ID の呼び出し元は空であること"
+        );
+    }
+
+    #[test]
+    fn call_chain_leaf_script_has_no_children() {
+        // minimal.xml: "Hello World" は Perform Script で "Another Script" を参照しているが、
+        // "Another Script" はカタログに定義されていないため子ノードは 0 件になる
+        let ddr = setup_ddr();
+        let node = build_call_chain(&ddr, ScriptId(1), None).unwrap();
+        assert_eq!(node.depth, 0, "ルートノードの depth は 0 であること");
+        assert!(
+            node.children.is_empty(),
+            "カタログ未定義の参照先は子ノードに含まれないこと"
+        );
+    }
+
+    #[test]
+    fn orphan_scripts_are_not_called_by_anyone() {
+        // 孤立スクリプトは find_callers で 0 件になること
+        let ddr = setup_ddr();
+        let orphans = crate::analyzer::orphans::find_orphan_scripts(&ddr);
+        for orphan in &orphans {
+            let callers = find_callers(&ddr, ScriptId(orphan.script_id));
+            assert!(
+                callers.is_empty(),
+                "孤立スクリプト {} の呼び出し元は存在しないこと",
+                orphan.script_name
+            );
+        }
+    }
 }

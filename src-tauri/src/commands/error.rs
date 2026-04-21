@@ -10,19 +10,19 @@ use serde::Serialize;
 #[derive(Debug, Serialize, thiserror::Error)]
 #[serde(tag = "kind", content = "message")]
 pub enum CommandError {
-    #[error("Database error: {0}")]
+    #[error("データベースエラー: {0}")]
     Database(String),
 
-    #[error("Parse error: {0}")]
+    #[error("パースエラー: {0}")]
     Parse(String),
 
-    #[error("Not found: {0}")]
+    #[error("見つかりません: {0}")]
     NotFound(String),
 
-    #[error("IO error: {0}")]
+    #[error("IOエラー: {0}")]
     Io(String),
 
-    #[error("Internal error: {0}")]
+    #[error("内部エラー: {0}")]
     Internal(String),
 }
 
@@ -74,7 +74,7 @@ mod tests {
     fn from_string_maps_to_internal() {
         let err = CommandError::from("something went wrong".to_string());
         assert!(matches!(err, CommandError::Internal(_)));
-        assert_eq!(err.to_string(), "Internal error: something went wrong");
+        assert_eq!(err.to_string(), "内部エラー: something went wrong");
     }
 
     #[test]
@@ -88,7 +88,7 @@ mod tests {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let err = CommandError::from(io_err);
         assert!(matches!(err, CommandError::Io(_)));
-        assert!(err.to_string().contains("IO error"));
+        assert!(err.to_string().contains("IOエラー"));
     }
 
     #[test]
@@ -96,7 +96,7 @@ mod tests {
         let db_err = rusqlite::Error::QueryReturnedNoRows;
         let err = CommandError::from(db_err);
         assert!(matches!(err, CommandError::Database(_)));
-        assert!(err.to_string().contains("Database error"));
+        assert!(err.to_string().contains("データベースエラー"));
     }
 
     #[test]
@@ -134,23 +134,23 @@ mod tests {
     fn display_messages_are_correct() {
         assert_eq!(
             CommandError::Database("db err".to_string()).to_string(),
-            "Database error: db err"
+            "データベースエラー: db err"
         );
         assert_eq!(
             CommandError::Parse("parse err".to_string()).to_string(),
-            "Parse error: parse err"
+            "パースエラー: parse err"
         );
         assert_eq!(
             CommandError::NotFound("not found".to_string()).to_string(),
-            "Not found: not found"
+            "見つかりません: not found"
         );
         assert_eq!(
             CommandError::Io("io err".to_string()).to_string(),
-            "IO error: io err"
+            "IOエラー: io err"
         );
         assert_eq!(
             CommandError::Internal("internal".to_string()).to_string(),
-            "Internal error: internal"
+            "内部エラー: internal"
         );
     }
 }
