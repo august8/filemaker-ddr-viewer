@@ -1,4 +1,4 @@
-//! DDR ファイルのインポートコマンド。
+﻿//! DDR ファイルのインポートコマンド。
 
 use std::path::Path;
 use std::sync::Arc;
@@ -54,10 +54,7 @@ pub async fn import_solution(
 
     // 5. DB に solution を作成
     let solution_id = {
-        let mut db = state
-            .db
-            .lock()
-            .map_err(|e| CommandError::Internal(e.to_string()))?;
+        let mut db = super::lock_db(&state)?;
         insert_solution(&mut db, &solution_name, Some(&summary_path))
             .map_err(|e| CommandError::Database(format!("DB挿入エラー: {e}")))?
     };
@@ -83,10 +80,7 @@ pub async fn import_solution(
         let ddr_arc = Arc::new(ddr);
 
         let project_id = {
-            let mut db = state
-                .db
-                .lock()
-                .map_err(|e| CommandError::Internal(e.to_string()))?;
+            let mut db = super::lock_db(&state)?;
             insert_ddr_file(&mut db, &ddr_arc, solution_id, Some(&detail_path_str))
                 .map_err(|e| CommandError::Database(format!("DB挿入エラー ({file_name}): {e}")))?
         };
@@ -102,10 +96,7 @@ pub async fn import_solution(
     }
 
     // 7. solution + projects を取得して返す
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     let solution =
         crate::db::repository::get_solution(&db, solution_id).map_err(CommandError::from)?;
     let projects = get_solution_projects(&db, solution_id).map_err(CommandError::from)?;
@@ -134,10 +125,7 @@ pub async fn import_ddr(
 
     // 3. solution + project を DB に保存
     let (_solution_id, project_id) = {
-        let mut db = state
-            .db
-            .lock()
-            .map_err(|e| CommandError::Internal(e.to_string()))?;
+        let mut db = super::lock_db(&state)?;
         let sid = insert_solution(&mut db, &ddr_arc.file_name, Some(&file_path))
             .map_err(|e| CommandError::Database(format!("DB挿入エラー: {e}")))?;
         let pid = insert_ddr_file(&mut db, &ddr_arc, sid, Some(&file_path))
@@ -155,10 +143,7 @@ pub async fn import_ddr(
     }
 
     // 5. ProjectRow を返す
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     get_project(&db, project_id).map_err(CommandError::from)
 }
 

@@ -1,4 +1,4 @@
-//! プロジェクト管理・サマリー取得コマンド。
+﻿//! プロジェクト管理・サマリー取得コマンド。
 
 use rusqlite::{params, OptionalExtension as _};
 use serde::{Deserialize, Serialize};
@@ -94,10 +94,7 @@ pub(crate) fn build_project_summary(
 pub async fn list_solutions(
     state: tauri::State<'_, AppState>,
 ) -> Result<Vec<SolutionRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_solutions(&db).map_err(CommandError::from)
 }
 
@@ -107,10 +104,7 @@ pub async fn get_solution_projects(
     state: tauri::State<'_, AppState>,
     solution_id: i64,
 ) -> Result<Vec<ProjectRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     crate::db::repository::get_solution_projects(&db, solution_id).map_err(CommandError::from)
 }
 
@@ -120,10 +114,7 @@ pub async fn delete_solution(
     state: tauri::State<'_, AppState>,
     solution_id: i64,
 ) -> Result<(), CommandError> {
-    let mut db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let mut db = super::lock_db(&state)?;
     db_delete_solution(&mut db, solution_id).map_err(CommandError::from)
 }
 
@@ -132,10 +123,7 @@ pub async fn delete_solution(
 pub async fn list_projects(
     state: tauri::State<'_, AppState>,
 ) -> Result<Vec<ProjectRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_projects(&db).map_err(CommandError::from)
 }
 
@@ -145,10 +133,7 @@ pub async fn delete_project(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<(), CommandError> {
-    let mut db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let mut db = super::lock_db(&state)?;
     db_delete_project(&mut db, project_id).map_err(CommandError::from)
 }
 
@@ -158,10 +143,7 @@ pub async fn get_project_summary(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<ProjectSummary, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     build_project_summary(&db, project_id)
 }
 
@@ -193,10 +175,7 @@ pub async fn resolve_element_by_name(
     element_type: String,
     name: String,
 ) -> Result<Option<ElementRef>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     resolve_element_by_name_inner(&db.conn, project_id, &element_type, &name)
         .map_err(CommandError::from)
 }
@@ -236,10 +215,7 @@ pub async fn get_upgrade_check(
     solution_id: i64,
     check_items: Vec<CheckItemConfig>,
 ) -> Result<Vec<UpgradeHit>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     run_upgrade_check(&db, solution_id, &check_items).map_err(CommandError::from)
 }
 

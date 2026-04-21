@@ -1,4 +1,4 @@
-//! エンティティ一覧取得コマンド。
+﻿//! エンティティ一覧取得コマンド。
 
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
@@ -55,10 +55,7 @@ pub async fn list_tables(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<TableRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_tables(&db, project_id).map_err(CommandError::from)
 }
 
@@ -68,10 +65,7 @@ pub async fn list_all_fields(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<AllFieldRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     list_all_fields_inner(&db, project_id).map_err(CommandError::from)
 }
 
@@ -115,10 +109,7 @@ pub async fn list_table_fields(
     project_id: i64,
     table_id: i64,
 ) -> Result<Vec<FieldRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_table_fields(&db, project_id, table_id).map_err(CommandError::from)
 }
 
@@ -128,10 +119,7 @@ pub async fn list_scripts(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<ScriptRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_scripts(&db, project_id).map_err(CommandError::from)
 }
 
@@ -141,10 +129,7 @@ pub async fn list_script_steps(
     state: tauri::State<'_, AppState>,
     script_id: i64,
 ) -> Result<Vec<ScriptStepRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_script_steps(&db, script_id).map_err(CommandError::from)
 }
 
@@ -154,10 +139,7 @@ pub async fn list_layouts(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<LayoutRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_layouts(&db, project_id).map_err(CommandError::from)
 }
 
@@ -167,10 +149,7 @@ pub async fn list_layout_triggers(
     state: tauri::State<'_, AppState>,
     layout_id: i64,
 ) -> Result<Vec<TriggerRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_layout_triggers(&db, layout_id).map_err(CommandError::from)
 }
 
@@ -180,10 +159,7 @@ pub async fn list_layout_objects(
     state: tauri::State<'_, AppState>,
     layout_id: i64,
 ) -> Result<Vec<LayoutObjectRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_layout_objects(&db, layout_id).map_err(CommandError::from)
 }
 
@@ -193,10 +169,7 @@ pub async fn list_layout_object_conditions(
     state: tauri::State<'_, AppState>,
     object_id: i64,
 ) -> Result<Vec<ConditionRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_layout_object_conditions(&db, object_id).map_err(CommandError::from)
 }
 
@@ -206,10 +179,7 @@ pub async fn list_value_lists(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<ValueListRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_value_lists(&db, project_id).map_err(CommandError::from)
 }
 
@@ -219,10 +189,7 @@ pub async fn list_value_list_items(
     state: tauri::State<'_, AppState>,
     value_list_id: i64,
 ) -> Result<Vec<String>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_value_list_items(&db, value_list_id).map_err(CommandError::from)
 }
 
@@ -232,10 +199,7 @@ pub async fn list_custom_functions(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<CustomFunctionRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_custom_functions(&db, project_id).map_err(CommandError::from)
 }
 
@@ -245,10 +209,7 @@ pub async fn list_table_occurrences(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<TableOccurrenceRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_table_occurrences(&db, project_id).map_err(CommandError::from)
 }
 
@@ -258,10 +219,7 @@ pub async fn list_relationships(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<RelationshipRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_relationships(&db, project_id).map_err(CommandError::from)
 }
 
@@ -271,10 +229,7 @@ pub async fn list_accounts(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<AccountRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_accounts(&db, project_id).map_err(CommandError::from)
 }
 
@@ -284,10 +239,7 @@ pub async fn list_privilege_sets(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<PrivilegeSetRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     db_list_privilege_sets(&db, project_id).map_err(CommandError::from)
 }
 

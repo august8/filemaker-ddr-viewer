@@ -1,4 +1,4 @@
-//! DDR 差分比較コマンド。
+﻿//! DDR 差分比較コマンド。
 
 use crate::{
     analyzer::diff_engine::{diff_ddr, DiffItem, DiffKind, DiffResult},
@@ -25,10 +25,7 @@ pub struct ProjectWithSolution {
 pub async fn list_all_projects(
     state: tauri::State<'_, AppState>,
 ) -> Result<Vec<ProjectWithSolution>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     list_all_projects_inner(&db.conn).map_err(CommandError::from)
 }
 
@@ -79,17 +76,11 @@ pub async fn compare_solutions(
     solution_id_b: i64,
 ) -> Result<DiffResult, CommandError> {
     let projects_a = {
-        let db = state
-            .db
-            .lock()
-            .map_err(|e| CommandError::Internal(e.to_string()))?;
+        let db = super::lock_db(&state)?;
         get_solution_projects(&db, solution_id_a).map_err(CommandError::from)?
     };
     let projects_b = {
-        let db = state
-            .db
-            .lock()
-            .map_err(|e| CommandError::Internal(e.to_string()))?;
+        let db = super::lock_db(&state)?;
         get_solution_projects(&db, solution_id_b).map_err(CommandError::from)?
     };
 
