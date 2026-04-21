@@ -12,7 +12,7 @@ OSS として公開中: https://github.com/august8/filemaker-ddr-viewer
 - **バックエンド**: Rust（全てのビジネスロジック）
 - **フロントエンド**: React 19 + TypeScript + Vite + TailwindCSS
 - **XML解析**: quick-xml + serde
-- **全文検索**: FTS5（SQLite 組み込み）※ Cargo.toml に tantivy が残っているが未使用
+- **全文検索**: FTS5（SQLite 組み込み）
 - **データ保存**: rusqlite (SQLite, bundled)
 - **グラフ解析**: petgraph
 - **フロントエンド可視化**: dagre（レイアウト計算）+ ネイティブ SVG
