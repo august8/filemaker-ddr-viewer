@@ -13,3 +13,17 @@ pub mod import;
 pub mod search;
 
 pub use error::CommandError;
+
+/// `state.db` のロックを取得する共通ヘルパー。
+///
+/// 全コマンドで繰り返されていた
+/// `state.db.lock().map_err(|e| CommandError::Internal(e.to_string()))?`
+/// を一箇所に集約する。
+pub(crate) fn lock_db(
+    state: &crate::AppState,
+) -> Result<std::sync::MutexGuard<'_, crate::db::Database>, CommandError> {
+    state
+        .db
+        .lock()
+        .map_err(|e| CommandError::Internal(e.to_string()))
+}

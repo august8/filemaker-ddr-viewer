@@ -1,4 +1,4 @@
-//! FTS5 全文検索コマンド。
+﻿//! FTS5 全文検索コマンド。
 
 use crate::{
     commands::CommandError,
@@ -34,10 +34,7 @@ pub async fn search_elements(
         Some(0) | None => -1,
         Some(n) => n as i64,
     };
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
 
     if contains == Some(true) {
         search_contains(&db, project_id, solution_id, &query, sql_limit).map_err(CommandError::from)

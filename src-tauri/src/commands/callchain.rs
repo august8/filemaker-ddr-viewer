@@ -1,4 +1,4 @@
-//! スクリプト呼び出しチェーン解析コマンド。
+﻿//! スクリプト呼び出しチェーン解析コマンド。
 
 use std::sync::Arc;
 
@@ -38,10 +38,7 @@ pub(crate) fn get_ddr(
 
     // キャッシュにない場合はファイルパスから再読み込み
     let file_path = {
-        let db = state
-            .db
-            .lock()
-            .map_err(|e| CommandError::Internal(e.to_string()))?;
+        let db = super::lock_db(state)?;
         crate::db::repository::get_project(&db, project_id)
             .map_err(CommandError::from)?
             .file_path

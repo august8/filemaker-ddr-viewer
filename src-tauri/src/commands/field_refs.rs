@@ -1,4 +1,4 @@
-//! フィールド参照解析コマンド。
+﻿//! フィールド参照解析コマンド。
 
 use rusqlite::{params, OptionalExtension as _};
 use serde::{Deserialize, Serialize};
@@ -88,10 +88,7 @@ pub async fn get_field_refs(
     if table_name.is_empty() || field_name.is_empty() {
         return Ok(vec![]);
     }
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
 
     // 1. ベーステーブルに紐づく全オカレンス名を取得
     let occ_names =
@@ -152,10 +149,7 @@ pub async fn get_field_calc_refs(
     if table_name.is_empty() || field_name.is_empty() {
         return Ok(vec![]);
     }
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
 
     // 1. ベーステーブルに紐づく全オカレンス名を取得
     let occ_names =
@@ -221,10 +215,7 @@ pub async fn get_field_layout_refs(
     if table_name.is_empty() || field_name.is_empty() {
         return Ok(vec![]);
     }
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     get_field_layout_refs_inner(&db.conn, project_id, &table_name, &field_name)
         .map_err(CommandError::from)
 }
@@ -237,10 +228,7 @@ pub async fn resolve_layout_field(
     occurrence_name: String,
     field_name: String,
 ) -> Result<Option<FieldLocation>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     resolve_layout_field_inner(&db.conn, project_id, &occurrence_name, &field_name)
         .map_err(CommandError::from)
 }
@@ -259,10 +247,7 @@ pub async fn get_field_relationship_keys(
     if table_name.is_empty() || field_name.is_empty() {
         return Ok(vec![]);
     }
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     get_field_relationship_keys_inner(&db.conn, project_id, &table_name, &field_name)
         .map_err(CommandError::from)
 }
@@ -281,10 +266,7 @@ pub async fn list_unused_fields(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<Vec<UnusedFieldRow>, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     list_unused_fields_inner(&db.conn, project_id).map_err(CommandError::from)
 }
 
@@ -529,10 +511,7 @@ pub async fn get_layout_ref_debug_info(
     state: tauri::State<'_, AppState>,
     project_id: i64,
 ) -> Result<LayoutRefDebugInfo, CommandError> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|e| CommandError::Internal(e.to_string()))?;
+    let db = super::lock_db(&state)?;
     get_layout_ref_debug_info_inner(&db.conn, project_id).map_err(CommandError::from)
 }
 
