@@ -52,8 +52,7 @@ pub(crate) fn get_ddr(
     })?;
 
     let bytes = std::fs::read(&path).map_err(CommandError::from)?;
-    let xml = crate::commands::import::decode_ddr_bytes(&bytes)
-        .map_err(|e| CommandError::Parse(format!("デコードエラー: {e}")))?;
+    let xml = crate::parser::decode_ddr_bytes(&bytes).map_err(CommandError::from)?;
 
     let ddr = crate::parser::parse_ddr(&xml)
         .map_err(|e| CommandError::Parse(format!("パースエラー: {e}")))?;

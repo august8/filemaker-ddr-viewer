@@ -50,6 +50,12 @@ impl From<&str> for CommandError {
     }
 }
 
+impl From<crate::parser::ParseError> for CommandError {
+    fn from(e: crate::parser::ParseError) -> Self {
+        CommandError::Parse(e.to_string())
+    }
+}
+
 impl From<crate::db::DbError> for CommandError {
     fn from(e: crate::db::DbError) -> Self {
         match e {
