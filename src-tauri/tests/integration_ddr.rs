@@ -4,31 +4,8 @@
 //! パーサーが FM17〜22 の実出力に対して正常に動作することを検証する。
 //! テーブルなしファイルのパースも検証する。
 
-use filemaker_ddr_viewer_lib::parser::parse_ddr;
+use filemaker_ddr_viewer_lib::parser::{decode_ddr_bytes, parse_ddr};
 use rstest::rstest;
-
-/// UTF-16 LE/BE ファイルを文字列にデコードする。
-/// `commands/import.rs` の `decode_ddr_bytes` と同じロジック。
-fn decode_ddr_bytes(bytes: &[u8]) -> String {
-    // UTF-16 LE BOM
-    if bytes.starts_with(&[0xFF, 0xFE]) {
-        let words: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|c| u16::from_le_bytes([c[0], c[1]]))
-            .collect();
-        return String::from_utf16_lossy(&words);
-    }
-    // UTF-16 BE BOM
-    if bytes.starts_with(&[0xFE, 0xFF]) {
-        let words: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|c| u16::from_be_bytes([c[0], c[1]]))
-            .collect();
-        return String::from_utf16_lossy(&words);
-    }
-    // UTF-8 (フォールバック)
-    String::from_utf8_lossy(bytes).into_owned()
-}
 
 #[rstest]
 #[case("17.0.7.700")]
@@ -40,7 +17,7 @@ fn decode_ddr_bytes(bytes: &[u8]) -> String {
 fn parse_real_ddr_succeeds(#[case] version: &str) {
     let path = format!("../tests/ddr/{version}/BaseFile_fmp12.xml");
     let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
-    let xml = decode_ddr_bytes(&bytes);
+    let xml = decode_ddr_bytes(&bytes).expect("decode failed");
     let result = parse_ddr(&xml);
     assert!(
         result.is_ok(),
@@ -59,7 +36,7 @@ fn parse_real_ddr_succeeds(#[case] version: &str) {
 fn parse_real_ddr_version_detected(#[case] version: &str, #[case] expected_major: u32) {
     let path = format!("../tests/ddr/{version}/BaseFile_fmp12.xml");
     let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
-    let xml = decode_ddr_bytes(&bytes);
+    let xml = decode_ddr_bytes(&bytes).expect("decode failed");
     let ddr = parse_ddr(&xml).unwrap_or_else(|e| panic!("FM{version} パース失敗: {e}"));
     assert_eq!(
         ddr.fm_version.major, expected_major,
@@ -77,7 +54,7 @@ fn parse_real_ddr_version_detected(#[case] version: &str, #[case] expected_major
 fn parse_real_ddr_has_tables_and_fields(#[case] version: &str) {
     let path = format!("../tests/ddr/{version}/BaseFile_fmp12.xml");
     let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
-    let xml = decode_ddr_bytes(&bytes);
+    let xml = decode_ddr_bytes(&bytes).expect("decode failed");
     let ddr = parse_ddr(&xml).unwrap_or_else(|e| panic!("FM{version} パース失敗: {e}"));
     assert!(!ddr.tables.is_empty(), "FM{version}: テーブルが0件");
     let total_fields: usize = ddr.tables.iter().map(|t| t.fields.len()).sum();
@@ -88,7 +65,7 @@ fn parse_real_ddr_has_tables_and_fields(#[case] version: &str) {
 fn parse_no_table_ddr_succeeds() {
     let path = "../tests/ddr/NoTableDDR/NoTableFile_fmp12.xml";
     let bytes = std::fs::read(path).unwrap_or_else(|e| panic!("{path}: {e}"));
-    let xml = decode_ddr_bytes(&bytes);
+    let xml = decode_ddr_bytes(&bytes).expect("decode failed");
     let ddr = parse_ddr(&xml).unwrap_or_else(|e| panic!("テーブルなし DDR のパース失敗: {e}"));
     assert!(
         ddr.tables.is_empty(),

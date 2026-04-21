@@ -8,43 +8,9 @@ use crate::{
     db::repository::{
         get_project, get_solution_projects, insert_ddr_file, insert_solution, SolutionWithProjects,
     },
-    parser::{normalize_link, parse_ddr, parse_summary},
+    parser::{decode_ddr_bytes, normalize_link, parse_ddr, parse_summary},
     AppState,
 };
-
-// ---------------------------------------------------------------------------
-// ビジネスロジック（テスト可能な部分を分離）
-// ---------------------------------------------------------------------------
-
-/// DDR ファイルのバイト列を UTF-8 文字列にデコードする。
-///
-/// FileMaker DDR は UTF-16 LE BOM (`\xFF\xFE`) または UTF-8 で出力される。
-/// UTF-16 BE BOM (`\xFE\xFF`) および UTF-8 BOM (`\xEF\xBB\xBF`) にも対応。
-pub(crate) fn decode_ddr_bytes(bytes: &[u8]) -> Result<String, String> {
-    if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE {
-        // UTF-16 LE
-        let words: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|c| u16::from_le_bytes([c[0], c[1]]))
-            .collect();
-        String::from_utf16(&words)
-            .or_else(|_| Ok::<String, String>(String::from_utf16_lossy(&words)))
-    } else if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
-        // UTF-16 BE
-        let words: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|c| u16::from_be_bytes([c[0], c[1]]))
-            .collect();
-        String::from_utf16(&words)
-            .or_else(|_| Ok::<String, String>(String::from_utf16_lossy(&words)))
-    } else if bytes.len() >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF {
-        // UTF-8 BOM
-        String::from_utf8(bytes[3..].to_vec()).map_err(|e| format!("UTF-8 デコードエラー: {e}"))
-    } else {
-        // UTF-8 (BOM なし)
-        String::from_utf8(bytes.to_vec()).map_err(|e| format!("UTF-8 デコードエラー: {e}"))
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Tauri コマンド
@@ -282,70 +248,6 @@ mod tests {
         assert!(xml_result.is_ok());
         let parse_result = parse_summary(&xml_result.unwrap());
         assert!(parse_result.is_err());
-    }
-
-    #[test]
-    fn decode_ddr_bytes_utf8() {
-        let xml = b"<?xml version=\"1.0\"?><root/>";
-        let result = decode_ddr_bytes(xml).unwrap();
-        assert!(result.contains("<root/>"));
-    }
-
-    #[test]
-    fn decode_ddr_bytes_utf16_le_bom() {
-        // UTF-16 LE BOM + "AB"
-        let mut bytes: Vec<u8> = vec![0xFF, 0xFE];
-        for ch in "AB".encode_utf16() {
-            bytes.extend_from_slice(&ch.to_le_bytes());
-        }
-        let result = decode_ddr_bytes(&bytes).unwrap();
-        assert_eq!(result, "AB");
-    }
-
-    #[test]
-    fn decode_ddr_bytes_utf8_bom() {
-        let mut bytes = vec![0xEF, 0xBB, 0xBF];
-        bytes.extend_from_slice(b"hello");
-        let result = decode_ddr_bytes(&bytes).unwrap();
-        assert_eq!(result, "hello");
-    }
-
-    #[test]
-    fn decode_ddr_bytes_utf16_le_invalid_surrogate_falls_back_lossy() {
-        // UTF-16 LE BOM + 孤立サロゲート 0xD800 + 'A'
-        // 0xD800 はサロゲートペアの前半のみで不正な UTF-16
-        let mut bytes: Vec<u8> = vec![0xFF, 0xFE];
-        bytes.extend_from_slice(&0xD800_u16.to_le_bytes()); // 孤立サロゲート
-        bytes.extend_from_slice(&('A' as u16).to_le_bytes());
-        // 修正前: from_utf16() がエラーを返すため Err になる
-        // 修正後: from_utf16_lossy() にフォールバックして Ok (U+FFFD + 'A') になる
-        let result = decode_ddr_bytes(&bytes);
-        assert!(
-            result.is_ok(),
-            "不正UTF-16でもlossyフォールバックでOkを返すこと"
-        );
-        let s = result.unwrap();
-        assert!(s.contains('A'), "有効な文字はそのまま含まれること");
-        assert!(
-            s.contains('\u{FFFD}'),
-            "不正サロゲートはU+FFDDに置換されること"
-        );
-    }
-
-    #[test]
-    fn decode_ddr_bytes_utf16_be_invalid_surrogate_falls_back_lossy() {
-        // UTF-16 BE BOM + 孤立サロゲート 0xDC00 + 'B'
-        let mut bytes: Vec<u8> = vec![0xFE, 0xFF];
-        bytes.extend_from_slice(&0xDC00_u16.to_be_bytes()); // 孤立サロゲート（後半のみ）
-        bytes.extend_from_slice(&('B' as u16).to_be_bytes());
-        let result = decode_ddr_bytes(&bytes);
-        assert!(
-            result.is_ok(),
-            "BE版でも不正UTF-16でlossyフォールバックすること"
-        );
-        let s = result.unwrap();
-        assert!(s.contains('B'));
-        assert!(s.contains('\u{FFFD}'));
     }
 
     #[test]
