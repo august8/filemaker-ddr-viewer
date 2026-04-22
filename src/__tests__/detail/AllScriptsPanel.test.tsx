@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllScriptsPanel } from "../../components/detail/AllScriptsPanel";
 import { makeScriptRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/script", () => ({
   useScriptList: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useScriptList } from "../../hooks/useTauriCommand";
+import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 
 const mockScripts = [

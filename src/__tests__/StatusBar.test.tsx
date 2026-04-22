@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { StatusBar } from "../components/StatusBar";
 import type { ProjectSummary } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/solutions", () => ({
   useProjectSummary: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useProjectSummary } from "../hooks/useTauriCommand";
+import { useProjectSummary } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 
 const mockSummary: ProjectSummary = {

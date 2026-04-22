@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Spinner } from "./Spinner";
-import { useSearch } from "../hooks/useTauriCommand";
+import { useSearch } from "../hooks/search";
 import { useAppStore } from "../stores/appStore";
 import { useSearchFiltering } from "../hooks/useSearchFiltering";
 import type { SearchResult } from "../types/ddr";

@@ -3,9 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllTableOccurrencesPanel } from "../../components/detail/AllTableOccurrencesPanel";
 import { makeTableOccurrenceRow, makeTableRow, makeLayoutRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/table", () => ({
   useTableOccurrenceList: vi.fn(),
   useTableList: vi.fn(),
+}));
+vi.mock("../../hooks/layout", () => ({
   useLayoutList: vi.fn(),
 }));
 
@@ -13,11 +15,8 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import {
-  useTableOccurrenceList,
-  useTableList,
-  useLayoutList,
-} from "../../hooks/useTauriCommand";
+import { useTableOccurrenceList, useTableList } from "../../hooks/table";
+import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 
 const mockTOs = [

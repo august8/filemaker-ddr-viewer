@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppStore } from "../../stores/appStore";
-import { useUpgradeCheck } from "../../hooks/useTauriCommand";
+import { useUpgradeCheck } from "../../hooks/analysis";
 import type { UpgradeHit } from "../../types/ddr";
 import { CARD, SECTION_HEADER } from "../../styles/tokens";
 import { Spinner } from "../Spinner";

@@ -3,10 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { LayoutObjectDetail } from "../../components/detail/LayoutObjectDetail";
 import { makeLayoutObjectRow, makeLayoutRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/layout", () => ({
   useLayoutObjects: vi.fn(),
   useLayoutObjectConditions: vi.fn(() => ({ data: [] })),
   useLayoutList: vi.fn(),
+}));
+vi.mock("../../hooks/fieldRefs", () => ({
   useResolveLayoutField: vi.fn(() => ({ data: null })),
 }));
 
@@ -14,11 +16,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import {
-  useLayoutObjects,
-  useLayoutObjectConditions,
-  useLayoutList,
-} from "../../hooks/useTauriCommand";
+import { useLayoutObjects, useLayoutObjectConditions, useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 
 const baseObj = makeLayoutObjectRow({

@@ -1,7 +1,7 @@
 // src/components/detail/ScriptDetail.tsx
 import { useMemo, useState } from "react";
 import { diffArrays } from "diff";
-import { useScriptSteps, useScriptList } from "../../hooks/useTauriCommand";
+import { useScriptSteps, useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 import type { ScriptRow, ScriptStepRow } from "../../types/ddr";
 import { WhereUsed } from "./WhereUsed";

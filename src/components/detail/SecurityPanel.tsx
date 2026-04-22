@@ -1,4 +1,4 @@
-import { useAccountList, usePrivilegeSetList } from "../../hooks/useTauriCommand";
+import { useAccountList, usePrivilegeSetList } from "../../hooks/security";
 import { Spinner } from "../Spinner";
 
 interface Props {

@@ -1,4 +1,4 @@
-import { useProjectSummary } from "../hooks/useTauriCommand";
+import { useProjectSummary } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { Spinner } from "./Spinner";
 

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllFieldsPanel } from "../../components/detail/AllFieldsPanel";
 import { makeAllFieldRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/table", () => ({
   useAllFields: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useAllFields } from "../../hooks/useTauriCommand";
+import { useAllFields } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 
 const mockSetRightPanel = vi.fn();

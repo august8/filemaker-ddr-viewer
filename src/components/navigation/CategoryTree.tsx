@@ -1,15 +1,10 @@
 // src/components/navigation/CategoryTree.tsx
 import { useState, useEffect, useRef, forwardRef } from "react";
 import { flushSync } from "react-dom";
-import {
-  useTableList,
-  useScriptList,
-  useLayoutList,
-  useValueListList,
-  useCustomFunctionList,
-  useTableOccurrenceList,
-  useRelationshipList,
-} from "../../hooks/useTauriCommand";
+import { useTableList, useTableOccurrenceList, useRelationshipList } from "../../hooks/table";
+import { useScriptList } from "../../hooks/script";
+import { useLayoutList } from "../../hooks/layout";
+import { useValueListList, useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 import type { SelectedElement } from "../../stores/appStore";
 

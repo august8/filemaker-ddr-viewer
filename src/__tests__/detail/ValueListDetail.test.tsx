@@ -3,11 +3,11 @@ import { render, screen } from "@testing-library/react";
 import { ValueListDetail } from "../../components/detail/ValueListDetail";
 import { makeValueListRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/catalog", () => ({
   useValueListItems: vi.fn(),
 }));
 
-import { useValueListItems } from "../../hooks/useTauriCommand";
+import { useValueListItems } from "../../hooks/catalog";
 
 const mockValueList = makeValueListRow({ id: 1, name: "Status", item_count: 2 });
 const mockFieldValueList = makeValueListRow({ id: 2, fm_id: 2, name: "Projects", source: "Field" });

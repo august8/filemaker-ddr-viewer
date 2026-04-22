@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllLayoutsPanel } from "../../components/detail/AllLayoutsPanel";
 import { makeLayoutRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/layout", () => ({
   useLayoutList: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useLayoutList } from "../../hooks/useTauriCommand";
+import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 
 const mockLayouts = [

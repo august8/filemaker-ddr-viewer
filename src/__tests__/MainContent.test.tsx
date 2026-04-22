@@ -2,12 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MainContent } from "../components/MainContent";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/script", () => ({
   useScriptList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../hooks/layout", () => ({
   useLayoutList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../hooks/catalog", () => ({
   useValueListList: vi.fn(() => ({ data: [], isLoading: false })),
   useCustomFunctionList: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+vi.mock("../hooks/solutions", () => ({
   useProjectSummary: vi.fn(() => ({ data: null, isLoading: false })),
+}));
+vi.mock("../hooks/analysis", () => ({
   useReportCard: vi.fn(() => ({ data: null, isLoading: false })),
   useBrokenRefs: vi.fn(() => ({ data: [], isLoading: false })),
   useOrphanScripts: vi.fn(() => ({ data: [], isLoading: false })),
@@ -24,7 +32,9 @@ vi.mock("../stores/appStore", () => ({
 }));
 
 import { useAppStore } from "../stores/appStore";
-import { useScriptList, useLayoutList, useValueListList, useCustomFunctionList } from "../hooks/useTauriCommand";
+import { useScriptList } from "../hooks/script";
+import { useLayoutList } from "../hooks/layout";
+import { useValueListList, useCustomFunctionList } from "../hooks/catalog";
 
 describe("MainContent", () => {
   it("shows_not_found_when_script_missing", () => {

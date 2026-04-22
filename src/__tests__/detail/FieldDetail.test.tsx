@@ -3,13 +3,17 @@ import { render, screen } from "@testing-library/react";
 import { FieldDetail } from "../../components/detail/FieldDetail";
 import { makeFieldRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/fieldRefs", () => ({
   useFieldRefs: vi.fn(() => ({ data: [], isLoading: false })),
   useFieldCalcRefs: vi.fn(() => ({ data: [], isLoading: false })),
   useFieldLayoutRefs: vi.fn(() => ({ data: [], isLoading: false })),
   useFieldRelationshipKeys: vi.fn(() => ({ data: [], isLoading: false })),
   useLayoutRefDebugInfo: vi.fn(() => ({ data: undefined })),
+}));
+vi.mock("../../hooks/script", () => ({
   useScriptList: vi.fn(() => ({ data: [] })),
+}));
+vi.mock("../../hooks/layout", () => ({
   useLayoutList: vi.fn(() => ({ data: [] })),
 }));
 
@@ -97,7 +101,7 @@ describe("FieldDetail", () => {
   });
 
   it("shows_loading_spinner_for_calc_refs", async () => {
-    const { useFieldCalcRefs } = await import("../../hooks/useTauriCommand");
+    const { useFieldCalcRefs } = await import("../../hooks/fieldRefs");
     vi.mocked(useFieldCalcRefs).mockReturnValue(
       { data: [], isLoading: true } as unknown as ReturnType<typeof useFieldCalcRefs>
     );

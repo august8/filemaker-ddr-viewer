@@ -4,8 +4,10 @@ import { OrphanScriptsList } from "../components/OrphanScriptsList";
 import type { OrphanScript } from "../types/ddr";
 import { makeScriptRow } from "./testFixtures";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/analysis", () => ({
   useOrphanScripts: vi.fn(),
+}));
+vi.mock("../hooks/script", () => ({
   useScriptList: vi.fn(),
 }));
 
@@ -17,7 +19,8 @@ vi.mock("../stores/appStore", () => ({
 
 const mockSelectElement = vi.fn();
 
-import { useOrphanScripts, useScriptList } from "../hooks/useTauriCommand";
+import { useOrphanScripts } from "../hooks/analysis";
+import { useScriptList } from "../hooks/script";
 
 const mockScripts = [
   makeScriptRow({ id: 10, fm_id: 101, name: "UnusedScript", step_count: 3 }),

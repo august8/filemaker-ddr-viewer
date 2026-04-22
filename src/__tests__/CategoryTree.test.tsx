@@ -7,21 +7,27 @@ import { render, act, screen } from "@testing-library/react";
 import { CategoryTree } from "../components/navigation/CategoryTree";
 import type { SelectedElement } from "../stores/appStore";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/table", () => ({
   useTableList: vi.fn(() => ({
     data: [{ id: 1, name: "TestTable", field_count: 3 }],
   })),
+  useTableOccurrenceList: vi.fn(() => ({ data: [] })),
+  useRelationshipList: vi.fn(() => ({ data: [] })),
+}));
+vi.mock("../hooks/script", () => ({
   useScriptList: vi.fn(() => ({
     data: [
       { id: 10, name: "ScriptA", folder_level: 0, is_folder: false, is_separator: false },
       { id: 11, name: "ScriptB", folder_level: 0, is_folder: false, is_separator: false },
     ],
   })),
+}));
+vi.mock("../hooks/layout", () => ({
   useLayoutList: vi.fn(() => ({ data: [] })),
+}));
+vi.mock("../hooks/catalog", () => ({
   useValueListList: vi.fn(() => ({ data: [] })),
   useCustomFunctionList: vi.fn(() => ({ data: [] })),
-  useTableOccurrenceList: vi.fn(() => ({ data: [] })),
-  useRelationshipList: vi.fn(() => ({ data: [] })),
 }));
 
 vi.mock("../stores/appStore", () => ({

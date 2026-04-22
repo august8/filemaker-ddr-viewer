@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useUnusedFields, useTableList } from "../hooks/useTauriCommand";
+import { useUnusedFields } from "../hooks/analysis";
+import { useTableList } from "../hooks/table";
 import { useAppStore } from "../stores/appStore";
 import { BADGE_VARIANTS } from "../styles/tokens";
 import { Spinner } from "./Spinner";

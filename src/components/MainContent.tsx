@@ -23,12 +23,9 @@ import { SecurityPanel } from "./detail/SecurityPanel";
 import { RelationshipGraphPanel } from "./detail/RelationshipGraphPanel";
 import { UpgradeCheckPanel } from "./detail/UpgradeCheckPanel";
 import { useAppStore } from "../stores/appStore";
-import {
-  useScriptList,
-  useLayoutList,
-  useValueListList,
-  useCustomFunctionList,
-} from "../hooks/useTauriCommand";
+import { useScriptList } from "../hooks/script";
+import { useLayoutList } from "../hooks/layout";
+import { useValueListList, useCustomFunctionList } from "../hooks/catalog";
 
 export function MainContent() {
   const { selectedProject, selectedElement, searchQuery } = useAppStore();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects } from "../hooks/useTauriCommand";
+import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { CategoryTree } from "./navigation/CategoryTree";
 import { Spinner } from "./Spinner";

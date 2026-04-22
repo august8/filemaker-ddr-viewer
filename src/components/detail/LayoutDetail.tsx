@@ -1,6 +1,7 @@
 // src/components/detail/LayoutDetail.tsx
 import { useMemo } from "react";
-import { useLayoutTriggers, useLayoutObjects, useScriptList, useLayoutList } from "../../hooks/useTauriCommand";
+import { useLayoutTriggers, useLayoutObjects, useLayoutList } from "../../hooks/layout";
+import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 import type { LayoutRow, LayoutObjectRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";

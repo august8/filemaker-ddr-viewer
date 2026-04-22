@@ -1,6 +1,6 @@
 // src/components/detail/CallChainTree.tsx
 import { useState } from "react";
-import { useCallChain, useScriptList } from "../../hooks/useTauriCommand";
+import { useCallChain, useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 import type { CallChainNode } from "../../types/ddr";
 import { Spinner } from "../Spinner";

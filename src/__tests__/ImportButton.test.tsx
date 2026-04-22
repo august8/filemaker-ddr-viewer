@@ -11,11 +11,11 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/solutions", () => ({
   useImportSolution: vi.fn(),
 }));
 
-import { useImportSolution } from "../hooks/useTauriCommand";
+import { useImportSolution } from "../hooks/solutions";
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient();

@@ -1,8 +1,5 @@
-import {
-  useFieldLayoutRefs,
-  useLayoutList,
-  useLayoutRefDebugInfo,
-} from "../../../hooks/useTauriCommand";
+import { useFieldLayoutRefs, useLayoutRefDebugInfo } from "../../../hooks/fieldRefs";
+import { useLayoutList } from "../../../hooks/layout";
 import { useAppStore } from "../../../stores/appStore";
 import { Spinner } from "../../Spinner";
 import { SECTION_HEADER } from "../../../styles/tokens";

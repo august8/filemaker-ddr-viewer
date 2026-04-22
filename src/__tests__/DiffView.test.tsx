@@ -3,8 +3,10 @@ import { render, screen } from "@testing-library/react";
 import { DiffView } from "../components/DiffView";
 import type { ProjectWithSolution, DiffResult } from "../types/ddr";
 
-vi.mock("../hooks/useTauriCommand", () => ({
+vi.mock("../hooks/solutions", () => ({
   useAllProjects: vi.fn(),
+}));
+vi.mock("../hooks/diff", () => ({
   useCompareSolutions: vi.fn(),
 }));
 
@@ -12,7 +14,8 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useAllProjects, useCompareSolutions } from "../hooks/useTauriCommand";
+import { useAllProjects } from "../hooks/solutions";
+import { useCompareSolutions } from "../hooks/diff";
 import { useAppStore } from "../stores/appStore";
 import type { DiffStateData } from "../stores/appStore";
 

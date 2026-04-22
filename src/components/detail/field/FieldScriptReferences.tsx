@@ -1,4 +1,5 @@
-import { useFieldRefs, useScriptList } from "../../../hooks/useTauriCommand";
+import { useFieldRefs } from "../../../hooks/fieldRefs";
+import { useScriptList } from "../../../hooks/script";
 import { useAppStore } from "../../../stores/appStore";
 import { Spinner } from "../../Spinner";
 import { SECTION_HEADER } from "../../../styles/tokens";

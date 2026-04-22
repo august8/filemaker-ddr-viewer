@@ -1,11 +1,8 @@
 import { useState, useMemo } from "react";
 import { BADGE_VARIANTS } from "../../styles/tokens";
 import { Spinner } from "../Spinner";
-import {
-  useTableOccurrenceList,
-  useTableList,
-  useLayoutList,
-} from "../../hooks/useTauriCommand";
+import { useTableOccurrenceList, useTableList } from "../../hooks/table";
+import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 import type { LayoutRow } from "../../types/ddr";
 

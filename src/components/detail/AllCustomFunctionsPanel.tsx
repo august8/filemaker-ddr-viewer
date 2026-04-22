@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useCustomFunctionList } from "../../hooks/useTauriCommand";
+import { useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
 

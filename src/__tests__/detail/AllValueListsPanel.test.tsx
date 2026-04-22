@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AllValueListsPanel } from "../../components/detail/AllValueListsPanel";
 import { makeValueListRow } from "../testFixtures";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/catalog", () => ({
   useValueListList: vi.fn(),
 }));
 
@@ -11,7 +11,7 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
-import { useValueListList } from "../../hooks/useTauriCommand";
+import { useValueListList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 
 const mockValueLists = [

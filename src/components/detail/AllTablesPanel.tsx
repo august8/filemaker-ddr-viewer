@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useTableList } from "../../hooks/useTauriCommand";
+import { useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
 

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CallChainTree } from "../../components/detail/CallChainTree";
 import type { CallChainNode, ScriptRow } from "../../types/ddr";
 
-vi.mock("../../hooks/useTauriCommand", () => ({
+vi.mock("../../hooks/script", () => ({
   useCallChain: vi.fn(),
   useScriptList: vi.fn(),
 }));
@@ -16,7 +16,7 @@ vi.mock("../../stores/appStore", () => ({
 
 const mockSelectElement = vi.fn();
 
-import { useCallChain, useScriptList } from "../../hooks/useTauriCommand";
+import { useCallChain, useScriptList } from "../../hooks/script";
 
 const mockScripts: ScriptRow[] = [
   { id: 10, fm_id: 1, name: "Root Script", run_with_full_access: false, step_count: 2 },
