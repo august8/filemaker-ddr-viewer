@@ -4,6 +4,13 @@
 
 ---
 
+## [0.1.2] - 2026-04-23
+
+### その他 (Chore/Infra)
+- AIエージェントの開発環境をAntigravityベースに移行し、関連ドキュメント（AGENTS.md等）を整備
+
+---
+
 ## [0.1.1] - 2026-04-18
 
 ### 修正
@@ -41,5 +48,6 @@
 
 ---
 
+[0.1.2]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/august8/filemaker-ddr-viewer/releases/tag/v0.1.0
