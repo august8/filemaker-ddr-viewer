@@ -1,0 +1,8 @@
+# .antigravityignore
+node_modules/
+dist/
+src-tauri/target/
+*.lock
+**/*.min.js
+coverage/
+.env

@@ -52,7 +52,7 @@ ci: CI 設定の変更
 ### TypeScript / React
 
 - 関数コンポーネント + hooks のみ。class component は使わない
-- `invoke()` の呼び出しは `src/hooks/useTauriCommand.ts` にまとめ、コンポーネントから直接呼ばない
+- `invoke()` の呼び出しは `src/hooks/` 配下のドメイン別ファイルにまとめ、コンポーネントから直接呼ばない
 - グローバル状態は zustand、サーバー状態は @tanstack/react-query を使う
 
 ## テスト

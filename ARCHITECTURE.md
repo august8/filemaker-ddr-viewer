@@ -26,7 +26,7 @@ filemaker-ddr-viewer/
 │   ├── components/
 │   │   ├── navigation/CategoryTree.tsx
 │   │   └── detail/                 # 各詳細パネル
-│   ├── hooks/useTauriCommand.ts    # 全 invoke() はここに集約
+│   ├── hooks/                      # Tauri IPC フック（ドメイン別に分割）
 │   ├── stores/appStore.ts          # グローバル状態（zustand）
 │   └── types/ddr.ts                # 型定義
 ├── src-tauri/src/
@@ -112,7 +112,7 @@ filemaker-ddr-viewer/
 | `detail/field/FieldBasicProperties.tsx` 他 | FieldDetail のサブコンポーネント群（FieldAutoEnter / FieldCalcReferences / FieldLayoutReferences / FieldRelationshipReferences / FieldScriptReferences / FieldStorage / FieldValidationRules） |
 | `DiffView.tsx` | 差分比較ビュー |
 | `stores/appStore.ts` | グローバル状態（zustand） |
-| `hooks/useTauriCommand.ts` | 全 Tauri IPC フック |
+| `hooks/` 配下のファイル群 | 全 Tauri IPC フック |
 | `hooks/useSearchFiltering.ts` | 検索フィルタリングロジック |
 | `styles/tokens.ts` | デザイントークン定数 |
 

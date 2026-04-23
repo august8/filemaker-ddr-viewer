@@ -95,7 +95,7 @@ filemaker-ddr-viewer/
 ├── src/                        # React フロントエンド
 │   ├── components/             # UI コンポーネント
 │   │   └── detail/             # 各詳細パネル
-│   ├── hooks/useTauriCommand.ts # Tauri IPC フック（全 invoke はここ）
+│   ├── hooks/                   # Tauri IPC フック（ドメイン別に分割）
 │   ├── stores/appStore.ts      # グローバル状態（Zustand）
 │   └── types/ddr.ts            # 型定義
 ├── src-tauri/                  # Rust バックエンド
@@ -118,6 +118,12 @@ filemaker-ddr-viewer/
 | `CONTRIBUTING.md` | コーディング規約・テスト・PR の出し方 |
 | `docs/decisions/` | 設計判断記録（ADR） |
 | `CHANGELOG.md` | バージョン履歴 |
+
+---
+
+## Acknowledgements
+AI エージェントの設定は以下のリポジトリをベースにしています。
+- [imkohenauser/antigravity-starter-ja](https://github.com/imkohenauser/antigravity-starter-ja)
 
 ---
 
