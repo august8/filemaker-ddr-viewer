@@ -122,9 +122,7 @@ filemaker-ddr-viewer/
 │   │       ├── UpgradeSettingsPanel.tsx
 │   │       ├── CallChainTree.tsx
 │   │       └── WhereUsed.tsx
-│   ├── hooks/
-│   │   ├── useTauriCommand.ts
-│   │   └── useSearchFiltering.ts
+│   ├── hooks/                      # ドメイン別 IPC フック
 │   ├── styles/tokens.ts
 │   ├── stores/appStore.ts
 │   └── types/ddr.ts

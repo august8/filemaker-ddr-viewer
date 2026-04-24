@@ -95,7 +95,7 @@ filemaker-ddr-viewer/
 ├── src/                        # React フロントエンド
 │   ├── components/             # UI コンポーネント
 │   │   └── detail/             # 各詳細パネル
-│   ├── hooks/useTauriCommand.ts # Tauri IPC フック（全 invoke はここ）
+│   ├── hooks/                   # ドメイン別 IPC フック
 │   ├── stores/appStore.ts      # グローバル状態（Zustand）
 │   └── types/ddr.ts            # 型定義
 ├── src-tauri/                  # Rust バックエンド
