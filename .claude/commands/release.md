@@ -14,20 +14,24 @@ description: バンプ・CHANGELOG 更新・コミット・タグ作成をまと
    - バンプされていない場合: 「先に `/bump` を実行してください」と案内して終了
 3. `CHANGELOG.md` に `## [VERSION]` セクションが存在するか確認する
    - 存在しない場合: `/changelog` 相当の処理を実行してから続行する
-4. 以下のファイルを git ステージする:
+4. ステージ状態を確認する:
+   - `git diff --cached --name-only` で既にステージ済みのファイルを確認する
+   - `git diff --name-only` で未ステージの変更ファイルを確認する
+   - バージョンファイル（`package.json`, `Cargo.toml`, `tauri.conf.json`）と `CHANGELOG.md` 以外にステージ済み/変更済みのファイルがある場合: ユーザーに警告して確認を求める
+5. 以下のファイルを git ステージする（変更がある場合のみ）:
    - `package.json`
    - `src-tauri/Cargo.toml`
    - `src-tauri/tauri.conf.json`
    - `CHANGELOG.md`
-5. コミットを作成する:
+6. コミットを作成する:
    ```
    chore: release vVERSION
    ```
-6. タグを作成する:
+7. タグを作成する:
    ```
    git tag vVERSION
    ```
-7. 完了を報告する:
+8. 完了を報告する:
    ```
    ✅ vVERSION のリリース準備が完了しました
    

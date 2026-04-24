@@ -38,9 +38,11 @@ description: git log から CHANGELOG.md のエントリを自動生成する
 ```
 
 8. ファイル末尾の比較リンクセクションに新エントリを追加する:
-   ```
-   [CURRENT]: https://github.com/august8/filemaker-ddr-viewer/compare/vPREV...vCURRENT
-   ```
+   - `git remote get-url origin` でリモート URL を取得し、GitHub リポジトリのベース URL（`https://github.com/OWNER/REPO`）を導出する。
+   - 以下の形式で挿入する:
+     ```
+     [CURRENT]: https://github.com/OWNER/REPO/compare/vPREV...vCURRENT
+     ```
    既存の最上位リンクの直前に挿入する。
 
 9. 完了を報告する:
