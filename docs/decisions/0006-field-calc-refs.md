@@ -23,4 +23,4 @@ FTS5 で検索する案 → `fields` は `search_index` の `content` に入っ�
 
 - `src-tauri/src/commands/field_refs.rs`
 - `src/components/detail/FieldDetail.tsx`
-- `src/hooks/useTauriCommand.ts`
+- `src/hooks/fieldRefs.ts`

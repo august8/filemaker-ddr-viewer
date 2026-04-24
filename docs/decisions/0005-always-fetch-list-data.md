@@ -21,4 +21,4 @@
 
 ## 関連ファイル
 
-- `src/hooks/useTauriCommand.ts`
+- `src/hooks/catalog.ts`
