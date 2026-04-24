@@ -185,6 +185,81 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 
 ---
 
+## Tauri IPC コマンド追加フロー
+
+新しい IPC コマンドを追加するときは以下の 6 ステップを全て完了すること。
+漏れがあるとコンパイルエラーまたはランタイムエラーになる。
+
+| # | 作業 | ファイル |
+|---|------|---------|
+| 1 | `#[tauri::command]` 関数を定義する | `src-tauri/src/commands/<domain>.rs` |
+| 2 | モジュールにエクスポートを追加する | `src-tauri/src/commands/mod.rs` |
+| 3 | `invoke_handler` に登録する | `src-tauri/src/lib.rs` |
+| 4 | `invoke()` ラッパー hooks を作成する | `src/hooks/<domain>.ts` |
+| 5 | TypeScript 型定義を追加する | `src/types/ddr.ts` |
+| 6 | Rust 関数のユニットテストを追加する | 同じ `.rs` ファイルの末尾 |
+
+コマンドを追加したら `ARCHITECTURE.md#Tauri IPC コマンド一覧` のテーブルも更新する。
+
+---
+
+## FileMaker バージョン対応
+
+### バージョン命名規則
+
+| 形式 | 例 | 世代 |
+|---|---|---|
+| `X.Yv<patch>` | `21.0v1`, `19.6v2` | FileMaker Pro 14〜21 |
+| `X.Y.Z` | `20.3.2`, `22.0.6` | Claris FileMaker 20〜 |
+
+`parser/version.rs` の `FmVersion::parse()` が両形式を統一的に解析する。
+
+### VersionAdapter パターン
+
+`VersionAdapter` (`parser/version.rs`) はバージョン間の XML 差異を正規化するアダプタ層。
+パーサー本体にバージョン分岐を直接書かず、差異は全て `VersionAdapter` のメソッドに集約する。
+
+```rust
+let adapter = VersionAdapter::new(version);
+let tag = adapter.field_catalog_tag(); // バージョンによって異なる可能性のある値
+```
+
+現在実装されているメソッド:
+
+| メソッド | 返す値 | バージョン差異 |
+|---|---|---|
+| `field_catalog_tag()` | `"FieldCatalog"` | FM17〜22 で変化なし |
+| `script_step_tag()` | `"Step"` | FM17〜22 で変化なし |
+| `step_list_tag()` | `"StepList"` | FM17〜22 で変化なし |
+
+### 既知のバージョン差異
+
+FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に変化はなく追加属性のみ。
+
+| バージョン | 追加された属性・要素 | 対応状況 |
+|---|---|---|
+| FM19〜（Claris 世代） | `withFewerFolders`（ScriptStep）, `messageCalc` | パーサーで属性を無視（影響なし） |
+| FM20〜 | バージョン文字列が `X.Y.Z` 形式に変更 | `FmVersion::parse()` で対応済み |
+
+新しいバージョン差異を発見した場合は `VersionAdapter` にメソッドを追加し、このテーブルを更新する。
+
+### テストサンプル
+
+`tests/ddr/` に各バージョンの実 DDR XML サンプルを格納している（統合テスト用）:
+
+| ディレクトリ | FM バージョン |
+|---|---|
+| `tests/ddr/17.0.7.700/` | FileMaker Pro 17.0.7 |
+| `tests/ddr/18.0.3.317/` | FileMaker Pro 18.0.3 |
+| `tests/ddr/19.6.3.302/` | FileMaker Pro 19.6.3 |
+| `tests/ddr/20.3.2.201/` | Claris FileMaker 20.3.2 |
+| `tests/ddr/21.1.2.200/` | Claris FileMaker 21.1.2 |
+| `tests/ddr/22.0.6.601/` | Claris FileMaker 22.0.6 |
+
+単体テスト用の小さな XML は `tests/fixtures/` に配置する。
+
+---
+
 ## 既知の制約
 
 - **インポートの重複チェックなし**: 同一の `概要.xml` を複数回インポートすると別エントリとして追加される

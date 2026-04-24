@@ -19,8 +19,9 @@ temp
 coverage/
 
 
-# Claude Code
-.claude/
+# Claude Code personal overrides (project commands/settings are committed)
+.claude/settings.local.json
+CLAUDE.local.md
 
 # DDR Sample
 .DDRSample/*
