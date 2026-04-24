@@ -9,19 +9,37 @@ import type {
 } from "../types/ddr";
 
 // プロジェクト内全フィールド（テーブル横断）
-export function useAllFields(projectId: number | null) {
+export function useAllFields(
+  projectId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["all_fields", projectId],
-    queryFn: () => invoke<AllFieldRow[]>("list_all_fields", { projectId }),
+    queryKey: ["all_fields", projectId, limit, offset],
+    queryFn: () =>
+      invoke<AllFieldRow[]>("list_all_fields", {
+        projectId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null,
   });
 }
 
 // テーブル一覧
-export function useTableList(projectId: number | null) {
+export function useTableList(
+  projectId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["tables", projectId],
-    queryFn: () => invoke<TableRow[]>("list_tables", { projectId }),
+    queryKey: ["tables", projectId, limit, offset],
+    queryFn: () =>
+      invoke<TableRow[]>("list_tables", {
+        projectId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null,
   });
 }
@@ -29,32 +47,55 @@ export function useTableList(projectId: number | null) {
 // テーブルフィールド一覧
 export function useTableFields(
   projectId: number | null,
-  tableId: number | null
+  tableId: number | null,
+  limit?: number,
+  offset?: number
 ) {
   return useQuery({
-    queryKey: ["table_fields", projectId, tableId],
+    queryKey: ["table_fields", projectId, tableId, limit, offset],
     queryFn: () =>
-      invoke<FieldRow[]>("list_table_fields", { projectId, tableId }),
+      invoke<FieldRow[]>("list_table_fields", {
+        projectId,
+        tableId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null && tableId !== null,
   });
 }
 
 // テーブルオカレンス一覧
-export function useTableOccurrenceList(projectId: number | null) {
+export function useTableOccurrenceList(
+  projectId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["table_occurrences", projectId],
+    queryKey: ["table_occurrences", projectId, limit, offset],
     queryFn: () =>
-      invoke<TableOccurrenceRow[]>("list_table_occurrences", { projectId }),
+      invoke<TableOccurrenceRow[]>("list_table_occurrences", {
+        projectId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null,
   });
 }
 
 // リレーション一覧（predicates 込み）
-export function useRelationshipList(projectId: number | null) {
+export function useRelationshipList(
+  projectId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["relationships", projectId],
+    queryKey: ["relationships", projectId, limit, offset],
     queryFn: () =>
-      invoke<RelationshipRow[]>("list_relationships", { projectId }),
+      invoke<RelationshipRow[]>("list_relationships", {
+        projectId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null,
   });
 }
