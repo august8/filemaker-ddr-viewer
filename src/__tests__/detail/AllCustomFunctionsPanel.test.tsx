@@ -14,10 +14,16 @@ vi.mock("../../stores/appStore", () => ({
 import { useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 
+const PAGE_SIZE = 500;
+
 const mockCFs = [
   makeCustomFunctionRow({ id: 1, fm_id: 1, name: "FormatDate", parameters: "date; format" }),
   makeCustomFunctionRow({ id: 2, fm_id: 2, name: "IsEmpty" }),
 ];
+
+const fullPage = Array.from({ length: PAGE_SIZE }, (_, i) =>
+  makeCustomFunctionRow({ id: i + 1, fm_id: i + 1, name: `CF${i}`, parameters: "" })
+);
 
 const mockSelectElement = vi.fn();
 
@@ -41,5 +47,40 @@ describe("AllCustomFunctionsPanel", () => {
       id: 1,
       name: "FormatDate",
     });
+  });
+
+  it("prev_button_disabled_on_first_page", () => {
+    vi.mocked(useCustomFunctionList).mockReturnValue(
+      { data: mockCFs, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
+    );
+    render(<AllCustomFunctionsPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /前/ })).toBeDisabled();
+  });
+
+  it("next_button_disabled_when_last_page", () => {
+    vi.mocked(useCustomFunctionList).mockReturnValue(
+      { data: mockCFs, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
+    );
+    render(<AllCustomFunctionsPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
+  });
+
+  it("next_button_enabled_when_full_page", () => {
+    vi.mocked(useCustomFunctionList).mockReturnValue(
+      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
+    );
+    render(<AllCustomFunctionsPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+  });
+
+  it("filter_resets_page_to_zero", () => {
+    vi.mocked(useCustomFunctionList).mockReturnValue(
+      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
+    );
+    render(<AllCustomFunctionsPanel projectId={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    fireEvent.change(screen.getByPlaceholderText(/絞り込み/), { target: { value: "x" } });
+    const calls = vi.mocked(useCustomFunctionList).mock.calls;
+    expect(calls[calls.length - 1][2]).toBe(0);
   });
 });

@@ -14,10 +14,16 @@ vi.mock("../../stores/appStore", () => ({
 import { useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 
+const PAGE_SIZE = 500;
+
 const mockTables = [
   makeTableRow({ id: 1, fm_id: 1, name: "Customer", field_count: 10 }),
   makeTableRow({ id: 2, fm_id: 2, name: "Order", field_count: 5 }),
 ];
+
+const fullPage = Array.from({ length: PAGE_SIZE }, (_, i) =>
+  makeTableRow({ id: i + 1, fm_id: i + 1, name: `Table${i}`, field_count: 0 })
+);
 
 const mockSelectElement = vi.fn();
 
@@ -43,4 +49,38 @@ describe("AllTablesPanel", () => {
     });
   });
 
+  it("prev_button_disabled_on_first_page", () => {
+    vi.mocked(useTableList).mockReturnValue(
+      { data: mockTables, isLoading: false } as unknown as ReturnType<typeof useTableList>
+    );
+    render(<AllTablesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /前/ })).toBeDisabled();
+  });
+
+  it("next_button_disabled_when_last_page", () => {
+    vi.mocked(useTableList).mockReturnValue(
+      { data: mockTables, isLoading: false } as unknown as ReturnType<typeof useTableList>
+    );
+    render(<AllTablesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
+  });
+
+  it("next_button_enabled_when_full_page", () => {
+    vi.mocked(useTableList).mockReturnValue(
+      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useTableList>
+    );
+    render(<AllTablesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+  });
+
+  it("filter_resets_page_to_zero", () => {
+    vi.mocked(useTableList).mockReturnValue(
+      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useTableList>
+    );
+    render(<AllTablesPanel projectId={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    fireEvent.change(screen.getByPlaceholderText(/絞り込み/), { target: { value: "x" } });
+    const calls = vi.mocked(useTableList).mock.calls;
+    expect(calls[calls.length - 1][2]).toBe(0);
+  });
 });
