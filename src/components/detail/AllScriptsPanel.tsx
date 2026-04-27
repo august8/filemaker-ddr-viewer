@@ -2,8 +2,8 @@ import { useState, useMemo } from "react";
 import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
+import { PAGE_SIZE } from "../../constants";
 
-const PAGE_SIZE = 500;
 
 interface Props {
   projectId: number;

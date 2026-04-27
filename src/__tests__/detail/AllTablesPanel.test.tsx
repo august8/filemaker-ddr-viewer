@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllTablesPanel } from "../../components/detail/AllTablesPanel";
 import { makeTableRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/table", () => ({
   useTableList: vi.fn(),
@@ -13,8 +14,6 @@ vi.mock("../../stores/appStore", () => ({
 
 import { useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockTables = [
   makeTableRow({ id: 1, fm_id: 1, name: "Customer", field_count: 10 }),
@@ -65,12 +64,13 @@ describe("AllTablesPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", () => {
-    vi.mocked(useTableList).mockReturnValue(
-      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useTableList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useTableList)
+      .mockReturnValueOnce({ data: fullPage, isLoading: false } as unknown as ReturnType<typeof useTableList>)
+      .mockReturnValue({ data: mockTables, isLoading: false } as unknown as ReturnType<typeof useTableList>);
     render(<AllTablesPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useTableList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
   it("filter_resets_page_to_zero", () => {

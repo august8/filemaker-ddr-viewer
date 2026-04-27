@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllScriptsPanel } from "../../components/detail/AllScriptsPanel";
 import { makeScriptRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/script", () => ({
   useScriptList: vi.fn(),
@@ -13,8 +14,6 @@ vi.mock("../../stores/appStore", () => ({
 
 import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockScripts = [
   makeScriptRow({ id: 1, fm_id: 1, name: "Save Record", step_count: 5 }),
@@ -65,12 +64,13 @@ describe("AllScriptsPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", () => {
-    vi.mocked(useScriptList).mockReturnValue(
-      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useScriptList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useScriptList)
+      .mockReturnValueOnce({ data: fullPage, isLoading: false } as unknown as ReturnType<typeof useScriptList>)
+      .mockReturnValue({ data: mockScripts, isLoading: false } as unknown as ReturnType<typeof useScriptList>);
     render(<AllScriptsPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useScriptList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
   it("filter_resets_page_to_zero", () => {

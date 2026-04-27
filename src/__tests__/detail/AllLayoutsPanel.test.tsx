@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllLayoutsPanel } from "../../components/detail/AllLayoutsPanel";
 import { makeLayoutRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/layout", () => ({
   useLayoutList: vi.fn(),
@@ -13,8 +14,6 @@ vi.mock("../../stores/appStore", () => ({
 
 import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockLayouts = [
   makeLayoutRow({ id: 1, fm_id: 1, name: "Customer List", table_occurrence_name: "Customers", trigger_count: 2 }),
@@ -65,12 +64,13 @@ describe("AllLayoutsPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", () => {
-    vi.mocked(useLayoutList).mockReturnValue(
-      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useLayoutList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useLayoutList)
+      .mockReturnValueOnce({ data: fullPage, isLoading: false } as unknown as ReturnType<typeof useLayoutList>)
+      .mockReturnValue({ data: mockLayouts, isLoading: false } as unknown as ReturnType<typeof useLayoutList>);
     render(<AllLayoutsPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useLayoutList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
   it("filter_resets_page_to_zero", () => {

@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllCustomFunctionsPanel } from "../../components/detail/AllCustomFunctionsPanel";
 import { makeCustomFunctionRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/catalog", () => ({
   useCustomFunctionList: vi.fn(),
@@ -13,8 +14,6 @@ vi.mock("../../stores/appStore", () => ({
 
 import { useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockCFs = [
   makeCustomFunctionRow({ id: 1, fm_id: 1, name: "FormatDate", parameters: "date; format" }),
@@ -65,12 +64,13 @@ describe("AllCustomFunctionsPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", () => {
-    vi.mocked(useCustomFunctionList).mockReturnValue(
-      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useCustomFunctionList)
+      .mockReturnValueOnce({ data: fullPage, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>)
+      .mockReturnValue({ data: mockCFs, isLoading: false } as unknown as ReturnType<typeof useCustomFunctionList>);
     render(<AllCustomFunctionsPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useCustomFunctionList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
   it("filter_resets_page_to_zero", () => {

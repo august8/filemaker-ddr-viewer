@@ -5,8 +5,8 @@ import { useTableOccurrenceList, useTableList } from "../../hooks/table";
 import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 import type { LayoutRow } from "../../types/ddr";
+import { PAGE_SIZE } from "../../constants";
 
-const PAGE_SIZE = 500;
 
 interface Props {
   projectId: number;
