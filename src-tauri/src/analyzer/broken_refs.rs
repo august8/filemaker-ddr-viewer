@@ -420,4 +420,49 @@ mod tests {
         assert_eq!(refs[0].source_name, "MainLayout");
         assert_eq!(refs[0].target_script_name, "MissingScript");
     }
+
+    #[test]
+    fn disabled_perform_script_is_ignored() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "Caller".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 89,
+                    name: "Perform Script".into(),
+                    enabled: false, // disabled → 除外
+                    script_ref: Some(ScriptRef {
+                        name: "NonExistent".into(),
+                        file_name: "".into(),
+                    }),
+                    calculation: None,
+                    step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert!(refs.is_empty(), "disabled PerformScript should be ignored");
+    }
 }
