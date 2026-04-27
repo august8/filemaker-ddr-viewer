@@ -227,7 +227,7 @@ filemaker-ddr-viewer/
 ```
 ## タスクリスト
 
-- [ ] ブランチ作成: `fix/add-broken-field-detection`  ← 実際のブランチ名を記載
+- [ ] ブランチ作成: `main` → `fix/add-broken-field-detection`  ← 作成元と実際のブランチ名を記載
 - [ ] テスト追加（Red確認）: `src/__tests__/.../Foo.test.tsx` または `broken_refs.rs` の `#[cfg(test)]`
 - [ ] 実装（Green確認）: 対象の `.tsx` / `.rs`
 - [ ] `cargo fmt` / `cargo clippy` / `tsc --noEmit` パス確認
