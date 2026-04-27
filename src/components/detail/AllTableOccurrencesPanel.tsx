@@ -6,16 +6,22 @@ import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 import type { LayoutRow } from "../../types/ddr";
 
+const PAGE_SIZE = 500;
+
 interface Props {
   projectId: number;
 }
 
 export function AllTableOccurrencesPanel({ projectId }: Props) {
-  const { data: tableOccurrences = [], isLoading } = useTableOccurrenceList(projectId);
+  const [page, setPage] = useState(0);
+  const [filter, setFilter] = useState("");
+
+  const { data: tableOccurrences = [], isLoading } = useTableOccurrenceList(projectId, PAGE_SIZE, page * PAGE_SIZE);
   const { data: tables = [] } = useTableList(projectId);
   const { data: layouts = [] } = useLayoutList(projectId);
   const { selectElement, setRightPanel } = useAppStore();
-  const [filter, setFilter] = useState("");
+
+  const isLastPage = tableOccurrences.length < PAGE_SIZE;
 
   const tableMap = useMemo(
     () => new Map(tables.map((t) => [t.name, t])),
@@ -44,6 +50,11 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
     );
   }, [tableOccurrences, filter]);
 
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value);
+    setPage(0);
+  };
+
   if (isLoading) {
     return <div className="flex items-center gap-2 p-4 text-gray-500 text-sm"><Spinner className="w-4 h-4" />読み込み中...</div>;
   }
@@ -55,16 +66,35 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
         <h2 className="text-lg font-bold text-gray-800 mb-2">
           テーブルオカレンス一覧
           <span className="ml-2 text-sm font-normal text-gray-500">
-            {filtered.length} / {tableOccurrences.length} 件
+            {filtered.length} 件
           </span>
         </h2>
-        <input
-          type="text"
-          placeholder="オカレンス名・ベーステーブル名で絞り込み..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="オカレンス名・ベーステーブル名で絞り込み..."
+            value={filter}
+            onChange={handleFilterChange}
+            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+          />
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0}
+            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            &lt; 前
+          </button>
+          <span className="text-sm text-gray-600 whitespace-nowrap">
+            {page + 1} ページ
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={isLastPage}
+            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            次 &gt;
+          </button>
+        </div>
       </div>
 
       {/* テーブル */}

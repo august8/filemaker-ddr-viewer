@@ -19,10 +19,16 @@ import { useTableOccurrenceList, useTableList } from "../../hooks/table";
 import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
 
+const PAGE_SIZE = 500;
+
 const mockTOs = [
   makeTableOccurrenceRow({ id: 1, occurrence_name: "Customers", base_table_name: "Customer" }),
   makeTableOccurrenceRow({ id: 2, occurrence_name: "Orders", base_table_name: "Order" }),
 ];
+
+const fullPageTOs = Array.from({ length: PAGE_SIZE }, (_, i) =>
+  makeTableOccurrenceRow({ id: i + 1, occurrence_name: `TO${i}`, base_table_name: "Customer" })
+);
 
 const mockTables = [
   makeTableRow({ id: 10, fm_id: 1, name: "Customer", field_count: 5 }),
@@ -53,6 +59,41 @@ beforeEach(() => {
 });
 
 describe("AllTableOccurrencesPanel", () => {
+  it("prev_button_disabled_on_first_page", () => {
+    vi.mocked(useTableOccurrenceList).mockReturnValue(
+      { data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
+    );
+    render(<AllTableOccurrencesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /前/ })).toBeDisabled();
+  });
+
+  it("next_button_disabled_when_last_page", () => {
+    vi.mocked(useTableOccurrenceList).mockReturnValue(
+      { data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
+    );
+    render(<AllTableOccurrencesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
+  });
+
+  it("next_button_enabled_when_full_page", { timeout: 15000 }, () => {
+    vi.mocked(useTableOccurrenceList).mockReturnValue(
+      { data: fullPageTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
+    );
+    render(<AllTableOccurrencesPanel projectId={1} />);
+    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+  });
+
+  it("filter_resets_page_to_zero", { timeout: 15000 }, () => {
+    vi.mocked(useTableOccurrenceList).mockReturnValue(
+      { data: fullPageTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
+    );
+    render(<AllTableOccurrencesPanel projectId={1} />);
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    fireEvent.change(screen.getByPlaceholderText(/絞り込み/), { target: { value: "x" } });
+    const calls = vi.mocked(useTableOccurrenceList).mock.calls;
+    expect(calls[calls.length - 1][2]).toBe(0);
+  });
+
   it("base_table_click_navigates_to_table", () => {
     vi.mocked(useTableOccurrenceList).mockReturnValue(
       { data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>

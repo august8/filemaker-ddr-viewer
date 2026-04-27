@@ -178,6 +178,8 @@ describe("useTableFields", () => {
     expect(invoke).toHaveBeenCalledWith("list_table_fields", {
       projectId: 2,
       tableId: 5,
+      limit: null,
+      offset: null,
     });
   });
 });

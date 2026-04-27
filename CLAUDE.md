@@ -195,7 +195,10 @@ filemaker-ddr-viewer/
    - 外部との設計議論が必要な場合は gh issue create で Issue も立てる
 
 4. テストを書いてから実装する（TDD）
-   - テストコードで仕様を表現する
+   - **テストファイルを先に開いて `it()` / `#[test]` を書き、その後で実装ファイルを編集する（順序厳守）**
+   - React: `src/__tests__/**/Foo.test.tsx` に空の `it("期待する動作")` を追加 → 実装 → Red → Green
+   - Rust: ファイル末尾の `#[cfg(test)]` ブロックに `#[test] fn test_xxx()` を追加 → 実装 → Red → Green
+   - 実装ファイルを先に変更してからテストを書くのは TDD の違反。発見したら指摘する
    - cargo test / npm run test を実行して Green を確認する
 
 5. ADR を作成した場合、実装完了後にステータスを Proposed → Accepted に更新する
@@ -205,6 +208,9 @@ filemaker-ddr-viewer/
    - 実装で判明した追加の制約・注意点を反映する
 
 7. PR を作成して完了とする
+   - **PR を作成する前に `/pre-pr` を実行してチェックリストを通過させる**
+   - Issue のスコープに Rust（バックエンド）と React（フロントエンド）が両方含まれる場合、
+     両方の実装とテストが完成してから PR を作成する（片方だけ完成した状態での PR 作成は禁止）
    - CI（fmt / clippy / test）が通ることを確認してから PR を作成する
    - main へのマージはユーザーが CI 確認後に実施する
 ```
@@ -315,6 +321,25 @@ coverage exclude 設定済みのファイル:
 | 統合テスト | `src-tauri/tests/` | 毎コミット |
 | フロントエンドテスト | `src/__tests__/` | 毎コミット |
 | スナップショットテスト | `src-tauri/src/**/snapshots/` | 毎コミット |
+
+### 大量データを使うテストは DOM ではなく hook 引数で検証する
+
+ページネーション・大量データ系のテストで DOM を大量レンダーするテストは書かない。
+hook が正しい引数で呼ばれたかを検証すれば DOM レンダー不要で高速になる:
+
+```tsx
+// NG: 500件を描画してボタン状態を確認 → 重い・タイムアウトしやすい
+const fullPage = Array.from({ length: 500 }, ...);
+render(<MyPanel />);
+expect(nextButton).not.toBeDisabled();
+
+// OK: hook の呼び出し引数を検証（DOMレンダー不要）
+fireEvent.click(nextButton);
+expect(vi.mocked(useMyList).mock.lastCall?.[1]).toBe(PAGE_SIZE); // limit
+expect(vi.mocked(useMyList).mock.lastCall?.[2]).toBe(PAGE_SIZE); // offset
+```
+
+タイムアウトが発生したとき `{ timeout: N }` で延長するのではなく、テスト設計を見直す。
 
 ## DDR XML 基本情報
 

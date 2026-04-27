@@ -910,7 +910,7 @@ mod tests {
         insert_layout_object_condition(&db, oid, 0, "Table::Field = 0", "color: red;").unwrap();
         insert_layout_object_condition(&db, oid, 1, "Table::Field = 1", "color: blue;").unwrap();
 
-        let conditions = list_layout_object_conditions(&db, oid).unwrap();
+        let conditions = list_layout_object_conditions(&db, oid, -1, 0).unwrap();
         assert_eq!(conditions.len(), 2);
         assert_eq!(conditions[0].rule_order, 0);
         assert_eq!(conditions[0].calculation, "Table::Field = 0");

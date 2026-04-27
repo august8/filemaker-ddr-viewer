@@ -193,16 +193,24 @@ pub struct PrivilegeSetRow {
 // ---------------------------------------------------------------------------
 
 /// プロジェクトのテーブル一覧を field_count 付きで返す（名前順）。
-pub fn list_tables(db: &Database, project_id: i64) -> Result<Vec<TableRow>, DbError> {
+///
+/// `limit=-1` で全件取得。`offset=0` からスタート。
+pub fn list_tables(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<TableRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT t.id, t.fm_id, t.name, COUNT(f.id) as field_count
            FROM base_tables t
            LEFT JOIN fields f ON f.table_id = t.id
           WHERE t.project_id = ?1
           GROUP BY t.id
-          ORDER BY t.name",
+          ORDER BY t.name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(TableRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -218,6 +226,8 @@ pub fn list_table_fields(
     db: &Database,
     project_id: i64,
     table_db_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<FieldRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, fm_id, name, data_type, field_type, comment,
@@ -229,9 +239,10 @@ pub fn list_table_fields(
            FROM fields
           WHERE project_id = ?1
             AND table_id = ?2
-          ORDER BY name",
+          ORDER BY name
+          LIMIT ?3 OFFSET ?4",
     )?;
-    let rows = stmt.query_map(params![project_id, table_db_id], |row| {
+    let rows = stmt.query_map(params![project_id, table_db_id, limit, offset], |row| {
         Ok(FieldRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -263,15 +274,21 @@ pub fn list_table_fields(
 }
 
 /// プロジェクトのスクリプト一覧を step_count 付きで返す（FileMaker順）。
-pub fn list_scripts(db: &Database, project_id: i64) -> Result<Vec<ScriptRow>, DbError> {
+pub fn list_scripts(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<ScriptRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT s.id, s.fm_id, s.name, s.run_with_full_access,
                 (SELECT COUNT(*) FROM script_steps WHERE script_id = s.id) as step_count
            FROM scripts s
           WHERE s.project_id = ?1
-          ORDER BY s.position",
+          ORDER BY s.position
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(ScriptRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -284,15 +301,21 @@ pub fn list_scripts(db: &Database, project_id: i64) -> Result<Vec<ScriptRow>, Db
 }
 
 /// スクリプトに属するステップ一覧を返す（position 順）。
-pub fn list_script_steps(db: &Database, script_db_id: i64) -> Result<Vec<ScriptStepRow>, DbError> {
+pub fn list_script_steps(
+    db: &Database,
+    script_db_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<ScriptStepRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, step_type_id, name, enabled,
                 script_ref_name, script_ref_file, calculation, step_text, position
            FROM script_steps
           WHERE script_id = ?1
-          ORDER BY position",
+          ORDER BY position
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![script_db_id], |row| {
+    let rows = stmt.query_map(params![script_db_id, limit, offset], |row| {
         Ok(ScriptStepRow {
             id: row.get(0)?,
             step_type_id: row.get(1)?,
@@ -309,15 +332,21 @@ pub fn list_script_steps(db: &Database, script_db_id: i64) -> Result<Vec<ScriptS
 }
 
 /// プロジェクトのレイアウト一覧を trigger_count 付きで返す（FileMaker順）。
-pub fn list_layouts(db: &Database, project_id: i64) -> Result<Vec<LayoutRow>, DbError> {
+pub fn list_layouts(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<LayoutRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT l.id, l.fm_id, l.name, l.table_occurrence_name,
                 (SELECT COUNT(*) FROM script_triggers WHERE layout_id = l.id) as trigger_count
            FROM layouts l
           WHERE l.project_id = ?1
-          ORDER BY l.position",
+          ORDER BY l.position
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(LayoutRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -330,14 +359,20 @@ pub fn list_layouts(db: &Database, project_id: i64) -> Result<Vec<LayoutRow>, Db
 }
 
 /// レイアウトに属するトリガー一覧を返す。
-pub fn list_layout_triggers(db: &Database, layout_db_id: i64) -> Result<Vec<TriggerRow>, DbError> {
+pub fn list_layout_triggers(
+    db: &Database,
+    layout_db_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<TriggerRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, event, script_name, file_name
            FROM script_triggers
           WHERE layout_id = ?1
-          ORDER BY event",
+          ORDER BY event
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![layout_db_id], |row| {
+    let rows = stmt.query_map(params![layout_db_id, limit, offset], |row| {
         Ok(TriggerRow {
             id: row.get(0)?,
             event: row.get(1)?,
@@ -352,6 +387,8 @@ pub fn list_layout_triggers(db: &Database, layout_db_id: i64) -> Result<Vec<Trig
 pub fn list_layout_objects(
     db: &Database,
     layout_db_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<LayoutObjectRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, object_type, object_key, object_name, button_label,
@@ -359,9 +396,10 @@ pub fn list_layout_objects(
                 bound_top, bound_left, bound_bottom, bound_right
            FROM layout_objects
           WHERE layout_id = ?1
-          ORDER BY position",
+          ORDER BY position
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![layout_db_id], |row| {
+    let rows = stmt.query_map(params![layout_db_id, limit, offset], |row| {
         Ok(LayoutObjectRow {
             id: row.get(0)?,
             object_type: row.get(1)?,
@@ -386,14 +424,17 @@ pub fn list_layout_objects(
 pub fn list_layout_object_conditions(
     db: &Database,
     object_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<ConditionRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, rule_order, calculation, format_css
            FROM layout_object_conditions
           WHERE object_id = ?1
-          ORDER BY rule_order",
+          ORDER BY rule_order
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![object_id], |row| {
+    let rows = stmt.query_map(params![object_id, limit, offset], |row| {
         Ok(ConditionRow {
             id: row.get(0)?,
             rule_order: row.get(1)?,
@@ -405,15 +446,21 @@ pub fn list_layout_object_conditions(
 }
 
 /// プロジェクトのバリューリスト一覧を item_count 付きで返す（名前順）。
-pub fn list_value_lists(db: &Database, project_id: i64) -> Result<Vec<ValueListRow>, DbError> {
+pub fn list_value_lists(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<ValueListRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT v.id, v.fm_id, v.name, v.source,
                 (SELECT COUNT(*) FROM value_list_items WHERE value_list_id = v.id) as item_count
            FROM value_lists v
           WHERE v.project_id = ?1
-          ORDER BY v.name",
+          ORDER BY v.name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(ValueListRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -426,14 +473,22 @@ pub fn list_value_lists(db: &Database, project_id: i64) -> Result<Vec<ValueListR
 }
 
 /// バリューリストに属する値一覧を返す（position 順）。
-pub fn list_value_list_items(db: &Database, value_list_db_id: i64) -> Result<Vec<String>, DbError> {
+pub fn list_value_list_items(
+    db: &Database,
+    value_list_db_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<String>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT value
            FROM value_list_items
           WHERE value_list_id = ?1
-          ORDER BY position",
+          ORDER BY position
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![value_list_db_id], |row| row.get::<_, String>(0))?;
+    let rows = stmt.query_map(params![value_list_db_id, limit, offset], |row| {
+        row.get::<_, String>(0)
+    })?;
     rows.collect::<Result<Vec<_>, _>>().map_err(DbError::from)
 }
 
@@ -441,14 +496,17 @@ pub fn list_value_list_items(db: &Database, value_list_db_id: i64) -> Result<Vec
 pub fn list_custom_functions(
     db: &Database,
     project_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<CustomFunctionRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, fm_id, name, parameters, calculation
            FROM custom_functions
           WHERE project_id = ?1
-          ORDER BY name",
+          ORDER BY name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(CustomFunctionRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -464,14 +522,17 @@ pub fn list_custom_functions(
 pub fn list_table_occurrences(
     db: &Database,
     project_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<TableOccurrenceRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, occurrence_name, base_table_name, source_file
            FROM table_occurrences
           WHERE project_id = ?1
-          ORDER BY occurrence_name",
+          ORDER BY occurrence_name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(TableOccurrenceRow {
             id: row.get(0)?,
             occurrence_name: row.get(1)?,
@@ -483,15 +544,23 @@ pub fn list_table_occurrences(
 }
 
 /// プロジェクトのリレーション一覧を predicates 込みで返す（名前順）。
-pub fn list_relationships(db: &Database, project_id: i64) -> Result<Vec<RelationshipRow>, DbError> {
+///
+/// LIMIT/OFFSET は外側クエリ（relationship 行）にのみ適用する。述語ループは影響を受けない。
+pub fn list_relationships(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<RelationshipRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, fm_id, name, left_table, right_table
            FROM relationships
           WHERE project_id = ?1
-          ORDER BY name",
+          ORDER BY name
+          LIMIT ?2 OFFSET ?3",
     )?;
     let mut rels: Vec<RelationshipRow> = stmt
-        .query_map(params![project_id], |row| {
+        .query_map(params![project_id, limit, offset], |row| {
             Ok(RelationshipRow {
                 id: row.get(0)?,
                 fm_id: row.get(1)?,
@@ -530,14 +599,20 @@ pub fn list_relationships(db: &Database, project_id: i64) -> Result<Vec<Relation
 }
 
 /// プロジェクトのアカウント一覧を返す（名前順）。
-pub fn list_accounts(db: &Database, project_id: i64) -> Result<Vec<AccountRow>, DbError> {
+pub fn list_accounts(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<AccountRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, fm_id, name, privilege_set, enabled
            FROM accounts
           WHERE project_id = ?1
-          ORDER BY name",
+          ORDER BY name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(AccountRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -553,14 +628,17 @@ pub fn list_accounts(db: &Database, project_id: i64) -> Result<Vec<AccountRow>, 
 pub fn list_privilege_sets(
     db: &Database,
     project_id: i64,
+    limit: i64,
+    offset: i64,
 ) -> Result<Vec<PrivilegeSetRow>, DbError> {
     let mut stmt = db.conn.prepare(
         "SELECT id, fm_id, name, comment
            FROM privilege_sets
           WHERE project_id = ?1
-          ORDER BY name",
+          ORDER BY name
+          LIMIT ?2 OFFSET ?3",
     )?;
-    let rows = stmt.query_map(params![project_id], |row| {
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
         Ok(PrivilegeSetRow {
             id: row.get(0)?,
             fm_id: row.get(1)?,
@@ -879,7 +957,7 @@ mod tests {
     #[test]
     fn list_tables_returns_with_field_count() {
         let (db, _sid, pid) = db_with_minimal();
-        let tables = list_tables(&db, pid).unwrap();
+        let tables = list_tables(&db, pid, -1, 0).unwrap();
         assert_eq!(tables.len(), 1, "minimal.xml に 1 テーブル");
         assert_eq!(tables[0].field_count, 1, "field_count=1");
         assert_eq!(tables[0].name, "Contact");
@@ -888,9 +966,9 @@ mod tests {
     #[test]
     fn list_table_fields_returns_fields() {
         let (db, _sid, pid) = db_with_minimal();
-        let tables = list_tables(&db, pid).unwrap();
+        let tables = list_tables(&db, pid, -1, 0).unwrap();
         let table_db_id = tables[0].id;
-        let fields = list_table_fields(&db, pid, table_db_id).unwrap();
+        let fields = list_table_fields(&db, pid, table_db_id, -1, 0).unwrap();
         assert_eq!(fields.len(), 1);
         assert_eq!(fields[0].name, "FirstName");
         assert_eq!(fields[0].data_type, "Text");
@@ -899,7 +977,7 @@ mod tests {
     #[test]
     fn list_scripts_returns_with_step_count() {
         let (db, _sid, pid) = db_with_minimal();
-        let scripts = list_scripts(&db, pid).unwrap();
+        let scripts = list_scripts(&db, pid, -1, 0).unwrap();
         assert_eq!(scripts.len(), 1, "minimal.xml に 1 スクリプト");
         assert_eq!(scripts[0].step_count, 2, "step_count=2");
     }
@@ -907,9 +985,9 @@ mod tests {
     #[test]
     fn list_script_steps_returns_steps() {
         let (db, _sid, pid) = db_with_minimal();
-        let scripts = list_scripts(&db, pid).unwrap();
+        let scripts = list_scripts(&db, pid, -1, 0).unwrap();
         let script_db_id = scripts[0].id;
-        let steps = list_script_steps(&db, script_db_id).unwrap();
+        let steps = list_script_steps(&db, script_db_id, -1, 0).unwrap();
         assert_eq!(steps.len(), 2);
         assert_eq!(steps[0].name, "Perform Script");
         assert!(steps[0].enabled);
@@ -918,7 +996,7 @@ mod tests {
     #[test]
     fn list_layouts_returns_with_trigger_count() {
         let (db, _sid, pid) = db_with_minimal();
-        let layouts = list_layouts(&db, pid).unwrap();
+        let layouts = list_layouts(&db, pid, -1, 0).unwrap();
         assert_eq!(layouts.len(), 1, "minimal.xml に 1 レイアウト");
         assert_eq!(layouts[0].trigger_count, 1, "trigger_count=1");
     }
@@ -926,9 +1004,9 @@ mod tests {
     #[test]
     fn list_layout_triggers_returns_triggers() {
         let (db, _sid, pid) = db_with_minimal();
-        let layouts = list_layouts(&db, pid).unwrap();
+        let layouts = list_layouts(&db, pid, -1, 0).unwrap();
         let layout_db_id = layouts[0].id;
-        let triggers = list_layout_triggers(&db, layout_db_id).unwrap();
+        let triggers = list_layout_triggers(&db, layout_db_id, -1, 0).unwrap();
         assert_eq!(triggers.len(), 1);
         assert_eq!(triggers[0].event, "OnRecordLoad");
     }
@@ -936,7 +1014,7 @@ mod tests {
     #[test]
     fn list_value_lists_returns_with_item_count() {
         let (db, _sid, pid) = db_with_minimal();
-        let vls = list_value_lists(&db, pid).unwrap();
+        let vls = list_value_lists(&db, pid, -1, 0).unwrap();
         assert_eq!(vls.len(), 1, "minimal.xml に 1 バリューリスト");
         assert_eq!(vls[0].item_count, 2, "item_count=2");
     }
@@ -944,16 +1022,16 @@ mod tests {
     #[test]
     fn list_value_list_items_returns_items() {
         let (db, _sid, pid) = db_with_minimal();
-        let vls = list_value_lists(&db, pid).unwrap();
+        let vls = list_value_lists(&db, pid, -1, 0).unwrap();
         let vl_db_id = vls[0].id;
-        let items = list_value_list_items(&db, vl_db_id).unwrap();
+        let items = list_value_list_items(&db, vl_db_id, -1, 0).unwrap();
         assert_eq!(items, vec!["Active", "Inactive"]);
     }
 
     #[test]
     fn list_custom_functions_returns_functions() {
         let (db, _sid, pid) = db_with_minimal();
-        let cfs = list_custom_functions(&db, pid).unwrap();
+        let cfs = list_custom_functions(&db, pid, -1, 0).unwrap();
         assert_eq!(cfs.len(), 1);
         assert_eq!(cfs[0].name, "MyFunc");
     }
@@ -961,7 +1039,7 @@ mod tests {
     #[test]
     fn list_accounts_returns_admin() {
         let (db, _sid, pid) = db_with_minimal();
-        let accounts = list_accounts(&db, pid).unwrap();
+        let accounts = list_accounts(&db, pid, -1, 0).unwrap();
         assert_eq!(accounts.len(), 1, "minimal.xml に 1 アカウント");
         assert_eq!(accounts[0].name, "Admin");
         assert_eq!(accounts[0].privilege_set, Some("[Full Access]".to_string()));
@@ -971,10 +1049,46 @@ mod tests {
     #[test]
     fn list_privilege_sets_returns_full_access() {
         let (db, _sid, pid) = db_with_minimal();
-        let psets = list_privilege_sets(&db, pid).unwrap();
+        let psets = list_privilege_sets(&db, pid, -1, 0).unwrap();
         assert_eq!(psets.len(), 1, "minimal.xml に 1 権限セット");
         assert_eq!(psets[0].name, "[Full Access]");
         assert_eq!(psets[0].comment, Some("Full access".to_string()));
+    }
+
+    // Pagination tests
+    #[test]
+    fn list_tables_neg_limit_returns_all() {
+        let (db, _sid, pid) = db_with_minimal();
+        let tables = list_tables(&db, pid, -1, 0).unwrap();
+        assert_eq!(tables.len(), 1, "limit=-1 は全件取得");
+    }
+
+    #[test]
+    fn list_tables_offset_skips_only_row() {
+        let (db, _sid, pid) = db_with_minimal();
+        let empty = list_tables(&db, pid, -1, 1).unwrap();
+        assert!(empty.is_empty(), "offset=1 で唯一の行をスキップ");
+    }
+
+    #[test]
+    fn list_scripts_limit_zero_returns_empty() {
+        let (db, _sid, pid) = db_with_minimal();
+        let scripts = list_scripts(&db, pid, 0, 0).unwrap();
+        assert!(scripts.is_empty(), "limit=0 は0件");
+    }
+
+    #[test]
+    fn list_layouts_offset_returns_empty() {
+        let (db, _sid, pid) = db_with_minimal();
+        let empty = list_layouts(&db, pid, -1, 1).unwrap();
+        assert!(empty.is_empty(), "offset=1 で唯一のレイアウトをスキップ");
+    }
+
+    #[test]
+    fn list_accounts_neg_limit_returns_all() {
+        let (db, _sid, pid) = db_with_minimal();
+        let accounts = list_accounts(&db, pid, -1, 0).unwrap();
+        assert_eq!(accounts.len(), 1);
     }
 
     // ADR-025: run_upgrade_check はソリューション単位で横断検索する
@@ -982,7 +1096,6 @@ mod tests {
     fn run_upgrade_check_solution_scope() {
         let mut db = Database::open_in_memory().unwrap();
         let ddr = parse_ddr(MINIMAL_XML).unwrap();
-        // 同一ソリューションに 2 プロジェクトをインポート
         let sid = insert_solution(&mut db, "Sol", None).unwrap();
         let _pid1 = insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
         let _pid2 = insert_ddr_file(&mut db, &ddr, sid, None).unwrap();

@@ -23,19 +23,37 @@ export function useCallers(projectId: number | null, scriptId: number | null) {
 }
 
 // スクリプト一覧
-export function useScriptList(projectId: number | null) {
+export function useScriptList(
+  projectId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["scripts", projectId],
-    queryFn: () => invoke<ScriptRow[]>("list_scripts", { projectId }),
+    queryKey: ["scripts", projectId, limit, offset],
+    queryFn: () =>
+      invoke<ScriptRow[]>("list_scripts", {
+        projectId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: projectId !== null,
   });
 }
 
 // スクリプトステップ一覧
-export function useScriptSteps(scriptId: number | null) {
+export function useScriptSteps(
+  scriptId: number | null,
+  limit?: number,
+  offset?: number
+) {
   return useQuery({
-    queryKey: ["script_steps", scriptId],
-    queryFn: () => invoke<ScriptStepRow[]>("list_script_steps", { scriptId }),
+    queryKey: ["script_steps", scriptId, limit, offset],
+    queryFn: () =>
+      invoke<ScriptStepRow[]>("list_script_steps", {
+        scriptId,
+        limit: limit ?? null,
+        offset: offset ?? null,
+      }),
     enabled: scriptId !== null,
   });
 }

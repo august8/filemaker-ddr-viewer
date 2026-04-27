@@ -286,22 +286,22 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `Option<ElementRef>` |
 | `get_upgrade_check` | analysis.rs | `solution_id, check_items` | `Vec<UpgradeHit>` |
 | `search_elements` | search.rs | `project_id?, solution_id?, query, limit?, contains?` | `Vec<SearchResult>` |
-| `list_tables` | catalog.rs | `project_id` | `Vec<TableRow>` |
-| `list_table_fields` | catalog.rs | `project_id, table_id` | `Vec<FieldRow>` |
-| `list_all_fields` | catalog.rs | `project_id` | `Vec<AllFieldRow>` |
-| `list_scripts` | catalog.rs | `project_id` | `Vec<ScriptRow>` |
-| `list_script_steps` | catalog.rs | `script_id` | `Vec<ScriptStepRow>` |
-| `list_layouts` | catalog.rs | `project_id` | `Vec<LayoutRow>` |
-| `list_layout_objects` | catalog.rs | `layout_id` | `Vec<LayoutObjectRow>` |
-| `list_layout_object_conditions` | catalog.rs | `object_id` | `Vec<ConditionRow>` |
-| `list_layout_triggers` | catalog.rs | `layout_id` | `Vec<TriggerRow>` |
-| `list_table_occurrences` | catalog.rs | `project_id` | `Vec<TableOccurrenceRow>` |
-| `list_relationships` | catalog.rs | `project_id` | `Vec<RelationshipRow>` |
-| `list_value_lists` | catalog.rs | `project_id` | `Vec<ValueListRow>` |
-| `list_value_list_items` | catalog.rs | `value_list_id` | `Vec<String>` |
-| `list_custom_functions` | catalog.rs | `project_id` | `Vec<CustomFunctionRow>` |
-| `list_accounts` | catalog.rs | `project_id` | `Vec<AccountRow>` |
-| `list_privilege_sets` | catalog.rs | `project_id` | `Vec<PrivilegeSetRow>` |
+| `list_tables` | catalog.rs | `project_id, limit?, offset?` | `Vec<TableRow>` |
+| `list_table_fields` | catalog.rs | `project_id, table_id, limit?, offset?` | `Vec<FieldRow>` |
+| `list_all_fields` | catalog.rs | `project_id, limit?, offset?` | `Vec<AllFieldRow>` |
+| `list_scripts` | catalog.rs | `project_id, limit?, offset?` | `Vec<ScriptRow>` |
+| `list_script_steps` | catalog.rs | `script_id, limit?, offset?` | `Vec<ScriptStepRow>` |
+| `list_layouts` | catalog.rs | `project_id, limit?, offset?` | `Vec<LayoutRow>` |
+| `list_layout_objects` | catalog.rs | `layout_id, limit?, offset?` | `Vec<LayoutObjectRow>` |
+| `list_layout_object_conditions` | catalog.rs | `object_id, limit?, offset?` | `Vec<ConditionRow>` |
+| `list_layout_triggers` | catalog.rs | `layout_id, limit?, offset?` | `Vec<TriggerRow>` |
+| `list_table_occurrences` | catalog.rs | `project_id, limit?, offset?` | `Vec<TableOccurrenceRow>` |
+| `list_relationships` | catalog.rs | `project_id, limit?, offset?` | `Vec<RelationshipRow>` |
+| `list_value_lists` | catalog.rs | `project_id, limit?, offset?` | `Vec<ValueListRow>` |
+| `list_value_list_items` | catalog.rs | `value_list_id, limit?, offset?` | `Vec<String>` |
+| `list_custom_functions` | catalog.rs | `project_id, limit?, offset?` | `Vec<CustomFunctionRow>` |
+| `list_accounts` | catalog.rs | `project_id, limit?, offset?` | `Vec<AccountRow>` |
+| `list_privilege_sets` | catalog.rs | `project_id, limit?, offset?` | `Vec<PrivilegeSetRow>` |
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
 | `get_field_calc_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldCalcRef>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |
