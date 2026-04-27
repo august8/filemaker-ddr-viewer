@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllValueListsPanel } from "../../components/detail/AllValueListsPanel";
 import { makeValueListRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/catalog", () => ({
   useValueListList: vi.fn(),
@@ -13,8 +14,6 @@ vi.mock("../../stores/appStore", () => ({
 
 import { useValueListList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockValueLists = [
   makeValueListRow({ id: 1, fm_id: 1, name: "Status", item_count: 3 }),
@@ -65,12 +64,13 @@ describe("AllValueListsPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", () => {
-    vi.mocked(useValueListList).mockReturnValue(
-      { data: fullPage, isLoading: false } as unknown as ReturnType<typeof useValueListList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useValueListList)
+      .mockReturnValueOnce({ data: fullPage, isLoading: false } as unknown as ReturnType<typeof useValueListList>)
+      .mockReturnValue({ data: mockValueLists, isLoading: false } as unknown as ReturnType<typeof useValueListList>);
     render(<AllValueListsPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useValueListList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
   it("filter_resets_page_to_zero", () => {

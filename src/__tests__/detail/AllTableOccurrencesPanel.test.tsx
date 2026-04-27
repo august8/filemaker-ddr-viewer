@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AllTableOccurrencesPanel } from "../../components/detail/AllTableOccurrencesPanel";
 import { makeTableOccurrenceRow, makeTableRow, makeLayoutRow } from "../testFixtures";
+import { PAGE_SIZE } from "../../constants";
 
 vi.mock("../../hooks/table", () => ({
   useTableOccurrenceList: vi.fn(),
@@ -18,8 +19,6 @@ vi.mock("../../stores/appStore", () => ({
 import { useTableOccurrenceList, useTableList } from "../../hooks/table";
 import { useLayoutList } from "../../hooks/layout";
 import { useAppStore } from "../../stores/appStore";
-
-const PAGE_SIZE = 500;
 
 const mockTOs = [
   makeTableOccurrenceRow({ id: 1, occurrence_name: "Customers", base_table_name: "Customer" }),
@@ -75,15 +74,16 @@ describe("AllTableOccurrencesPanel", () => {
     expect(screen.getByRole("button", { name: /次/ })).toBeDisabled();
   });
 
-  it("next_button_enabled_when_full_page", { timeout: 15000 }, () => {
-    vi.mocked(useTableOccurrenceList).mockReturnValue(
-      { data: fullPageTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
-    );
+  it("next_click_increments_offset", () => {
+    vi.mocked(useTableOccurrenceList)
+      .mockReturnValueOnce({ data: fullPageTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>)
+      .mockReturnValue({ data: mockTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>);
     render(<AllTableOccurrencesPanel projectId={1} />);
-    expect(screen.getByRole("button", { name: /次/ })).not.toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /次/ }));
+    expect(vi.mocked(useTableOccurrenceList).mock.lastCall?.[2]).toBe(PAGE_SIZE);
   });
 
-  it("filter_resets_page_to_zero", { timeout: 15000 }, () => {
+  it("filter_resets_page_to_zero", () => {
     vi.mocked(useTableOccurrenceList).mockReturnValue(
       { data: fullPageTOs, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
     );
