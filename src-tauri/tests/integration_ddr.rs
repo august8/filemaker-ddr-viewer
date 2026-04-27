@@ -4,6 +4,7 @@
 //! パーサーが FM17〜22 の実出力に対して正常に動作することを検証する。
 //! テーブルなしファイルのパースも検証する。
 
+use filemaker_ddr_viewer_lib::analyzer::broken_refs::{find_broken_refs, BrokenRefKind};
 use filemaker_ddr_viewer_lib::parser::{decode_ddr_bytes, parse_ddr};
 use rstest::rstest;
 
@@ -59,6 +60,27 @@ fn parse_real_ddr_has_tables_and_fields(#[case] version: &str) {
     assert!(!ddr.tables.is_empty(), "FM{version}: テーブルが0件");
     let total_fields: usize = ddr.tables.iter().map(|t| t.fields.len()).sum();
     assert!(total_fields > 0, "FM{version}: フィールドが0件");
+}
+
+/// FM22 の DDR には壊れたフィールド参照・レイアウト参照が含まれており、
+/// find_broken_refs が BrokenFieldRef / BrokenLayoutRef を返すことを確認する。
+#[test]
+fn fm22_broken_step_refs_detected() {
+    let path = "../tests/ddr/22.0.6.601/BaseFile_fmp12.xml";
+    let bytes = std::fs::read(path).unwrap_or_else(|e| panic!("{path}: {e}"));
+    let xml = decode_ddr_bytes(&bytes).expect("decode failed");
+    let ddr = parse_ddr(&xml).unwrap_or_else(|e| panic!("FM22 パース失敗: {e}"));
+
+    let refs = find_broken_refs(&ddr);
+    assert!(
+        refs.iter().any(|r| r.kind == BrokenRefKind::BrokenFieldRef),
+        "BrokenFieldRef が検出されなかった: {refs:?}"
+    );
+    assert!(
+        refs.iter()
+            .any(|r| r.kind == BrokenRefKind::BrokenLayoutRef),
+        "BrokenLayoutRef が検出されなかった: {refs:?}"
+    );
 }
 
 #[test]

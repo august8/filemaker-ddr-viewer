@@ -160,6 +160,8 @@ mod tests {
                         }),
                         calculation: None,
                         step_text: None,
+                        broken_field_table: None,
+                        has_broken_layout_ref: false,
                     }],
                 },
                 Script {
@@ -259,6 +261,8 @@ mod tests {
                         }),
                         calculation: None,
                         step_text: None,
+                        broken_field_table: None,
+                        has_broken_layout_ref: false,
                     }],
                 },
                 Script {
