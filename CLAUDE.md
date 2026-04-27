@@ -222,11 +222,12 @@ filemaker-ddr-viewer/
 
 プランファイルの末尾には必ず `## タスクリスト` セクションを追加する。
 各工程はチェックボックスで列挙し、完了したらその都度ユーザーに進捗を報告する（サイレントに次工程へ進まない）。
+**タスクリストの先頭には作業ブランチ名を具体的に明記すること**（`fix/xxx` のような仮名は不可）。
 
 ```
 ## タスクリスト
 
-- [ ] ブランチ作成: `fix/xxx` / `feat/xxx`
+- [ ] ブランチ作成: `fix/add-broken-field-detection`  ← 実際のブランチ名を記載
 - [ ] テスト追加（Red確認）: `src/__tests__/.../Foo.test.tsx` または `broken_refs.rs` の `#[cfg(test)]`
 - [ ] 実装（Green確認）: 対象の `.tsx` / `.rs`
 - [ ] `cargo fmt` / `cargo clippy` / `tsc --noEmit` パス確認
