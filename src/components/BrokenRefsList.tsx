@@ -13,6 +13,8 @@ interface Props {
 const KIND_LABELS: Record<string, string> = {
   performScript: "Perform Script",
   scriptTrigger: "Script Trigger",
+  brokenFieldRef: "壊れたフィールド参照",
+  brokenLayoutRef: "壊れたレイアウト参照",
 };
 
 export function BrokenRefsList({ projectId }: Props) {
@@ -35,7 +37,7 @@ export function BrokenRefsList({ projectId }: Props) {
 
   function handleClick(ref: BrokenRef) {
     if (!projectId) return;
-    if (ref.kind === "performScript") {
+    if (ref.kind === "performScript" || ref.kind === "brokenFieldRef" || ref.kind === "brokenLayoutRef") {
       const script = scripts.find((s) => s.name === ref.source_name);
       if (script) selectElement({ kind: "script", projectId, id: script.id, name: script.name });
     } else if (ref.kind === "scriptTrigger") {

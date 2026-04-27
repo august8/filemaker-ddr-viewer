@@ -18,6 +18,10 @@ pub enum BrokenRefKind {
     PerformScript,
     /// ScriptTrigger が存在しないスクリプトを参照している。
     ScriptTrigger,
+    /// Set Field 等のステップが存在しないフィールドを参照している。
+    BrokenFieldRef,
+    /// Go to Layout 等のステップが存在しないレイアウトを参照している。
+    BrokenLayoutRef,
 }
 
 /// 単一の壊れた参照。
@@ -70,6 +74,26 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     kind: BrokenRefKind::PerformScript,
                     source_name: script.name.clone(),
                     target_script_name: script_ref.name.clone(),
+                });
+            }
+        }
+
+        // 壊れたフィールド参照（Set Field 等）
+        for step in script.steps.iter().filter(|s| s.enabled) {
+            if step.broken_field_table.is_some() {
+                let target = step.step_text.as_deref().unwrap_or("(broken field ref)");
+                result.push(BrokenRef {
+                    kind: BrokenRefKind::BrokenFieldRef,
+                    source_name: script.name.clone(),
+                    target_script_name: target.to_string(),
+                });
+            }
+            if step.has_broken_layout_ref {
+                let target = step.step_text.as_deref().unwrap_or("(broken layout ref)");
+                result.push(BrokenRef {
+                    kind: BrokenRefKind::BrokenLayoutRef,
+                    source_name: script.name.clone(),
+                    target_script_name: target.to_string(),
                 });
             }
         }
@@ -126,6 +150,142 @@ mod tests {
     }
 
     #[test]
+    fn detects_broken_set_field_step() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "MainScript".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 76,
+                    name: "フィールド設定".into(),
+                    enabled: true,
+                    script_ref: None,
+                    calculation: None,
+                    step_text: Some(
+                        "フィールド設定 [ BaseFile::<フィールドが見つかりません> ]".into(),
+                    ),
+                    broken_field_table: Some("BaseFile".into()),
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].kind, BrokenRefKind::BrokenFieldRef);
+        assert_eq!(refs[0].source_name, "MainScript");
+        assert!(refs[0]
+            .target_script_name
+            .contains("フィールドが見つかりません"));
+    }
+
+    #[test]
+    fn detects_broken_go_to_layout_step() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "NavScript".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 6,
+                    name: "レイアウト切り替え".into(),
+                    enabled: true,
+                    script_ref: None,
+                    calculation: None,
+                    step_text: Some("レイアウト切り替え [ <不明> ]".into()),
+                    broken_field_table: None,
+                    has_broken_layout_ref: true,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].kind, BrokenRefKind::BrokenLayoutRef);
+        assert_eq!(refs[0].source_name, "NavScript");
+        assert!(refs[0].target_script_name.contains("不明"));
+    }
+
+    #[test]
+    fn disabled_broken_step_is_ignored() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "S".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 76,
+                    name: "フィールド設定".into(),
+                    enabled: false, // disabled → 除外
+                    script_ref: None,
+                    calculation: None,
+                    step_text: None,
+                    broken_field_table: Some("BaseFile".into()),
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert!(refs.is_empty(), "disabled steps should be ignored");
+    }
+
+    #[test]
     fn detects_broken_perform_script() {
         use crate::parser::models::*;
         use crate::parser::version::FmVersion;
@@ -152,6 +312,8 @@ mod tests {
                     }),
                     calculation: None,
                     step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
                 }],
             }],
             layouts: vec![],
@@ -198,6 +360,8 @@ mod tests {
                     }),
                     calculation: None,
                     step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
                 }],
             }],
             layouts: vec![],
@@ -255,5 +419,50 @@ mod tests {
         assert_eq!(refs[0].kind, BrokenRefKind::ScriptTrigger);
         assert_eq!(refs[0].source_name, "MainLayout");
         assert_eq!(refs[0].target_script_name, "MissingScript");
+    }
+
+    #[test]
+    fn disabled_perform_script_is_ignored() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "Caller".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 89,
+                    name: "Perform Script".into(),
+                    enabled: false, // disabled → 除外
+                    script_ref: Some(ScriptRef {
+                        name: "NonExistent".into(),
+                        file_name: "".into(),
+                    }),
+                    calculation: None,
+                    step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert!(refs.is_empty(), "disabled PerformScript should be ignored");
     }
 }

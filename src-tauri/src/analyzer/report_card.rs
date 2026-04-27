@@ -91,6 +91,10 @@ pub fn generate_report_card(ddr: &DdrFile) -> ReportCard {
             crate::analyzer::broken_refs::BrokenRefKind::ScriptTrigger => {
                 (Some("layout".into()), Some(r.source_name.clone()))
             }
+            crate::analyzer::broken_refs::BrokenRefKind::BrokenFieldRef
+            | crate::analyzer::broken_refs::BrokenRefKind::BrokenLayoutRef => {
+                (Some("script".into()), Some(r.source_name.clone()))
+            }
         };
         issues.push(ReportIssue {
             severity: Severity::Error,
@@ -220,6 +224,8 @@ mod tests {
                     }),
                     calculation: None,
                     step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
                 }],
             }],
             layouts: vec![],

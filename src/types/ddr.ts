@@ -51,7 +51,7 @@ export interface SearchResult {
 }
 
 export interface BrokenRef {
-  kind: "performScript" | "scriptTrigger";
+  kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef";
   source_name: string;
   target_script_name: string;
 }

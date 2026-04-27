@@ -170,6 +170,12 @@ pub struct ScriptStep {
     pub calculation: Option<String>,
     /// 実DDR <StepText> — 人間可読な表示テキスト
     pub step_text: Option<String>,
+    /// Set Field 等でフィールドが見つからない場合のテーブルオカレンス名。
+    /// `<Field table="TO" name=""/>` パターンで検出。
+    pub broken_field_table: Option<String>,
+    /// Go to Layout 等でレイアウトが見つからない場合のフラグ。
+    /// `<Layout name=""/>` パターンで検出。
+    pub has_broken_layout_ref: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,31 +1,65 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { BrokenRefsList } from "../components/BrokenRefsList";
+import { makeScriptRow, makeLayoutRow } from "./testFixtures";
 import type { BrokenRef } from "../types/ddr";
 
 vi.mock("../hooks/analysis", () => ({
   useBrokenRefs: vi.fn(),
 }));
 vi.mock("../hooks/script", () => ({
-  useScriptList: vi.fn(() => ({ data: [], isLoading: false })),
+  useScriptList: vi.fn(),
 }));
 vi.mock("../hooks/layout", () => ({
-  useLayoutList: vi.fn(() => ({ data: [], isLoading: false })),
+  useLayoutList: vi.fn(),
 }));
-
 vi.mock("../stores/appStore", () => ({
-  useAppStore: vi.fn(() => ({ selectElement: vi.fn() })),
+  useAppStore: vi.fn(),
 }));
 
 import { useBrokenRefs } from "../hooks/analysis";
+import { useScriptList } from "../hooks/script";
+import { useLayoutList } from "../hooks/layout";
+import { useAppStore } from "../stores/appStore";
 
-const mockBrokenRefs: BrokenRef[] = [
-  { kind: "performScript", source_name: "Script A", target_script_name: "Missing Script" },
-  { kind: "scriptTrigger", source_name: "Layout B", target_script_name: "Gone Script" },
+const mockScripts = [
+  makeScriptRow({ id: 1, name: "MainScript" }),
+  makeScriptRow({ id: 2, name: "NavScript" }),
 ];
+const mockLayouts = [makeLayoutRow({ id: 10, name: "CustomerList" })];
+const mockSelectElement = vi.fn();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(useAppStore).mockReturnValue({
+    selectElement: mockSelectElement,
+  } as unknown as ReturnType<typeof useAppStore>);
+  vi.mocked(useScriptList).mockReturnValue(
+    { data: mockScripts, isLoading: false } as unknown as ReturnType<typeof useScriptList>
+  );
+  vi.mocked(useLayoutList).mockReturnValue(
+    { data: mockLayouts, isLoading: false } as unknown as ReturnType<typeof useLayoutList>
+  );
+});
 
 describe("BrokenRefsList", () => {
-  it("renders_empty_message_when_no_broken_refs", () => {
+  it("returns_null_when_project_id_is_null", () => {
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: [], isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    const { container } = render(<BrokenRefsList projectId={null} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("shows_spinner_while_loading", () => {
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+  });
+
+  it("shows_empty_message_when_no_refs", () => {
     vi.mocked(useBrokenRefs).mockReturnValue(
       { data: [], isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
     );
@@ -33,14 +67,76 @@ describe("BrokenRefsList", () => {
     expect(screen.getByText("壊れた参照はありません")).toBeInTheDocument();
   });
 
-  it("renders_broken_ref_names", () => {
+  it("shows_kind_label_for_each_ref", () => {
+    const refs: BrokenRef[] = [
+      { kind: "performScript",   source_name: "MainScript",   target_script_name: "Missing" },
+      { kind: "scriptTrigger",   source_name: "CustomerList", target_script_name: "Missing" },
+      { kind: "brokenFieldRef",  source_name: "MainScript",   target_script_name: "Set Field [...]" },
+      { kind: "brokenLayoutRef", source_name: "NavScript",    target_script_name: "Go to Layout [...]" },
+    ];
     vi.mocked(useBrokenRefs).mockReturnValue(
-      { data: mockBrokenRefs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
     );
     render(<BrokenRefsList projectId={1} />);
-    expect(screen.getByText("Script A")).toBeInTheDocument();
-    expect(screen.getByText("Missing Script")).toBeInTheDocument();
-    expect(screen.getByText("Layout B")).toBeInTheDocument();
-    expect(screen.getByText("Gone Script")).toBeInTheDocument();
+    expect(screen.getByText("Perform Script")).toBeInTheDocument();
+    expect(screen.getByText("Script Trigger")).toBeInTheDocument();
+    expect(screen.getByText("壊れたフィールド参照")).toBeInTheDocument();
+    expect(screen.getByText("壊れたレイアウト参照")).toBeInTheDocument();
+  });
+
+  it("perform_script_click_selects_script", () => {
+    const refs: BrokenRef[] = [
+      { kind: "performScript", source_name: "MainScript", target_script_name: "Missing" },
+    ];
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    fireEvent.click(screen.getByTitle("MainScript を表示"));
+    expect(mockSelectElement).toHaveBeenCalledWith({
+      kind: "script", projectId: 1, id: 1, name: "MainScript",
+    });
+  });
+
+  it("script_trigger_click_selects_layout", () => {
+    const refs: BrokenRef[] = [
+      { kind: "scriptTrigger", source_name: "CustomerList", target_script_name: "Missing" },
+    ];
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    fireEvent.click(screen.getByTitle("CustomerList を表示"));
+    expect(mockSelectElement).toHaveBeenCalledWith({
+      kind: "layout", projectId: 1, id: 10, name: "CustomerList",
+    });
+  });
+
+  it("broken_field_ref_click_selects_script", () => {
+    const refs: BrokenRef[] = [
+      { kind: "brokenFieldRef", source_name: "MainScript", target_script_name: "Set Field [...]" },
+    ];
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    fireEvent.click(screen.getByTitle("MainScript を表示"));
+    expect(mockSelectElement).toHaveBeenCalledWith({
+      kind: "script", projectId: 1, id: 1, name: "MainScript",
+    });
+  });
+
+  it("broken_layout_ref_click_selects_script", () => {
+    const refs: BrokenRef[] = [
+      { kind: "brokenLayoutRef", source_name: "NavScript", target_script_name: "Go to Layout [...]" },
+    ];
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    fireEvent.click(screen.getByTitle("NavScript を表示"));
+    expect(mockSelectElement).toHaveBeenCalledWith({
+      kind: "script", projectId: 1, id: 2, name: "NavScript",
+    });
   });
 });

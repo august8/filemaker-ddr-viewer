@@ -163,6 +163,8 @@ fn parse_step_list<R: BufRead>(
                     script_ref: None,
                     calculation: None,
                     step_text: None,
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
                 });
             }
             Event::Start(_) => {
@@ -189,6 +191,8 @@ fn parse_step_children<R: BufRead>(
     let mut script_ref: Option<ScriptRef> = None;
     let mut calculation: Option<String> = None;
     let mut step_text: Option<String> = None;
+    let mut broken_field_table: Option<String> = None;
+    let mut has_broken_layout_ref = false;
 
     loop {
         buf.clear();
@@ -247,6 +251,21 @@ fn parse_step_children<R: BufRead>(
                     skip_element(reader, buf)?;
                 }
             }
+            // <Field table="TO" name=""/>  name が空 = 壊れたフィールド参照
+            Event::Empty(ref e) if e.name().as_ref() == b"Field" => {
+                let table = get_attr(e, b"table").unwrap_or_default();
+                let field_name = get_attr(e, b"name").unwrap_or_default();
+                if !table.is_empty() && field_name.is_empty() {
+                    broken_field_table = Some(table);
+                }
+            }
+            // <Layout name=""/>  name が空 = 壊れたレイアウト参照
+            Event::Empty(ref e) if e.name().as_ref() == b"Layout" => {
+                let layout_name = get_attr(e, b"name").unwrap_or_default();
+                if layout_name.is_empty() {
+                    has_broken_layout_ref = true;
+                }
+            }
             Event::Start(_) => {
                 skip_element(reader, buf)?;
             }
@@ -264,6 +283,8 @@ fn parse_step_children<R: BufRead>(
         script_ref,
         calculation,
         step_text,
+        broken_field_table,
+        has_broken_layout_ref,
     })
 }
 
