@@ -15,6 +15,7 @@ vi.mock("../../hooks/layout", () => ({
 vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
+vi.mock("../../constants", () => ({ PAGE_SIZE: 3 }));
 
 import { useTableOccurrenceList, useTableList } from "../../hooks/table";
 import { useLayoutList } from "../../hooks/layout";
