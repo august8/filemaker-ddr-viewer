@@ -4,6 +4,25 @@
 
 ---
 
+## [0.1.2] - 2026-04-27
+
+### 機能
+- list_* コマンド全件に limit/offset ページネーション追加
+- CommandError メッセージを日本語化
+
+### 修正
+- 壊れたフィールド参照・レイアウト参照を broken_refs で検出し BrokenRefsList に表示
+- ページネーション対応後のレビュー指摘事項を修正
+- 未使用の tantivy 依存を Cargo.toml から削除
+- ProjectSummary の TypeScript 型を Rust のシリアライズ形式に合わせて修正
+
+### 改善
+- 複数のモジュールを責務別ファイルに分割（diff_engine.rs・layout_parser.rs・field_refs.rs・useTauriCommand.ts）
+- lock_db ヘルパーで DB ロック取得を一箇所に集約
+- decode_ddr_bytes を parser モジュールに集約
+
+---
+
 ## [0.1.1] - 2026-04-18
 
 ### 修正
@@ -41,5 +60,6 @@
 
 ---
 
+[0.1.2]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/august8/filemaker-ddr-viewer/releases/tag/v0.1.0
