@@ -11,8 +11,13 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: vi.fn(),
+}));
+
 import { useAllFields } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const mockSetRightPanel = vi.fn();
 
@@ -27,6 +32,21 @@ beforeEach(() => {
   vi.mocked(useAppStore).mockReturnValue({
     setRightPanel: mockSetRightPanel,
   } as unknown as ReturnType<typeof useAppStore>);
+  // useVirtualizer スタブ: テスト環境では全アイテムを返す
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vi.mocked(useVirtualizer).mockImplementation((opts: any) => ({
+    getVirtualItems: () =>
+      Array.from({ length: opts.count as number }, (_: unknown, i: number) => ({
+        index: i,
+        key: i,
+        start: i * (opts.estimateSize as (i: number) => number)(i),
+        end: (i + 1) * (opts.estimateSize as (i: number) => number)(i),
+        size: (opts.estimateSize as (i: number) => number)(i),
+        lane: 0,
+      })),
+    getTotalSize: () => (opts.count as number) * (opts.estimateSize as (i: number) => number)(0),
+    measureElement: vi.fn(),
+  }) as unknown as ReturnType<typeof useVirtualizer>);
 });
 
 describe("AllFieldsPanel", () => {
@@ -107,6 +127,16 @@ describe("AllFieldsPanel", () => {
     // "G" はヘッダー（th）とデータ行（td）の両方に現れる
     const gCells = screen.getAllByText("G");
     expect(gCells.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("useVirtualizer_receives_filtered_count_as_count", () => {
+    vi.mocked(useAllFields).mockReturnValue(
+      { data: mockFields, isLoading: false } as unknown as ReturnType<typeof useAllFields>
+    );
+    render(<AllFieldsPanel projectId={1} />);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts = vi.mocked(useVirtualizer).mock.lastCall?.[0] as any;
+    expect(opts?.count).toBe(mockFields.length);
   });
 
   it("clicking_row_calls_setRightPanel_with_field_info", () => {

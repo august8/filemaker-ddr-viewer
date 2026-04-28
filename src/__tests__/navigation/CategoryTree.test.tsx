@@ -132,6 +132,20 @@ describe("CategoryTree", () => {
     });
   });
 
+  it("closed_category_calls_hook_with_null_projectId", () => {
+    render(<CategoryTree projectId={1} />);
+    // 初期状態ではすべてのカテゴリが閉じている → useTableList に null が渡る
+    expect(vi.mocked(useTableList).mock.calls[0]?.[0]).toBeNull();
+  });
+
+  it("opening_category_calls_hook_with_real_projectId", () => {
+    render(<CategoryTree projectId={1} />);
+    vi.mocked(useTableList).mockClear();
+    fireEvent.click(screen.getByText(/^テーブル \(/));
+    // 展開後は projectId=1 でフックが呼ばれる
+    expect(vi.mocked(useTableList)).toHaveBeenCalledWith(1);
+  });
+
   it("element_click_calls_selectElement", () => {
     render(<CategoryTree projectId={1} />);
 
