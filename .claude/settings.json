@@ -8,5 +8,18 @@
       "Bash(git commit:*)",
       "Bash(git status:*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "result=$(npm run test 2>&1 | tail -60); jq -n --arg res \"$result\" '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":(\"### セッション開始 自動テスト結果\\n\" + $res)}}'",
+            "timeout": 90
+          }
+        ]
+      }
+    ]
   }
 }

@@ -32,6 +32,10 @@ git diff origin/main...HEAD --name-only
 **TDD 順序の確認:**
 - `git log --oneline origin/main...HEAD` でコミット履歴を確認し、テストコミットが実装コミットより後になっていないか
 
+**ARCHITECTURE.md 更新の確認:**
+- `src/**` または `src-tauri/src/**` に実装変更が含まれる場合、`ARCHITECTURE.md` も変更されているか確認する
+- 変更されていない場合: 結果レポートに「❌ ARCHITECTURE.md が更新されていません（ワークフロー Step 6）」を含める
+
 ### 3. 未完了マーカーの確認
 
 ```bash
