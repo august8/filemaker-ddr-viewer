@@ -23,10 +23,15 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
+vi.mock("../../hooks/solutions", () => ({
+  useProjectSummary: vi.fn(),
+}));
+
 import { useTableList } from "../../hooks/table";
 import { useScriptList } from "../../hooks/script";
 import { useLayoutList } from "../../hooks/layout";
 import { useValueListList, useCustomFunctionList } from "../../hooks/catalog";
+import { useProjectSummary } from "../../hooks/solutions";
 import { useAppStore } from "../../stores/appStore";
 
 const mockTables = [
@@ -60,6 +65,22 @@ beforeEach(() => {
     selectElement: mockSelectElement,
     setRightPanel: mockSetRightPanel,
   } as unknown as ReturnType<typeof useAppStore>);
+  vi.mocked(useProjectSummary).mockReturnValue({
+    data: {
+      project: {} as never,
+      table_count: 2,
+      field_count: 8,
+      script_count: 1,
+      layout_count: 1,
+      table_occurrence_count: 0,
+      relationship_count: 0,
+      value_list_count: 1,
+      custom_function_count: 1,
+      account_count: 0,
+      privilege_set_count: 0,
+    },
+    isLoading: false,
+  } as unknown as ReturnType<typeof useProjectSummary>);
   vi.mocked(useTableList).mockReturnValue({
     data: mockTables,
     isLoading: false,
@@ -130,6 +151,20 @@ describe("CategoryTree", () => {
       kind: "all_relationships",
       projectId: 1,
     });
+  });
+
+  it("closed_category_calls_hook_with_null_projectId", () => {
+    render(<CategoryTree projectId={1} />);
+    // 初期状態ではすべてのカテゴリが閉じている → useTableList に null が渡る
+    expect(vi.mocked(useTableList).mock.calls[0]?.[0]).toBeNull();
+  });
+
+  it("opening_category_calls_hook_with_real_projectId", () => {
+    render(<CategoryTree projectId={1} />);
+    vi.mocked(useTableList).mockClear();
+    fireEvent.click(screen.getByText(/^テーブル \(/));
+    // 展開後は projectId=1 でフックが呼ばれる
+    expect(vi.mocked(useTableList)).toHaveBeenCalledWith(1);
   });
 
   it("element_click_calls_selectElement", () => {

@@ -85,7 +85,7 @@ filemaker-ddr-viewer/
 |--------------------------|------|
 | `App.tsx` | 3 ペインレイアウト・リサイズ・ナビゲーション |
 | `MainContent.tsx` | メインエリアのルーティング（`selectedElement.kind` で切り替え） |
-| `navigation/CategoryTree.tsx` | サイドバーツリー |
+| `navigation/CategoryTree.tsx` | サイドバーツリー。カテゴリ展開時のみ IPC クエリを発行（遅延ロード）。カウントは `useProjectSummary` から取得し未展開時も正確な値を表示 |
 | `SearchBar.tsx` / `SearchResults.tsx` | 全文検索・カテゴリフィルター・クリック遷移 |
 | `SolutionList.tsx` | ソリューション一覧・削除 |
 | `ImportButton.tsx` | `概要.xml` インポート |
@@ -103,7 +103,7 @@ filemaker-ddr-viewer/
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
 | `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
 | `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
-| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel） |
+| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
 | `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |

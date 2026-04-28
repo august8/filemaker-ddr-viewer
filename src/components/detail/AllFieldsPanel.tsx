@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useAllFields } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
@@ -33,6 +34,21 @@ export function AllFieldsPanel({ projectId }: Props) {
         f.comment.toLowerCase().includes(q)
     );
   }, [fields, filter]);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: filtered.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 40,
+    overscan: 10,
+  });
+
+  const virtualRows = virtualizer.getVirtualItems();
+  const totalSize = virtualizer.getTotalSize();
+  const paddingTop = virtualRows[0]?.start ?? 0;
+  const lastVirtualRow = virtualRows[virtualRows.length - 1];
+  const paddingBottom = totalSize - (lastVirtualRow?.end ?? 0);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
@@ -87,7 +103,7 @@ export function AllFieldsPanel({ projectId }: Props) {
       </div>
 
       {/* テーブル */}
-      <div className="flex-1 overflow-auto px-4 pb-4">
+      <div ref={scrollRef} className="flex-1 overflow-auto px-4 pb-4">
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 bg-white z-10">
             <tr className="bg-gray-100 text-left">
@@ -100,49 +116,56 @@ export function AllFieldsPanel({ projectId }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((field) => (
-              <tr
-                key={field.id}
-                className="hover:bg-blue-50 cursor-pointer"
-                onClick={() =>
-                  setRightPanel({
-                    kind: "field",
-                    projectId,
-                    tableId: field.table_id,
-                    fieldId: field.id,
-                    tableName: field.table_name,
-                  })
-                }
-              >
-                <td className="px-3 py-1.5 border border-gray-200 text-gray-500 whitespace-nowrap">
-                  {field.table_name}
-                </td>
-                <td className="px-3 py-1.5 border border-gray-200 font-medium text-gray-800 whitespace-nowrap">
-                  {field.name}
-                </td>
-                <td className="px-3 py-1.5 border border-gray-200 text-xs font-mono whitespace-nowrap">
-                  {field.data_type}
-                </td>
-                <td className="px-3 py-1.5 border border-gray-200 text-xs whitespace-nowrap">
-                  {field.field_type === "normal"
-                    ? ""
-                    : field.field_type === "calculated"
-                    ? "計算"
-                    : field.field_type === "summary"
-                    ? "集計"
-                    : field.field_type}
-                </td>
-                <td className="px-3 py-1.5 border border-gray-200 text-center text-xs">
-                  {field.is_global ? "G" : ""}
-                </td>
-                <td
-                  className="px-3 py-1.5 border border-gray-200 text-gray-500 max-w-xs truncate"
-                  title={field.comment ?? ""}
+            {/* top spacer */}
+            <tr><td colSpan={6} style={{ height: `${paddingTop}px`, padding: 0 }} /></tr>
+            {virtualRows.map((vRow) => {
+              const field = filtered[vRow.index];
+              return (
+                <tr
+                  key={field.id}
+                  className="hover:bg-blue-50 cursor-pointer"
+                  onClick={() =>
+                    setRightPanel({
+                      kind: "field",
+                      projectId,
+                      tableId: field.table_id,
+                      fieldId: field.id,
+                      tableName: field.table_name,
+                    })
+                  }
                 >
-                  {field.comment}
-                </td>
-              </tr>
-            ))}
+                  <td className="px-3 py-1.5 border border-gray-200 text-gray-500 whitespace-nowrap">
+                    {field.table_name}
+                  </td>
+                  <td className="px-3 py-1.5 border border-gray-200 font-medium text-gray-800 whitespace-nowrap">
+                    {field.name}
+                  </td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-xs font-mono whitespace-nowrap">
+                    {field.data_type}
+                  </td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-xs whitespace-nowrap">
+                    {field.field_type === "normal"
+                      ? ""
+                      : field.field_type === "calculated"
+                      ? "計算"
+                      : field.field_type === "summary"
+                      ? "集計"
+                      : field.field_type}
+                  </td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-center text-xs">
+                    {field.is_global ? "G" : ""}
+                  </td>
+                  <td
+                    className="px-3 py-1.5 border border-gray-200 text-gray-500 max-w-xs truncate"
+                    title={field.comment ?? ""}
+                  >
+                    {field.comment}
+                  </td>
+                </tr>
+              );
+            })}
+            {/* bottom spacer */}
+            <tr><td colSpan={6} style={{ height: `${paddingBottom}px`, padding: 0 }} /></tr>
           </tbody>
         </table>
         {filtered.length === 0 && (

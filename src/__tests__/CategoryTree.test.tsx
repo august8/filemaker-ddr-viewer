@@ -34,6 +34,24 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
+vi.mock("../hooks/solutions", () => ({
+  useProjectSummary: vi.fn(() => ({
+    data: {
+      project: {},
+      table_count: 1,
+      field_count: 3,
+      script_count: 2,
+      layout_count: 0,
+      table_occurrence_count: 0,
+      relationship_count: 0,
+      value_list_count: 0,
+      custom_function_count: 0,
+      account_count: 0,
+      privilege_set_count: 0,
+    },
+  })),
+}));
+
 import { useAppStore } from "../stores/appStore";
 
 const mockSelectElement = vi.fn();

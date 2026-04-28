@@ -1,10 +1,11 @@
 // src/components/navigation/CategoryTree.tsx
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef, forwardRef, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { useTableList, useTableOccurrenceList, useRelationshipList } from "../../hooks/table";
+import { useTableList } from "../../hooks/table";
 import { useScriptList } from "../../hooks/script";
 import { useLayoutList } from "../../hooks/layout";
 import { useValueListList, useCustomFunctionList } from "../../hooks/catalog";
+import { useProjectSummary } from "../../hooks/solutions";
 import { useAppStore } from "../../stores/appStore";
 import type { SelectedElement } from "../../stores/appStore";
 
@@ -73,18 +74,38 @@ export function CategoryTree({ projectId }: Props) {
   );
   const { selectedElement, selectElement, setRightPanel } = useAppStore();
   const selectedItemRef = useRef<HTMLButtonElement>(null);
+  // データの遅延ロード後にスクロールが必要なときにセットする
+  const pendingScrollRef = useRef(false);
 
-  const { data: tables = [] } = useTableList(projectId);
-  const { data: scripts = [] } = useScriptList(projectId);
-  const { data: layouts = [] } = useLayoutList(projectId);
-  const { data: valueLists = [] } = useValueListList(projectId);
-  const { data: customFunctions = [] } = useCustomFunctionList(projectId);
-  const { data: tableOccurrences = [] } = useTableOccurrenceList(projectId);
-  const { data: relationships = [] } = useRelationshipList(projectId);
+  // カテゴリが開いているときのみ projectId を渡し、クエリを有効化する
+  const tablesProjectId = openCategories["tables"] ? projectId : null;
+  const scriptsProjectId = openCategories["scripts"] ? projectId : null;
+  const layoutsProjectId = openCategories["layouts"] ? projectId : null;
+  const valueListsProjectId = openCategories["value_lists"] ? projectId : null;
+  const customFunctionsProjectId = openCategories["custom_functions"] ? projectId : null;
+
+  const { data: summary } = useProjectSummary(projectId);
+  const { data: tables = [] } = useTableList(tablesProjectId);
+  const { data: scripts = [] } = useScriptList(scriptsProjectId);
+  const { data: layouts = [] } = useLayoutList(layoutsProjectId);
+  const { data: valueLists = [] } = useValueListList(valueListsProjectId);
+  const { data: customFunctions = [] } = useCustomFunctionList(customFunctionsProjectId);
 
   const toggle = (category: string) => {
     setOpenCategories((prev) => ({ ...prev, [category]: !prev[category] }));
   };
+
+  const tryScroll = useCallback(() => {
+    if (pendingScrollRef.current && selectedItemRef.current) {
+      pendingScrollRef.current = false;
+      selectedItemRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, []);
+
+  // データ到着後にスクロールを再試行（遅延ロード時に ref が null だったケース）
+  useEffect(() => {
+    tryScroll();
+  }, [tables, scripts, layouts, valueLists, customFunctions, tryScroll]);
 
   // selectedElement が変化したとき、対応するカテゴリを自動展開してハイライト行にスクロールする
   // flushSync でカテゴリ展開を同期的に DOM に反映してから scrollIntoView を呼ぶことで
@@ -105,7 +126,12 @@ export function CategoryTree({ projectId }: Props) {
       });
     }
     // flushSync 後は DOM が更新済みで ref も設定されているため直接スクロールできる
-    selectedItemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    // 遅延ロード中（データ未到着）の場合は pendingScrollRef に記録して後で再試行する
+    if (selectedItemRef.current) {
+      selectedItemRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } else if (category) {
+      pendingScrollRef.current = true;
+    }
   }, [selectedElement]);
 
   const isSelected = (element: SelectedElement) => {
@@ -118,7 +144,15 @@ export function CategoryTree({ projectId }: Props) {
     return true;
   };
 
-  const totalFieldCount = tables.reduce((sum, t) => sum + t.field_count, 0);
+  // カウントはサマリーから取得して遅延ロード中も正確な値を表示する
+  const totalFieldCount = summary?.field_count ?? 0;
+  const tableCount = summary?.table_count ?? 0;
+  const scriptCount = summary?.script_count ?? 0;
+  const layoutCount = summary?.layout_count ?? 0;
+  const valueListCount = summary?.value_list_count ?? 0;
+  const customFunctionCount = summary?.custom_function_count ?? 0;
+  const tableOccurrenceCount = summary?.table_occurrence_count ?? 0;
+  const relationshipCount = summary?.relationship_count ?? 0;
 
   return (
     <div className="overflow-auto">
@@ -144,7 +178,7 @@ export function CategoryTree({ projectId }: Props) {
       <CategorySection
         label="テーブル"
         icon="📊"
-        count={tables.length}
+        count={tableCount}
         isOpen={!!openCategories["tables"]}
         onToggle={() => toggle("tables")}
       >
@@ -179,7 +213,7 @@ export function CategoryTree({ projectId }: Props) {
       >
         <span className="flex items-center gap-1.5">
           <span className="text-base">🔁</span>
-          テーブルオカレンス ({tableOccurrences.length})
+          テーブルオカレンス ({tableOccurrenceCount})
         </span>
       </button>
 
@@ -197,7 +231,7 @@ export function CategoryTree({ projectId }: Props) {
       >
         <span className="flex items-center gap-1.5">
           <span className="text-base">🔗</span>
-          リレーション ({relationships.length})
+          リレーション ({relationshipCount})
         </span>
       </button>
 
@@ -205,7 +239,7 @@ export function CategoryTree({ projectId }: Props) {
       <CategorySection
         label="スクリプト"
         icon="📜"
-        count={scripts.length}
+        count={scriptCount}
         isOpen={!!openCategories["scripts"]}
         onToggle={() => toggle("scripts")}
       >
@@ -230,7 +264,7 @@ export function CategoryTree({ projectId }: Props) {
       <CategorySection
         label="レイアウト"
         icon="🖼"
-        count={layouts.length}
+        count={layoutCount}
         isOpen={!!openCategories["layouts"]}
         onToggle={() => toggle("layouts")}
       >
@@ -255,7 +289,7 @@ export function CategoryTree({ projectId }: Props) {
       <CategorySection
         label="バリューリスト"
         icon="📋"
-        count={valueLists.length}
+        count={valueListCount}
         isOpen={!!openCategories["value_lists"]}
         onToggle={() => toggle("value_lists")}
       >
@@ -280,7 +314,7 @@ export function CategoryTree({ projectId }: Props) {
       <CategorySection
         label="カスタム関数"
         icon="ƒ"
-        count={customFunctions.length}
+        count={customFunctionCount}
         isOpen={!!openCategories["custom_functions"]}
         onToggle={() => toggle("custom_functions")}
       >
