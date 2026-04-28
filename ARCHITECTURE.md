@@ -315,3 +315,64 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `compare_projects` | diff.rs | `project_id_a, project_id_b` | `DiffResult` |
 | `compare_solutions` | diff.rs | `solution_id_a, solution_id_b` | `DiffResult` |
 | `list_all_projects` | diff.rs | — | `Vec<ProjectWithSolution>` |
+| `import_ddr_from_path` ⚠️ test-utils | test_utils.rs | `summary_path: String` | `SolutionWithProjects` |
+
+---
+
+## E2E テスト
+
+### 技術選定
+
+WebdriverIO + tauri-driver を採用（ADR 0011 参照）。WebdriverIO は WebDriver プロトコルネイティブで、
+tauri-driver との公式ドキュメント付きペアリングが存在する。Playwright + tauri-driver は CDP/WebDriver
+プロトコル不一致のため却下。
+
+### ファイルダイアログのバイパス
+
+OS ネイティブのファイルピッカーは WebDriver から操作できない。Cargo feature フラグ `test-utils` で
+テスト専用 IPC コマンド `import_ddr_from_path` を追加し、パスを直接受け取る方式で回避する。
+
+`npx tauri build --debug --features test-utils` でビルドしたバイナリのみにこのコマンドが含まれる。
+リリースバイナリ（feature なし）には一切含まれない。
+
+### ローカル実行手順
+
+```bash
+# 初回のみ必要な依存ツールのインストール
+cargo install tauri-driver
+# msedgedriver は Windows に Edge が入っていれば通常インストール不要
+# 不足している場合: winget install Microsoft.WebDriver
+
+# E2E バイナリのビルド（Rust コード変更後に必要）
+npm run build:e2e
+# 展開: npx tauri build --debug --features test-utils
+
+# E2E テスト実行（バイナリが既にある場合）
+npx wdio run wdio.conf.ts
+
+# ビルドからテストまで一括実行
+npm run test:e2e
+```
+
+### テスト構成
+
+| ファイル | 内容 |
+|---|---|
+| `wdio.conf.ts` | WebdriverIO 設定（バイナリパス・サービス設定） |
+| `tests/e2e/golden-path.spec.ts` | ゴールデンパス 4 ステップ（インポート → サイドバー表示 → 検索 → 詳細表示） |
+| `src-tauri/src/commands/test_utils.rs` | `import_ddr_from_path` コマンド（`test-utils` feature でゲート） |
+
+### 安定したセレクタ
+
+E2E テストは CSS クラス名ではなく以下を優先して使う:
+
+| 用途 | セレクタ |
+|---|---|
+| 検索結果アイテム | `[data-testid="search-result-item"]` |
+| 検索バー | `[placeholder*="検索"]` |
+| テキスト内容による要素検索 | `$("*=BaseFile.fmp12")` |
+
+### CI への追加（現フェーズは対象外）
+
+Tauri バイナリのビルドに約 10 分かかるため、現時点では CI に含めない。
+CI 追加手順のコメントは `.github/workflows/ci.yml` に記載済み。

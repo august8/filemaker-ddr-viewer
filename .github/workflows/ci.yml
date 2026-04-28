@@ -104,3 +104,32 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           flags: frontend
+
+# E2E テストを CI に追加する場合の手順:
+#
+# e2e:
+#   name: E2E (local-only for now)
+#   runs-on: windows-latest
+#   steps:
+#     - uses: actions/checkout@v4
+#     - uses: actions/setup-node@v4
+#       with: { node-version: 20, cache: npm }
+#     - uses: dtolnay/rust-toolchain@stable
+#     - name: Install dependencies
+#       run: npm ci
+#     - name: Install tauri-driver
+#       run: cargo install tauri-driver
+#     - name: Install msedgedriver
+#       run: winget install --silent Microsoft.WebDriver
+#       # または: choco install selenium-edge-driver
+#     - name: Build test binary
+#       run: npm run build:e2e
+#       # 展開: npx tauri build --debug --features test-utils
+#       # 所要時間: 約 8-10 分
+#     - name: Run E2E tests
+#       run: npx wdio run wdio.conf.ts
+#
+# 注意:
+# - ビルド時間が長いため release job からバイナリを artifact で受け取ることで高速化できる
+# - msedgedriver が windows-latest に含まれているかは要検証
+# - tauri-driver のビルドにも数分かかる

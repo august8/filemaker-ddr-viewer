@@ -1,6 +1,6 @@
 # ADR 0011: E2E テスト基盤の技術選定
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-04-28
 
 ## Context

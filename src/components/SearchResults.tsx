@@ -164,6 +164,7 @@ export function SearchResults({ query }: Props) {
         {filteredResults.map((result) => (
           <button
             key={`${result.element_type}-${result.element_id}`}
+            data-testid="search-result-item"
             className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors"
             onClick={() => handleClick(result)}
           >
