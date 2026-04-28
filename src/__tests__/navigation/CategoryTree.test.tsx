@@ -23,10 +23,15 @@ vi.mock("../../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
+vi.mock("../../hooks/solutions", () => ({
+  useProjectSummary: vi.fn(),
+}));
+
 import { useTableList } from "../../hooks/table";
 import { useScriptList } from "../../hooks/script";
 import { useLayoutList } from "../../hooks/layout";
 import { useValueListList, useCustomFunctionList } from "../../hooks/catalog";
+import { useProjectSummary } from "../../hooks/solutions";
 import { useAppStore } from "../../stores/appStore";
 
 const mockTables = [
@@ -60,6 +65,22 @@ beforeEach(() => {
     selectElement: mockSelectElement,
     setRightPanel: mockSetRightPanel,
   } as unknown as ReturnType<typeof useAppStore>);
+  vi.mocked(useProjectSummary).mockReturnValue({
+    data: {
+      project: {} as never,
+      table_count: 2,
+      field_count: 8,
+      script_count: 1,
+      layout_count: 1,
+      table_occurrence_count: 0,
+      relationship_count: 0,
+      value_list_count: 1,
+      custom_function_count: 1,
+      account_count: 0,
+      privilege_set_count: 0,
+    },
+    isLoading: false,
+  } as unknown as ReturnType<typeof useProjectSummary>);
   vi.mocked(useTableList).mockReturnValue({
     data: mockTables,
     isLoading: false,
