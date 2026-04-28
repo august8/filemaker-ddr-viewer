@@ -175,6 +175,8 @@ pub fn run() {
             commands::diff::compare_solutions,
             commands::diff::list_all_projects,
             commands::analysis::get_upgrade_check,
+            #[cfg(feature = "test-utils")]
+            commands::test_utils::import_ddr_from_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
