@@ -89,8 +89,9 @@ pub async fn import_ddr_from_path(
 
 ## CI への追加（今フェーズは対象外）
 
-Tauri バイナリのビルドには約 10 分かかる。`tauri-driver` + `msedgedriver` のセットアップも
-GitHub Actions 上で未検証のため、今フェーズはローカル実行のみとする。
+Tauri バイナリのビルドには約 10 分かかるため、今フェーズはローカル実行のみとする。
+CI に追加する際は `npx playwright install chromium --with-deps` でブラウザを取得するだけでよい
+（`tauri-driver` / `msedgedriver` 等の外部バイナリは不要）。
 
 CI に追加する場合の手順は `.github/workflows/ci.yml` にコメントで記載する。
 

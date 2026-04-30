@@ -373,6 +373,7 @@ E2E テストは CSS クラス名ではなく以下を優先して使う:
 | 検索バー | `page.getByPlaceholder(/検索/)` |
 | テキスト内容による要素検索 | `page.locator("aside").getByText(name).first()` |
 | メインコンテンツエリア | `[data-testid="main-content"]` |
+| 詳細パネル（table/script/layout/value_list/custom_function） | `[data-testid="detail-panel"]` |
 
 ### CI への追加（現フェーズは対象外）
 

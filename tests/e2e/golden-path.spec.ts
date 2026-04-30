@@ -40,7 +40,7 @@ test.describe.serial("Golden path: DDR import → 検索 → 詳細表示", () =
       (window as unknown as { __queryClient?: QC }).__queryClient
         ?.invalidateQueries({ queryKey: ["solutions"] });
     });
-    await page.waitForTimeout(1500);
+    // waitForTimeout は使わず、ステップ 2 で実際の表示を待つ
   });
 
   test("2. サイドバーにソリューション名が表示される", async ({ page }) => {
@@ -61,19 +61,17 @@ test.describe.serial("Golden path: DDR import → 検索 → 詳細表示", () =
 
   test("3. 検索バーでキーワード検索できる", async ({ page }) => {
     await page.getByPlaceholder(/検索/).fill("BaseFile");
-    // FTS5 検索は 300ms デバウンス後に実行されるため 400ms 待機
-    await page.waitForTimeout(400);
-
+    // FTS5 デバウンス完了後に結果が出るまでポーリングで待つ（固定スリープ不要）
     await expect(
       page.locator('[data-testid="search-result-item"]').first(),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("4. 検索結果クリックで詳細パネルが表示される", async ({ page }) => {
     await page.locator('[data-testid="search-result-item"]').first().click();
-
+    // クリックで searchQuery がクリアされ、詳細パネル（data-testid="detail-panel"）が出現する
     await expect(
-      page.locator('[data-testid="main-content"]'),
+      page.locator('[data-testid="detail-panel"]'),
     ).toBeVisible({ timeout: 10_000 });
   });
 });
