@@ -3,14 +3,18 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const PID_FILE = path.resolve(__dirname, "../../.e2e-app.pid");
+const STATE_FILE = path.resolve(__dirname, "../../.e2e-state.json");
 
 export default async function globalTeardown() {
   try {
-    const pid = parseInt(fs.readFileSync(PID_FILE, "utf8"), 10);
+    const { pid, dbPath } = JSON.parse(fs.readFileSync(STATE_FILE, "utf8")) as {
+      pid: number;
+      dbPath: string;
+    };
     process.kill(pid);
-    fs.unlinkSync(PID_FILE);
+    if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+    fs.unlinkSync(STATE_FILE);
   } catch {
-    // already exited
+    // already exited or state file missing
   }
 }

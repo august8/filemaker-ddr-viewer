@@ -21,7 +21,7 @@ coverage/
 # Playwright
 test-results/
 playwright-report/
-.e2e-app.pid
+.e2e-state.json
 
 
 # Claude Code personal overrides (project commands/settings are committed)

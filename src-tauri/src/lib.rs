@@ -51,6 +51,12 @@ pub fn run() {
                 })
                 .unwrap_or_else(|_| std::path::PathBuf::from("fm_ddr.db"));
 
+            // E2E テスト時は環境変数で DB パスを上書きする（test-utils ビルドのみ）
+            #[cfg(feature = "test-utils")]
+            let db_path = std::env::var("E2E_DB_PATH")
+                .map(std::path::PathBuf::from)
+                .unwrap_or(db_path);
+
             let db = Database::open(db_path.to_str().unwrap_or("fm_ddr.db"))?;
             app.manage(AppState {
                 db: Mutex::new(db),
