@@ -37,6 +37,7 @@ export default async function globalSetup() {
     env: { ...process.env, E2E_DB_PATH: dbPath },
   });
 
+  if (!proc.pid) throw new Error(`Failed to spawn ${BINARY}`);
   fs.writeFileSync(STATE_FILE, JSON.stringify({ pid: proc.pid, dbPath }));
 
   await waitForCDP(20_000);

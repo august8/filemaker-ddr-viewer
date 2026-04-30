@@ -9,7 +9,8 @@ type TauriInternals = {
   __TAURI_INTERNALS__: { invoke: (cmd: string, args: unknown) => Promise<unknown> };
 };
 
-test.describe("Golden path: DDR import → 検索 → 詳細表示", () => {
+// テスト 2〜4 はテスト 1 のインポート結果に依存するため serial を指定する
+test.describe.serial("Golden path: DDR import → 検索 → 詳細表示", () => {
   test("1. import_ddr_from_path でソリューションをインポートできる", async ({ page }) => {
     // Tauri IPC 準備完了まで待機
     await page.waitForFunction(

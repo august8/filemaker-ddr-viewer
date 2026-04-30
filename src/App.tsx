@@ -20,7 +20,9 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
-// E2E テスト用: WebDriver から React Query キャッシュを操作できるよう公開
+// E2E テスト用: Playwright から React Query キャッシュを操作できるよう公開する。
+// Tauri の WebView はサンドボックス化されており外部コードはアクセスできないため
+// 本番ビルドに含まれても実質的なリスクはない。
 (window as unknown as { __queryClient?: typeof queryClient }).__queryClient = queryClient;
 
 const SIDEBAR_MIN = 180;

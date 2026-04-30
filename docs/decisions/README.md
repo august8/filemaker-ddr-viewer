@@ -14,4 +14,4 @@
 | [0008](0008-unused-fields-bare-ref.md) | 未参照フィールド検出に同テーブル内ベア参照チェックを追加する | Accepted |
 | [0009](0009-remove-upsert-solution.md) | upsert_solution を削除しインポートは常に新規追加とする | Accepted |
 | [0010](0010-utf16-lossy-fallback.md) | UTF-16 デコード失敗時に lossy フォールバックを追加する | Accepted |
-| [0011](0011-e2e-testing.md) | E2E テスト基盤の技術選定（WebdriverIO + tauri-driver） | Accepted |
+| [0011](0011-e2e-testing.md) | E2E テスト基盤の技術選定（Playwright + WebView2 CDP） | Accepted |
