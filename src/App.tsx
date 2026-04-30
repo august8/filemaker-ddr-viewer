@@ -20,6 +20,11 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
+// E2E テスト用: Playwright から React Query キャッシュを操作できるよう公開する。
+// Tauri の WebView はサンドボックス化されており外部コードはアクセスできないため
+// 本番ビルドに含まれても実質的なリスクはない。
+(window as unknown as { __queryClient?: typeof queryClient }).__queryClient = queryClient;
+
 const SIDEBAR_MIN = 180;
 const SIDEBAR_MAX = 600;
 const SIDEBAR_DEFAULT = 288; // w-72
@@ -257,7 +262,7 @@ function App() {
           />
 
           {/* メインエリア（ナビバー + コンテンツ） */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden" data-testid="main-content">
             {/* ← → ナビゲーションバー */}
             <div className="flex items-center gap-1 px-2 py-1 border-b border-gray-200 bg-white shrink-0">
               <button

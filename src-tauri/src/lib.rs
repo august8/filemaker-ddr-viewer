@@ -51,6 +51,12 @@ pub fn run() {
                 })
                 .unwrap_or_else(|_| std::path::PathBuf::from("fm_ddr.db"));
 
+            // E2E テスト時は環境変数で DB パスを上書きする（test-utils ビルドのみ）
+            #[cfg(feature = "test-utils")]
+            let db_path = std::env::var("E2E_DB_PATH")
+                .map(std::path::PathBuf::from)
+                .unwrap_or(db_path);
+
             let db = Database::open(db_path.to_str().unwrap_or("fm_ddr.db"))?;
             app.manage(AppState {
                 db: Mutex::new(db),
@@ -175,6 +181,8 @@ pub fn run() {
             commands::diff::compare_solutions,
             commands::diff::list_all_projects,
             commands::analysis::get_upgrade_check,
+            #[cfg(feature = "test-utils")]
+            commands::test_utils::import_ddr_from_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

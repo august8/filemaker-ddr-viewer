@@ -13,6 +13,10 @@ export function useSolutions() {
   return useQuery({
     queryKey: ["solutions"],
     queryFn: () => invoke<SolutionRow[]>("list_solutions"),
+    // アプリ起動直後は Tauri バックエンドの初期化が間に合わないことがあるため
+    // グローバルデフォルト（retry: false）を上書きしてリトライを有効にする
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 

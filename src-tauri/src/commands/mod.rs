@@ -11,6 +11,8 @@ pub mod error;
 pub mod field_refs;
 pub mod import;
 pub mod search;
+#[cfg(feature = "test-utils")]
+pub mod test_utils;
 
 pub use error::CommandError;
 

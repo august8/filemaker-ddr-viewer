@@ -60,7 +60,7 @@ export function MainContent() {
         );
       case "table":
         return (
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto" data-testid="detail-panel">
             <TableDetail
               projectId={selectedElement.projectId}
               tableId={selectedElement.id}
@@ -73,7 +73,7 @@ export function MainContent() {
         const script = scripts.find((s) => s.id === selectedElement.id);
         if (script) {
           return (
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" data-testid="detail-panel">
               <ScriptDetail script={script} projectId={selectedElement.projectId} />
             </div>
           );
@@ -85,7 +85,7 @@ export function MainContent() {
         const layout = layouts.find((l) => l.id === selectedElement.id);
         if (layout) {
           return (
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" data-testid="detail-panel">
               <LayoutDetail layout={layout} projectId={selectedElement.projectId} />
             </div>
           );
@@ -97,7 +97,7 @@ export function MainContent() {
         const valueList = valueLists.find((v) => v.id === selectedElement.id);
         if (valueList) {
           return (
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" data-testid="detail-panel">
               <ValueListDetail valueList={valueList} />
             </div>
           );
@@ -109,7 +109,7 @@ export function MainContent() {
         const cf = customFunctions.find((c) => c.id === selectedElement.id);
         if (cf) {
           return (
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto" data-testid="detail-panel">
               <CustomFunctionDetail customFunction={cf} />
             </div>
           );
