@@ -323,32 +323,30 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 
 ### 技術選定
 
-WebdriverIO + tauri-driver を採用（ADR 0011 参照）。WebdriverIO は WebDriver プロトコルネイティブで、
-tauri-driver との公式ドキュメント付きペアリングが存在する。Playwright + tauri-driver は CDP/WebDriver
-プロトコル不一致のため却下。
+Playwright + WebView2 CDP 直接接続を採用（ADR 0011 参照）。
+WebView2 は `--remote-debugging-port=9222` で CDP を公開し、
+Playwright の `chromium.connectOverCDP()` で接続する。
+tauri-driver・msedgedriver 等の外部バイナリは不要。
 
 ### ファイルダイアログのバイパス
 
-OS ネイティブのファイルピッカーは WebDriver から操作できない。Cargo feature フラグ `test-utils` で
+OS ネイティブのファイルピッカーは自動化ツールから操作できない。Cargo feature フラグ `test-utils` で
 テスト専用 IPC コマンド `import_ddr_from_path` を追加し、パスを直接受け取る方式で回避する。
 
 `npx tauri build --debug --features test-utils` でビルドしたバイナリのみにこのコマンドが含まれる。
 リリースバイナリ（feature なし）には一切含まれない。
 
+CDP も同様に `test-utils` feature のときのみ有効化される（`main.rs` で env var を設定）。
+
 ### ローカル実行手順
 
 ```bash
-# 初回のみ必要な依存ツールのインストール
-cargo install tauri-driver
-# msedgedriver は Windows に Edge が入っていれば通常インストール不要
-# 不足している場合: winget install Microsoft.WebDriver
-
 # E2E バイナリのビルド（Rust コード変更後に必要）
 npm run build:e2e
 # 展開: npx tauri build --debug --features test-utils
 
 # E2E テスト実行（バイナリが既にある場合）
-npx wdio run wdio.conf.ts
+npx playwright test
 
 # ビルドからテストまで一括実行
 npm run test:e2e
@@ -358,7 +356,10 @@ npm run test:e2e
 
 | ファイル | 内容 |
 |---|---|
-| `wdio.conf.ts` | WebdriverIO 設定（バイナリパス・サービス設定） |
+| `playwright.config.ts` | Playwright 設定 |
+| `tests/e2e/global-setup.ts` | アプリ起動・CDP 待機 |
+| `tests/e2e/global-teardown.ts` | アプリ終了 |
+| `tests/e2e/fixtures.ts` | `connectOverCDP()` による Page fixture |
 | `tests/e2e/golden-path.spec.ts` | ゴールデンパス 4 ステップ（インポート → サイドバー表示 → 検索 → 詳細表示） |
 | `src-tauri/src/commands/test_utils.rs` | `import_ddr_from_path` コマンド（`test-utils` feature でゲート） |
 
@@ -369,8 +370,9 @@ E2E テストは CSS クラス名ではなく以下を優先して使う:
 | 用途 | セレクタ |
 |---|---|
 | 検索結果アイテム | `[data-testid="search-result-item"]` |
-| 検索バー | `[placeholder*="検索"]` |
-| テキスト内容による要素検索 | `$("*=BaseFile.fmp12")` |
+| 検索バー | `page.getByPlaceholder(/検索/)` |
+| テキスト内容による要素検索 | `page.locator("aside").getByText(name).first()` |
+| メインコンテンツエリア | `[data-testid="main-content"]` |
 
 ### CI への追加（現フェーズは対象外）
 

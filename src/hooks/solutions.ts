@@ -13,6 +13,8 @@ export function useSolutions() {
   return useQuery({
     queryKey: ["solutions"],
     queryFn: () => invoke<SolutionRow[]>("list_solutions"),
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 

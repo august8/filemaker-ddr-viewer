@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:e2e": "npx tauri build --debug --features test-utils",
-    "test:e2e": "npm run build:e2e && npx wdio run wdio.conf.ts"
+    "test:e2e": "npm run build:e2e && npx playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
@@ -29,6 +29,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -38,17 +39,10 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "@vitest/coverage-v8": "^4.1.4",
-    "@wdio/cli": "^8.46.0",
-    "@wdio/local-runner": "^8.46.0",
-    "@wdio/mocha-framework": "^8.46.0",
-    "@wdio/spec-reporter": "^8.43.0",
-    "@wdio/tauri-service": "^1.0.0-next.0",
-    "@wdio/types": "^8.41.0",
     "jsdom": "^29.0.1",
     "lefthook": "^2.1.5",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
-    "vitest": "^4.1.1",
-    "webdriverio": "^8.46.0"
+    "vitest": "^4.1.1"
   }
 }

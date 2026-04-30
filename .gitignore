@@ -18,6 +18,11 @@ temp
 # Test coverage output
 coverage/
 
+# Playwright
+test-results/
+playwright-report/
+.e2e-app.pid
+
 
 # Claude Code personal overrides (project commands/settings are committed)
 .claude/settings.local.json
