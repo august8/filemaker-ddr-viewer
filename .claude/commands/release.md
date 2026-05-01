@@ -33,7 +33,7 @@ description: バンプ・CHANGELOG 更新・コミット・タグ作成をまと
    ```
 7. タグを作成する:
    ```
-   git tag vVERSION
+   git tag -a vVERSION -m "Release vVERSION"
    ```
 8. 完了を報告する:
    ```
