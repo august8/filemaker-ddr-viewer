@@ -260,7 +260,9 @@ filemaker-ddr-viewer/
 ## タスクリスト
 
 - [ ] ブランチ作成: `main` → `fix/add-broken-field-detection`  ← 作成元と実際のブランチ名を記載
+- [ ] `/test-spec` 実行（テスト仕様をファイルに生成）
 - [ ] テスト追加（Red確認）: `src/__tests__/.../Foo.test.tsx` または `broken_refs.rs` の `#[cfg(test)]`
+- [ ] `/tdd-guard` 実行（実装に入る前にテストが先に書かれているか確認）
 - [ ] 実装（Green確認）: 対象の `.tsx` / `.rs`
 - [ ] `cargo fmt` / `cargo clippy` / `tsc --noEmit` パス確認
 - [ ] `/pre-pr` 実行・全チェック通過
