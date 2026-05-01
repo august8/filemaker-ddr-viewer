@@ -4,6 +4,15 @@
 
 ---
 
+## [0.2.0] - 2026-05-01
+
+### 機能
+- AllFieldsPanel 仮想スクロール・CategoryTree 遅延ロード
+- Playwright + WebView2 CDP による E2E テスト基盤を導入
+- E2E CI 有効化（main push 時に自動実行）・test:e2e:run スクリプト追加
+
+---
+
 ## [0.1.2] - 2026-04-27
 
 ### 機能
@@ -60,6 +69,7 @@
 
 ---
 
+[0.2.0]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/august8/filemaker-ddr-viewer/releases/tag/v0.1.0
