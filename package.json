@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build:e2e": "npx tauri build --debug --features test-utils",
-    "test:e2e": "npm run build:e2e && npx playwright test"
+    "test:e2e": "npm run build:e2e && npx playwright test",
+    "test:e2e:run": "npx playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",

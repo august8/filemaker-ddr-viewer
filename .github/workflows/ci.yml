@@ -105,32 +105,30 @@ jobs:
           files: coverage/lcov.info
           flags: frontend
 
-# E2E テストを CI に追加する場合の手順:
-#
-# e2e:
-#   name: E2E (local-only for now)
-#   runs-on: windows-latest
-#   steps:
-#     - uses: actions/checkout@v4
-#     - uses: actions/setup-node@v4
-#       with: { node-version: 20, cache: npm }
-#     - uses: dtolnay/rust-toolchain@stable
-#     - name: Cache Rust
-#       uses: Swatinem/rust-cache@v2
-#       with:
-#         workspaces: src-tauri
-#     - name: Install dependencies
-#       run: npm ci
-#     - name: Install Playwright browsers
-#       run: npx playwright install chromium --with-deps
-#     - name: Build E2E binary (test-utils + CDP enabled)
-#       run: npm run build:e2e
-#       # 展開: npx tauri build --debug --features test-utils
-#       # 所要時間: 約 8-10 分（Rust-cache なしの場合）
-#     - name: Run E2E tests
-#       run: npx playwright test
-#
-# 注意:
-# - ビルド時間が長いため別 job でバイナリをビルドして artifact 経由で受け取ると高速化できる
-# - tauri-driver / msedgedriver は不要（Playwright + CDP 直接接続のため）
-# - CDP ポート 9222 が他のプロセスと競合しないことを確認すること
+  e2e:
+    name: E2E
+    runs-on: windows-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: Build E2E binary (test-utils + CDP enabled)
+        run: npm run build:e2e
+      - name: Run E2E tests
+        run: npm run test:e2e:run
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: test-results/
