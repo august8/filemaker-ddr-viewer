@@ -17,6 +17,7 @@ vi.mock("../../stores/appStore", () => ({
 }));
 
 import { useLayoutObjects, useLayoutObjectConditions, useLayoutList } from "../../hooks/layout";
+import { useResolveLayoutField } from "../../hooks/fieldRefs";
 import { useAppStore } from "../../stores/appStore";
 
 const baseObj = makeLayoutObjectRow({
@@ -112,6 +113,25 @@ describe("LayoutObjectDetail", () => {
     render(<LayoutObjectDetail layoutObjectId={1} layoutId={10} />);
     expect(screen.getByText("変更点")).toBeInTheDocument();
     expect(screen.getByText(/位置/)).toBeInTheDocument();
+  });
+
+  it("field_click_passes_field_project_id_to_set_right_panel", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    setupStore(null);
+    vi.mocked(useResolveLayoutField).mockReturnValue({
+      data: { table_id: 5, field_id: 42, table_name: "Customer", field_project_id: 99 },
+    } as unknown as ReturnType<typeof useResolveLayoutField>);
+    render(<LayoutObjectDetail layoutObjectId={1} layoutId={10} />);
+    const btn = screen.getByRole("button", { name: /Contact::Name/ });
+    fireEvent.click(btn);
+    expect(mockSetRightPanel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "field",
+        fieldProjectId: 99,
+        tableId: 5,
+        fieldId: 42,
+      })
+    );
   });
 
   it("shows_tooltip_change_when_tooltip_differs", () => {

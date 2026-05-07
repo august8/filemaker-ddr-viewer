@@ -114,6 +114,7 @@ export function LayoutObjectDetail({ layoutObjectId, layoutId }: Props) {
                 setRightPanel({
                   kind: "field",
                   projectId,
+                  fieldProjectId: fieldLocation.field_project_id,
                   tableId: fieldLocation.table_id,
                   fieldId: fieldLocation.field_id,
                   tableName: fieldLocation.table_name,

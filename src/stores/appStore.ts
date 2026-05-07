@@ -91,7 +91,7 @@ export type SelectedElement =
   | null;
 
 export type RightPanelState =
-  | { kind: "field"; fieldId: number; tableId: number; projectId: number; tableName: string }
+  | { kind: "field"; fieldId: number; tableId: number; projectId: number; tableName: string; fieldProjectId?: number }
   | { kind: "layout_object"; layoutObjectId: number; layoutId: number }
   | null;
 

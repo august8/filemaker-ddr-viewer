@@ -1,5 +1,4 @@
 import { useFieldRefs } from "../../../hooks/fieldRefs";
-import { useScriptList } from "../../../hooks/script";
 import { useAppStore } from "../../../stores/appStore";
 import { Spinner } from "../../Spinner";
 import { SECTION_HEADER } from "../../../styles/tokens";
@@ -13,14 +12,6 @@ interface Props {
 export function FieldScriptReferences({ projectId, tableName, fieldName }: Props) {
   const { selectElement } = useAppStore();
   const { data: refs = [], isLoading } = useFieldRefs(projectId, tableName, fieldName);
-  const { data: scripts = [] } = useScriptList(projectId);
-
-  function handleScriptClick(scriptName: string) {
-    const script = scripts.find((s) => s.name === scriptName);
-    if (script) {
-      selectElement({ kind: "script", projectId, id: script.id, name: script.name });
-    }
-  }
 
   return (
     <section>
@@ -40,7 +31,14 @@ export function FieldScriptReferences({ projectId, tableName, fieldName }: Props
             <li key={ref.script_id}>
               <button
                 className="text-blue-600 hover:underline text-left break-all w-full"
-                onClick={() => handleScriptClick(ref.script_name)}
+                onClick={() =>
+                  selectElement({
+                    kind: "script",
+                    projectId: ref.project_id,
+                    id: ref.script_id,
+                    name: ref.script_name,
+                  })
+                }
               >
                 {ref.script_name}
               </button>

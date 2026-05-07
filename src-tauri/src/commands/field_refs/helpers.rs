@@ -1,6 +1,9 @@
 use rusqlite::params;
 
-/// ベーステーブルに紐づく全オカレンス名を返す。
+/// ベーステーブルに紐づく全オカレンス名を返す（ソリューション全体スコープ）。
+///
+/// 同一ソリューション内の全プロジェクトを対象にするため、分離モデルでも
+/// プログラムファイル側のオカレンス名がデータファイルの project_id から取得できる。
 pub(crate) fn fetch_occ_names(
     conn: &rusqlite::Connection,
     project_id: i64,
@@ -8,7 +11,11 @@ pub(crate) fn fetch_occ_names(
 ) -> Result<Vec<String>, rusqlite::Error> {
     let mut stmt = conn.prepare(
         "SELECT occurrence_name FROM table_occurrences
-         WHERE project_id = ?1 AND base_table_name = ?2",
+         WHERE project_id IN (
+           SELECT id FROM projects
+           WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+         )
+         AND base_table_name = ?2",
     )?;
     let rows = stmt
         .query_map(params![project_id, base_table_name], |r| r.get(0))?
@@ -90,6 +97,60 @@ pub(crate) mod test_helpers {
     /// - Invoice::合計金額         計算式 "Amount + Tax"                (bare ref + 部分一致の罠)
     /// - Order::Total             計算式 "Invoice::Amount + 100"        (base table 名と一致)
     /// - Order::Note              計算式 "Order::Amount"                (別フィールド)
+    /// 分離モデル（プログラムファイル + データファイル）用セットアップ。
+    ///
+    /// - program_project: table_occurrence "Customers" → base_table_name="Customer", source_file="DataFile"
+    /// - data_project:    base_table "Customer", field "FirstName"
+    ///
+    /// 戻り値: (conn, program_project_id, data_project_id)
+    pub(crate) fn setup_cross_project() -> (Connection, i64, i64) {
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'ProgramFile', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let program_project_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'DataFile', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let data_project_id = conn.last_insert_rowid();
+
+        // data_project: base_table "Customer" + field "FirstName"
+        conn.execute(
+            "INSERT INTO base_tables(project_id, fm_id, name) VALUES(?1, 1, 'Customer')",
+            [data_project_id],
+        )
+        .unwrap();
+        let customer_table_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO fields(project_id, table_id, fm_id, name, field_type, data_type)
+             VALUES(?1, ?2, 1, 'FirstName', 'Normal', 'Text')",
+            rusqlite::params![data_project_id, customer_table_id],
+        )
+        .unwrap();
+
+        // program_project: occurrence "Customers" → Customer in DataFile
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'Customers', 'Customer', 'DataFile')",
+            [program_project_id],
+        )
+        .unwrap();
+
+        (conn, program_project_id, data_project_id)
+    }
+
     pub(crate) fn setup() -> (Connection, i64) {
         let conn = Connection::open_in_memory().unwrap();
         initialize(&conn).unwrap();
@@ -198,7 +259,7 @@ pub(crate) mod test_helpers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_helpers::setup;
+    use test_helpers::{setup, setup_cross_project};
 
     #[test]
     fn bare_ref_detects_standalone() {
@@ -255,5 +316,17 @@ mod tests {
         let (conn, project_id) = setup();
         let names = fetch_occ_names(&conn, project_id, "NonExistent").unwrap();
         assert!(names.is_empty());
+    }
+
+    #[test]
+    fn fetch_occ_names_solution_scope_finds_occ_in_other_project() {
+        // データファイルの project_id を渡したとき、
+        // プログラムファイル側のオカレンス名も返ること
+        let (conn, _program_project_id, data_project_id) = setup_cross_project();
+        let names = fetch_occ_names(&conn, data_project_id, "Customer").unwrap();
+        assert!(
+            names.contains(&"Customers".to_string()),
+            "should find 'Customers' occurrence from program project: got {names:?}"
+        );
     }
 }

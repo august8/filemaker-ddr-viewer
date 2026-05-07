@@ -183,6 +183,43 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 
 フィールドの検索結果クリック時に親テーブルを特定するため、`search()` クエリで `fields` テーブルと `base_tables` テーブルを LEFT JOIN して `table_id` と `table_name` を付与している。
 
+### 分離モデル（プログラムファイル + データファイル）対応
+
+FileMaker の分離モデルでは、レイアウト・スクリプトを持つ「プログラムファイル」と、テーブル・フィールドを持つ「データファイル」が別々の project として同一 solution にインポートされる。
+
+**`fetch_occ_names` のソリューションスコープ化**
+
+`table_occurrences` の検索範囲を同一 `solution_id` の全プロジェクトに拡張することで、データファイルの `project_id` を起点にプログラムファイル側のオカレンス名も取得できる。
+
+```sql
+WHERE project_id IN (
+  SELECT id FROM projects
+  WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+)
+```
+
+これにより `get_field_refs`, `get_field_calc_refs`, `get_field_layout_refs`, `get_field_relationship_keys` がすべてソリューション全体を対象に検索する。
+
+**`resolve_layout_field` のクロスプロジェクト検索**
+
+`resolve_layout_field_inner` は以下の 2 段階で解決する:
+1. 同一プロジェクト内で `(occurrence_name, field_name)` を検索
+2. 見つからない場合、`table_occurrences.source_file` → 外部プロジェクト名 → `projects.name` で外部プロジェクトを特定してフィールドを検索
+
+**返却型の `project_id` / `field_project_id`**
+
+クロスプロジェクトナビゲーションのため、各返却型にプロジェクト ID を追加している:
+
+| 型 | 追加フィールド | 用途 |
+|----|--------------|------|
+| `FieldLocation` | `field_project_id` | フィールド定義が属するプロジェクト（外部ファイルの場合に異なる） |
+| `FieldRefScript` | `project_id` | スクリプトが属するプロジェクト |
+| `FieldRefLayout` | `project_id` | レイアウトが属するプロジェクト |
+| `FieldCalcRef` | `project_id` | 参照元フィールドが属するプロジェクト |
+| `FieldRelKeyRef` | `project_id` | リレーションが属するプロジェクト |
+
+フロントエンドは `FieldPanelInner` で `fieldProjectId ?? projectId` を使い、`useTableFields` の呼び出しとサブコンポーネントへの `projectId` 渡しを正しいプロジェクトで行う。各参照リストコンポーネントは `ref.project_id` を使って `selectElement` / `setRightPanel` を呼ぶ。
+
 ---
 
 ## Tauri IPC コマンド追加フロー

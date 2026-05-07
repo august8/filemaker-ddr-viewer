@@ -219,6 +219,7 @@ export interface FieldLocation {
   table_id: number;
   field_id: number;
   table_name: string;
+  field_project_id: number;
 }
 
 export interface AllFieldRow {
@@ -240,16 +241,19 @@ export interface FieldCalcRef {
   field_name: string;
   table_name: string;
   table_id: number;
+  project_id: number;
 }
 
 export interface FieldRefScript {
   script_id: number;
   script_name: string;
+  project_id: number;
 }
 
 export interface FieldRefLayout {
   layout_id: number;
   layout_name: string;
+  project_id: number;
 }
 
 export interface ConditionRow {
@@ -291,6 +295,7 @@ export interface FieldRelKeyRef {
   right_table: string;
   operator: string;
   side: "left" | "right";
+  project_id: number;
 }
 
 export interface UnusedFieldRow {
