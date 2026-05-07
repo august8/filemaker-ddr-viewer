@@ -13,6 +13,7 @@ import type {
   TriggerRow,
   ConditionRow,
   AllFieldRow,
+  ExternalDataSourceRow,
 } from "../types/ddr";
 
 export function makeTableRow(overrides: Partial<TableRow> = {}): TableRow {
@@ -82,6 +83,10 @@ export function makeValueListRow(overrides: Partial<ValueListRow> = {}): ValueLi
 
 export function makeCustomFunctionRow(overrides: Partial<CustomFunctionRow> = {}): CustomFunctionRow {
   return { id: 1, fm_id: 1, name: "TestFunction", parameters: "", calculation: null, ...overrides };
+}
+
+export function makeExternalDataSourceRow(overrides: Partial<ExternalDataSourceRow> = {}): ExternalDataSourceRow {
+  return { id: 1, fm_id: 2, name: "ExternalFile", path_list: "file:ExternalFile", link: "ExternalFile_fmp12.xml", ...overrides };
 }
 
 export function makeLayoutObjectRow(overrides: Partial<LayoutObjectRow> = {}): LayoutObjectRow {

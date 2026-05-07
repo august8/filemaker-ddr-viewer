@@ -103,7 +103,7 @@ filemaker-ddr-viewer/
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
 | `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
 | `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
-| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
+| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel / AllExternalDataSourcesPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
 | `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |
@@ -302,6 +302,7 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `list_custom_functions` | catalog.rs | `project_id, limit?, offset?` | `Vec<CustomFunctionRow>` |
 | `list_accounts` | catalog.rs | `project_id, limit?, offset?` | `Vec<AccountRow>` |
 | `list_privilege_sets` | catalog.rs | `project_id, limit?, offset?` | `Vec<PrivilegeSetRow>` |
+| `list_external_data_sources` | catalog.rs | `project_id, limit?, offset?` | `Vec<ExternalDataSourceRow>` |
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
 | `get_field_calc_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldCalcRef>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |

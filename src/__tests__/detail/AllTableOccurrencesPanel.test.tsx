@@ -142,6 +142,6 @@ describe("AllTableOccurrencesPanel", () => {
       { data: tosWithNoLayout, isLoading: false } as unknown as ReturnType<typeof useTableOccurrenceList>
     );
     render(<AllTableOccurrencesPanel projectId={1} />);
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 });

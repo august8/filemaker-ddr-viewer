@@ -37,6 +37,7 @@ export interface ProjectSummary {
   custom_function_count: number;
   account_count: number;
   privilege_set_count: number;
+  external_data_source_count: number;
 }
 
 export interface SearchResult {
@@ -313,6 +314,16 @@ export interface PrivilegeSetRow {
   fm_id: number;
   name: string;
   comment: string | null;
+}
+
+export interface ExternalDataSourceRow {
+  id: number;
+  fm_id: number;
+  name: string;
+  /** pathList 属性（例: "file:ExternalFile"） */
+  path_list: string;
+  /** link 属性 — 対応する DDR ファイル名（例: "ExternalFile_fmp12.xml"） */
+  link: string;
 }
 
 // ---------------------------------------------------------------------------

@@ -187,6 +187,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -234,6 +235,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -279,6 +281,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -324,6 +327,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -372,6 +376,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -412,6 +417,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);
@@ -460,6 +466,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let refs = find_broken_refs(&ddr);

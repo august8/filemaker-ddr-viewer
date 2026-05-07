@@ -193,6 +193,9 @@ fn parse_step_children<R: BufRead>(
     let mut step_text: Option<String> = None;
     let mut broken_field_table: Option<String> = None;
     let mut has_broken_layout_ref = false;
+    // 実DDR形式の外部スクリプト参照: <FileReference name="ExternalFile"> + <Script name="Sub"/>
+    // FileReference の name を先に保存し、後続の Script 要素で使う
+    let mut pending_file_ref: Option<String> = None;
 
     loop {
         buf.clear();
@@ -201,10 +204,24 @@ fn parse_step_children<R: BufRead>(
             Event::Start(ref e) if e.name().as_ref() == b"StepText" => {
                 step_text = Some(read_text_content(reader, buf)?);
             }
-            // <Script .../> — Perform Script reference (self-closing, 旧形式)
+            // <FileReference name="ExternalFile"> — 実DDR形式の外部スクリプト参照（子要素あり）
+            Event::Start(ref e) if e.name().as_ref() == b"FileReference" => {
+                pending_file_ref = get_attr(e, b"name").ok();
+                skip_element(reader, buf)?;
+            }
+            // <FileReference name="ExternalFile"/> — 自己終了形式
+            Event::Empty(ref e) if e.name().as_ref() == b"FileReference" => {
+                pending_file_ref = get_attr(e, b"name").ok();
+            }
+            // <Script .../> — Perform Script reference (self-closing, 旧形式 or 実DDR形式)
             Event::Empty(ref e) if e.name().as_ref() == b"Script" => {
                 let ref_name = get_attr(e, b"name").unwrap_or_default();
-                let file_name = get_attr(e, b"file").unwrap_or_default();
+                // 旧形式は file 属性を持つ。実DDR形式は pending_file_ref を使う
+                let file_name = get_attr(e, b"file")
+                    .ok()
+                    .filter(|s| !s.is_empty())
+                    .or_else(|| pending_file_ref.take())
+                    .unwrap_or_default();
                 script_ref = Some(ScriptRef {
                     name: ref_name,
                     file_name,
@@ -213,7 +230,11 @@ fn parse_step_children<R: BufRead>(
             // <Script ...>...</Script> — Perform Script reference (with children, 旧形式)
             Event::Start(ref e) if e.name().as_ref() == b"Script" => {
                 let ref_name = get_attr(e, b"name").unwrap_or_default();
-                let file_name = get_attr(e, b"file").unwrap_or_default();
+                let file_name = get_attr(e, b"file")
+                    .ok()
+                    .filter(|s| !s.is_empty())
+                    .or_else(|| pending_file_ref.take())
+                    .unwrap_or_default();
                 script_ref = Some(ScriptRef {
                     name: ref_name,
                     file_name,
@@ -451,6 +472,51 @@ mod tests {
         )
         .unwrap();
         assert!(scripts[0].run_with_full_access);
+    }
+
+    // 実DDR形式: 外部スクリプト参照（<FileReference> + <Script> 分離形式）
+    #[test]
+    fn external_script_reference_file_reference_plus_script() {
+        let xml = r#"
+        <Script id="1" name="メイン" includeInMenu="True" runWithFullAccessPrivileges="False">
+          <StepList>
+            <Step id="1" enable="True" name="スクリプト実行">
+              <StepText>スクリプト実行 [ 「Sub」 , ファイル: 「ExternalFile」 ]</StepText>
+              <FileReference id="3" name="ExternalFile">
+                <UniversalPathList>file:ExternalFile</UniversalPathList>
+              </FileReference>
+              <Script id="3" name="Sub"/>
+            </Step>
+          </StepList>
+        </Script>
+        "#;
+        let scripts = parse(xml).unwrap();
+        assert_eq!(scripts.len(), 1);
+        let step = &scripts[0].steps[0];
+        assert_eq!(step.name, "スクリプト実行");
+        let sref = step.script_ref.as_ref().expect("script_ref should be Some");
+        assert_eq!(sref.name, "Sub");
+        assert_eq!(sref.file_name, "ExternalFile");
+    }
+
+    // 実DDR形式: 同一ファイル内スクリプト参照（file_name は空のまま）
+    #[test]
+    fn internal_script_reference_no_file() {
+        let xml = r#"
+        <Script id="2" name="呼び出し元" includeInMenu="False" runWithFullAccessPrivileges="False">
+          <StepList>
+            <Step id="1" enable="True" name="スクリプト実行">
+              <StepText>スクリプト実行 [ 「Sub」 ]</StepText>
+              <Script id="3" name="Sub"/>
+            </Step>
+          </StepList>
+        </Script>
+        "#;
+        let scripts = parse(xml).unwrap();
+        let step = &scripts[0].steps[0];
+        let sref = step.script_ref.as_ref().expect("script_ref should be Some");
+        assert_eq!(sref.name, "Sub");
+        assert_eq!(sref.file_name, "");
     }
 
     // 実DDR形式: <ScriptReference> + <DisplayCalculation>

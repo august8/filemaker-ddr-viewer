@@ -5,8 +5,8 @@ use quick_xml::{events::Event, Reader};
 use crate::parser::{
     helpers::{get_attr, read_text_content, skip_element},
     models::{
-        Account, AccountId, CustomFunction, CustomFunctionId, PrivilegeSet, PrivilegeSetId,
-        ValueList, ValueListFieldRef, ValueListId, ValueListSource,
+        Account, AccountId, CustomFunction, CustomFunctionId, ExternalDataSource, PrivilegeSet,
+        PrivilegeSetId, ValueList, ValueListFieldRef, ValueListId, ValueListSource,
     },
     ParseError,
 };
@@ -416,6 +416,68 @@ pub fn parse_privilege_sets<R: BufRead>(
 }
 
 // ---------------------------------------------------------------------------
+// External Data Sources
+// ---------------------------------------------------------------------------
+
+/// Parse `<ExternalDataSourcesCatalog>` content (opening tag already consumed).
+pub fn parse_external_data_sources<R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+) -> Result<Vec<ExternalDataSource>, ParseError> {
+    let mut sources = Vec::new();
+
+    loop {
+        buf.clear();
+        match reader.read_event_into(buf)? {
+            Event::Empty(ref e) if e.name().as_ref() == b"FileReference" => {
+                let fm_id = get_attr(e, b"id")
+                    .and_then(|v| {
+                        v.parse::<u32>()
+                            .map_err(|_| ParseError::InvalidValue(format!("FileReference id: {v}")))
+                    })
+                    .unwrap_or(0);
+                let name = get_attr(e, b"name").unwrap_or_default();
+                let path_list = get_attr(e, b"pathList").unwrap_or_default();
+                let link = get_attr(e, b"link").unwrap_or_default();
+                sources.push(ExternalDataSource {
+                    fm_id,
+                    name,
+                    path_list,
+                    link,
+                });
+            }
+            Event::Start(ref e) if e.name().as_ref() == b"FileReference" => {
+                let fm_id = get_attr(e, b"id")
+                    .and_then(|v| {
+                        v.parse::<u32>()
+                            .map_err(|_| ParseError::InvalidValue(format!("FileReference id: {v}")))
+                    })
+                    .unwrap_or(0);
+                let name = get_attr(e, b"name").unwrap_or_default();
+                let path_list = get_attr(e, b"pathList").unwrap_or_default();
+                let link = get_attr(e, b"link").unwrap_or_default();
+                skip_element(reader, buf)?;
+                sources.push(ExternalDataSource {
+                    fm_id,
+                    name,
+                    path_list,
+                    link,
+                });
+            }
+            Event::Start(_) => {
+                skip_element(reader, buf)?;
+            }
+            Event::Empty(_) => {}
+            Event::End(_) => break,
+            Event::Eof => return Err(ParseError::UnexpectedEof),
+            _ => {}
+        }
+    }
+
+    Ok(sources)
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -633,5 +695,68 @@ mod tests {
         consume_opening(&mut r, &mut buf, b"PrivilegesCatalog");
         let ps = parse_privilege_sets(&mut r, &mut buf).unwrap();
         assert_eq!(ps.len(), count);
+    }
+
+    // --- External Data Sources ---
+
+    #[test]
+    fn external_data_sources_basic() {
+        let xml = r#"<ExternalDataSourcesCatalog>
+          <FileReference link="BaseFile_fmp12.xml" id="2" pathList="file:BaseFile" name="BaseFile"/>
+          <FileReference link="ExternalFile_fmp12.xml" id="3" pathList="file:ExternalFile" name="ExternalFile"/>
+        </ExternalDataSourcesCatalog>"#;
+        let (mut r, mut buf) = make_reader(xml);
+        consume_opening(&mut r, &mut buf, b"ExternalDataSourcesCatalog");
+        let sources = parse_external_data_sources(&mut r, &mut buf).unwrap();
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].name, "BaseFile");
+        assert_eq!(sources[0].path_list, "file:BaseFile");
+        assert_eq!(sources[0].link, "BaseFile_fmp12.xml");
+        assert_eq!(sources[1].name, "ExternalFile");
+        assert_eq!(sources[1].path_list, "file:ExternalFile");
+        assert_eq!(sources[1].link, "ExternalFile_fmp12.xml");
+    }
+
+    #[test]
+    fn external_data_sources_empty() {
+        let xml = r#"<ExternalDataSourcesCatalog/>"#;
+        let (mut r, mut buf) = make_reader(xml);
+        // 空要素: Event::Empty で返るためループしてから確認
+        let sources = {
+            buf.clear();
+            // 空タグは Start ではなく Empty なので専用処理
+            loop {
+                buf.clear();
+                match r.read_event_into(&mut buf).unwrap() {
+                    Event::Empty(ref e) if e.name().as_ref() == b"ExternalDataSourcesCatalog" => {
+                        break vec![]
+                    }
+                    Event::Start(ref e) if e.name().as_ref() == b"ExternalDataSourcesCatalog" => {
+                        break parse_external_data_sources(&mut r, &mut buf).unwrap()
+                    }
+                    Event::Eof => panic!("tag not found"),
+                    _ => {}
+                }
+            }
+        };
+        assert_eq!(sources.len(), 0);
+    }
+
+    #[rstest]
+    #[case(0)]
+    #[case(3)]
+    fn external_data_sources_count(#[case] count: usize) {
+        let inner: String = (1..=count)
+            .map(|i| {
+                format!(
+                    r#"<FileReference link="F{i}.xml" id="{i}" pathList="file:F{i}" name="F{i}"/>"#
+                )
+            })
+            .collect();
+        let xml = format!("<ExternalDataSourcesCatalog>{inner}</ExternalDataSourcesCatalog>");
+        let (mut r, mut buf) = make_reader(&xml);
+        consume_opening(&mut r, &mut buf, b"ExternalDataSourcesCatalog");
+        let sources = parse_external_data_sources(&mut r, &mut buf).unwrap();
+        assert_eq!(sources.len(), count);
     }
 }

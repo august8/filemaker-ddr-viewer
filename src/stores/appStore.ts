@@ -81,6 +81,7 @@ export type SelectedElement =
   | { kind: "all_custom_functions"; projectId: number }
   | { kind: "all_table_occurrences"; projectId: number }
   | { kind: "all_relationships"; projectId: number; highlightId?: number }
+  | { kind: "all_external_data_sources"; projectId: number }
   | { kind: "search"; query: string }
   | { kind: "dashboard" }
   | { kind: "diff" }
@@ -111,6 +112,7 @@ function elementKey(el: SelectedElement | undefined): string {
     case "all_value_lists":
     case "all_custom_functions":
     case "all_table_occurrences":
+    case "all_external_data_sources":
     case "security":
     case "relationship_graph":
       return `${el.kind}:${el.projectId}`;

@@ -252,6 +252,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         }
     }
 

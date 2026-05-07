@@ -4,9 +4,10 @@ use rusqlite::params;
 
 use crate::db::{Database, DbError};
 use crate::parser::models::{
-    Account, CustomFunction, DataType, DdrFile, Field, FieldKind, JoinPredicate, Layout,
-    LayoutFieldRef, LayoutObject, PrivilegeSet, Relationship, Script, ScriptStep, ScriptTrigger,
-    Table, TableOccurrence, ValueList, ValueListFieldRef, ValueListSource,
+    Account, CustomFunction, DataType, DdrFile, ExternalDataSource, Field, FieldKind,
+    JoinPredicate, Layout, LayoutFieldRef, LayoutObject, PrivilegeSet, Relationship, Script,
+    ScriptStep, ScriptTrigger, Table, TableOccurrence, ValueList, ValueListFieldRef,
+    ValueListSource,
 };
 
 // ---------------------------------------------------------------------------
@@ -198,7 +199,12 @@ pub fn insert_ddr_file(
         insert_privilege_set_inner(&tx, project_id, ps)?;
     }
 
-    // 10. FTS5 インデックス（DB IDを使用）
+    // 10. external data sources
+    for eds in &ddr.external_data_sources {
+        insert_external_data_source_inner(&tx, project_id, eds)?;
+    }
+
+    // 11. FTS5 インデックス（DB IDを使用）
     {
         let mut stmt = tx.prepare(
             "INSERT INTO search_index (project_id, element_type, element_id, name, content)
@@ -584,6 +590,25 @@ fn insert_privilege_set_inner(
         "INSERT INTO privilege_sets (project_id, fm_id, name, comment)
          VALUES (?1, ?2, ?3, ?4)",
         params![project_id, ps.id.0 as i64, ps.name, ps.comment],
+    )?;
+    Ok(())
+}
+
+fn insert_external_data_source_inner(
+    tx: &rusqlite::Transaction<'_>,
+    project_id: i64,
+    eds: &ExternalDataSource,
+) -> Result<(), DbError> {
+    tx.execute(
+        "INSERT OR IGNORE INTO external_data_sources (project_id, fm_id, name, path_list, link)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![
+            project_id,
+            eds.fm_id as i64,
+            eds.name,
+            eds.path_list,
+            eds.link
+        ],
     )?;
     Ok(())
 }

@@ -40,6 +40,7 @@ pub struct ProjectSummary {
     pub custom_function_count: i64,
     pub account_count: i64,
     pub privilege_set_count: i64,
+    pub external_data_source_count: i64,
 }
 
 /// 要素名から DB の id を解決する結果型（差分クリックナビゲーション用）。
@@ -82,6 +83,7 @@ pub(crate) fn build_project_summary(
         custom_function_count: count("custom_functions")?,
         account_count: count("accounts")?,
         privilege_set_count: count("privilege_sets")?,
+        external_data_source_count: count("external_data_sources")?,
     })
 }
 

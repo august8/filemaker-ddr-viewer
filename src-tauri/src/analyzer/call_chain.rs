@@ -234,6 +234,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let node = build_call_chain(&ddr, ScriptId(1), None).unwrap();
@@ -311,6 +312,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let node = build_call_chain(&ddr, ScriptId(1), Some(1)).unwrap();
