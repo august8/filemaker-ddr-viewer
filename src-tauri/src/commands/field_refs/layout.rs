@@ -144,13 +144,34 @@ fn resolve_layout_field_inner(
         None => return Ok(None),
     };
 
+    // external_data_sources から path_list を取得してファイル名ステムを導出する。
+    // 例: source_file="PARTNER", path_list="file:PARTNER_v3" → stem="PARTNER_v3"
+    // projects.name="PARTNER_v3.fmp12" にマッチさせるために必要。
+    let path_stem: String = conn
+        .query_row(
+            "SELECT path_list FROM external_data_sources
+             WHERE project_id = ?1 AND name = ?2
+             LIMIT 1",
+            params![project_id, &source_file],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?
+        .map(|p| {
+            let without_scheme = p.find(':').map_or(p.as_str(), |i| &p[i + 1..]);
+            without_scheme
+                .strip_suffix(".fmp12")
+                .unwrap_or(without_scheme)
+                .to_string()
+        })
+        .unwrap_or_else(|| source_file.clone());
+
     let ext_project_id: Option<i64> = conn
         .query_row(
             "SELECT ext.id FROM projects ext
           JOIN projects cur ON cur.solution_id = ext.solution_id
-         WHERE cur.id = ?1 AND ext.name = ?2
+         WHERE cur.id = ?1 AND (ext.name = ?2 OR ext.name = ?2 || '.fmp12')
          LIMIT 1",
-            params![project_id, source_file],
+            params![project_id, &path_stem],
             |row| row.get(0),
         )
         .optional()?;
@@ -258,6 +279,131 @@ mod tests {
         let loc = loc.unwrap();
         assert_eq!(loc.table_name, "Customer");
         assert_eq!(loc.field_project_id, data_project_id);
+    }
+
+    /// 実DDR では projects.name = "DataFile.fmp12"、source_file = "DataFile"（拡張子なし）になる。
+    #[test]
+    fn resolve_layout_field_handles_fmp12_extension_mismatch() {
+        use crate::db::schema::initialize;
+        use rusqlite::Connection;
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'ProgramFile', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let program_project_id = conn.last_insert_rowid();
+
+        // 実DDRと同様に projects.name には ".fmp12" 拡張子が付く
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'DataFile.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let data_project_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO base_tables(project_id, fm_id, name) VALUES(?1, 1, 'Customer')",
+            [data_project_id],
+        )
+        .unwrap();
+        let table_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO fields(project_id, table_id, fm_id, name, field_type, data_type)
+             VALUES(?1, ?2, 1, 'FirstName', 'Normal', 'Text')",
+            rusqlite::params![data_project_id, table_id],
+        )
+        .unwrap();
+
+        // source_file は拡張子なし（実DDRの FileReference name 属性の形式）
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'Customers', 'Customer', 'DataFile')",
+            [program_project_id],
+        )
+        .unwrap();
+
+        let loc = resolve_layout_field_inner(&conn, program_project_id, "Customers", "FirstName")
+            .unwrap();
+        assert!(
+            loc.is_some(),
+            "source_file='DataFile' と projects.name='DataFile.fmp12' でも解決できるべき"
+        );
+        assert_eq!(loc.unwrap().field_project_id, data_project_id);
+    }
+
+    /// 実DDR の典型パターン:
+    /// source_file="PARTNER"、external_data_sources.path_list="file:PARTNER_v3"、
+    /// projects.name="PARTNER_v3.fmp12" — 3者が異なる文字列。
+    #[test]
+    fn resolve_layout_field_handles_external_data_source_path_stem() {
+        use crate::db::schema::initialize;
+        use rusqlite::Connection;
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'TRIVECTOR_v3.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let prog_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'PARTNER_v3.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let data_id = conn.last_insert_rowid();
+
+        // data project: base_table + field
+        conn.execute(
+            "INSERT INTO base_tables(project_id, fm_id, name) VALUES(?1, 1, 'パートナー評価区分')",
+            [data_id],
+        )
+        .unwrap();
+        let tbl = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO fields(project_id, table_id, fm_id, name, field_type, data_type)
+             VALUES(?1, ?2, 1, '評価区分名', 'Normal', 'Text')",
+            rusqlite::params![data_id, tbl],
+        )
+        .unwrap();
+
+        // prog project: occurrence → source_file="PARTNER"
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'パートナー評価区分', 'パートナー評価区分', 'PARTNER')",
+            [prog_id],
+        )
+        .unwrap();
+
+        // prog project: external_data_sources で PARTNER → file:PARTNER_v3 のマッピング
+        conn.execute(
+            "INSERT INTO external_data_sources(project_id, fm_id, name, path_list, link)
+             VALUES(?1, 1, 'PARTNER', 'file:PARTNER_v3', '')",
+            [prog_id],
+        )
+        .unwrap();
+
+        let loc =
+            resolve_layout_field_inner(&conn, prog_id, "パートナー評価区分", "評価区分名").unwrap();
+        assert!(
+            loc.is_some(),
+            "source_file='PARTNER'→path_list='file:PARTNER_v3'→projects.name='PARTNER_v3.fmp12' で解決できるべき"
+        );
+        assert_eq!(loc.unwrap().field_project_id, data_id);
     }
 
     #[test]

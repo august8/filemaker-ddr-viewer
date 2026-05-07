@@ -18,6 +18,10 @@ interface Props {
 export function FieldDetail({ field, tableName, projectId }: Props) {
   return (
     <div className="p-4 space-y-4 text-sm">
+      <div>
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">テーブル</div>
+        <div className="font-medium text-gray-800">{tableName}</div>
+      </div>
       <FieldBasicProperties field={field} />
       <FieldAutoEnter field={field} />
       <FieldValidationRules field={field} />
