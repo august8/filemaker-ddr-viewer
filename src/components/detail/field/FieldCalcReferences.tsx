@@ -36,7 +36,8 @@ export function FieldCalcReferences({ projectId, tableName, fieldName }: Props) 
                 onClick={() =>
                   setRightPanel({
                     kind: "field",
-                    projectId,
+                    projectId: ref.project_id,
+                    fieldProjectId: ref.project_id,
                     tableId: ref.table_id,
                     fieldId: ref.field_id,
                     tableName: ref.table_name,

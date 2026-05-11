@@ -24,11 +24,12 @@ pub use solution::{
 pub use import::{insert_ddr_file, insert_layout_object_condition};
 
 pub use catalog::{
-    list_accounts, list_custom_functions, list_layout_object_conditions, list_layout_objects,
-    list_layout_triggers, list_layouts, list_privilege_sets, list_relationships, list_script_steps,
-    list_scripts, list_table_fields, list_table_occurrences, list_tables, list_value_list_items,
-    list_value_lists, run_upgrade_check, AccountRow, CheckItemConfig, ConditionRow,
-    CustomFunctionRow, FieldRow, LayoutObjectRow, LayoutRow, PredicateRow, PrivilegeSetRow,
+    list_accounts, list_custom_functions, list_external_data_sources,
+    list_layout_object_conditions, list_layout_objects, list_layout_triggers, list_layouts,
+    list_privilege_sets, list_relationships, list_script_steps, list_scripts, list_table_fields,
+    list_table_occurrences, list_tables, list_value_list_items, list_value_lists,
+    run_upgrade_check, AccountRow, CheckItemConfig, ConditionRow, CustomFunctionRow,
+    ExternalDataSourceRow, FieldRow, LayoutObjectRow, LayoutRow, PredicateRow, PrivilegeSetRow,
     RelationshipRow, ScriptRow, ScriptStepRow, TableOccurrenceRow, TableRow, TriggerRow,
     UpgradeHit, ValueListRow,
 };

@@ -167,6 +167,7 @@ pub fn run() {
             commands::catalog::list_relationships,
             commands::catalog::list_accounts,
             commands::catalog::list_privilege_sets,
+            commands::catalog::list_external_data_sources,
             commands::field_refs::resolve_layout_field,
             commands::field_refs::get_field_refs,
             commands::field_refs::get_field_calc_refs,

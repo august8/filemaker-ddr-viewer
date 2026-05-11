@@ -179,6 +179,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let orphans = find_orphan_scripts(&ddr);
@@ -227,6 +228,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let orphans = find_orphan_scripts(&ddr);
@@ -280,6 +282,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
 
         let callers = find_callers_of(&ddr, ScriptId(2));

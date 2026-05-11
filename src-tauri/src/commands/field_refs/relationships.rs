@@ -35,21 +35,27 @@ fn get_field_relationship_keys_inner(
     field_name: &str,
 ) -> Result<Vec<FieldRelKeyRef>, rusqlite::Error> {
     let mut stmt = conn.prepare(
-        "SELECT r.id, r.name, r.left_table, r.right_table, jp.operator, 'left'
+        "SELECT r.id, r.name, r.left_table, r.right_table, jp.operator, 'left', r.project_id
          FROM relationships r
          JOIN join_predicates jp ON jp.relationship_id = r.id
          JOIN table_occurrences toc
            ON toc.occurrence_name = r.left_table AND toc.project_id = r.project_id
-         WHERE r.project_id = ?1
+         WHERE r.project_id IN (
+           SELECT id FROM projects
+           WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+         )
            AND jp.left_field = ?3
            AND toc.base_table_name = ?2
          UNION
-         SELECT r.id, r.name, r.left_table, r.right_table, jp.operator, 'right'
+         SELECT r.id, r.name, r.left_table, r.right_table, jp.operator, 'right', r.project_id
          FROM relationships r
          JOIN join_predicates jp ON jp.relationship_id = r.id
          JOIN table_occurrences toc
            ON toc.occurrence_name = r.right_table AND toc.project_id = r.project_id
-         WHERE r.project_id = ?1
+         WHERE r.project_id IN (
+           SELECT id FROM projects
+           WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+         )
            AND jp.right_field = ?3
            AND toc.base_table_name = ?2
          ORDER BY r.name",
@@ -63,6 +69,7 @@ fn get_field_relationship_keys_inner(
                 right_table: row.get(3)?,
                 operator: row.get(4)?,
                 side: row.get(5)?,
+                project_id: row.get(6)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;

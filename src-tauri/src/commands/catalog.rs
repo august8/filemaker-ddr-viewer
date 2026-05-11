@@ -8,6 +8,7 @@ use crate::{
     db::{
         repository::{
             list_accounts as db_list_accounts, list_custom_functions as db_list_custom_functions,
+            list_external_data_sources as db_list_external_data_sources,
             list_layout_object_conditions as db_list_layout_object_conditions,
             list_layout_objects as db_list_layout_objects,
             list_layout_triggers as db_list_layout_triggers, list_layouts as db_list_layouts,
@@ -17,8 +18,9 @@ use crate::{
             list_table_occurrences as db_list_table_occurrences, list_tables as db_list_tables,
             list_value_list_items as db_list_value_list_items,
             list_value_lists as db_list_value_lists, AccountRow, ConditionRow, CustomFunctionRow,
-            FieldRow, LayoutObjectRow, LayoutRow, PrivilegeSetRow, RelationshipRow, ScriptRow,
-            ScriptStepRow, TableOccurrenceRow, TableRow, TriggerRow, ValueListRow,
+            ExternalDataSourceRow, FieldRow, LayoutObjectRow, LayoutRow, PrivilegeSetRow,
+            RelationshipRow, ScriptRow, ScriptStepRow, TableOccurrenceRow, TableRow, TriggerRow,
+            ValueListRow,
         },
         Database,
     },
@@ -301,6 +303,19 @@ pub async fn list_privilege_sets(
 ) -> Result<Vec<PrivilegeSetRow>, CommandError> {
     let db = super::lock_db(&state)?;
     db_list_privilege_sets(&db, project_id, limit.unwrap_or(-1), offset.unwrap_or(0))
+        .map_err(CommandError::from)
+}
+
+/// プロジェクトの外部データソース一覧を返す（名前順）。
+#[tauri::command]
+pub async fn list_external_data_sources(
+    state: tauri::State<'_, AppState>,
+    project_id: i64,
+    limit: Option<i64>,
+    offset: Option<i64>,
+) -> Result<Vec<ExternalDataSourceRow>, CommandError> {
+    let db = super::lock_db(&state)?;
+    db_list_external_data_sources(&db, project_id, limit.unwrap_or(-1), offset.unwrap_or(0))
         .map_err(CommandError::from)
 }
 

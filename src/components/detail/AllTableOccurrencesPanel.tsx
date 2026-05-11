@@ -46,7 +46,8 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
     return tableOccurrences.filter(
       (to) =>
         to.occurrence_name.toLowerCase().includes(q) ||
-        to.base_table_name.toLowerCase().includes(q)
+        to.base_table_name.toLowerCase().includes(q) ||
+        to.source_file.toLowerCase().includes(q)
     );
   }, [tableOccurrences, filter]);
 
@@ -104,6 +105,7 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
             <tr className="bg-gray-100 text-left">
               <th className="px-3 py-2 border border-gray-200 whitespace-nowrap">オカレンス名</th>
               <th className="px-3 py-2 border border-gray-200 whitespace-nowrap">ベーステーブル</th>
+              <th className="px-3 py-2 border border-gray-200 whitespace-nowrap">外部ファイル</th>
               <th className="px-3 py-2 border border-gray-200">使用レイアウト</th>
             </tr>
           </thead>
@@ -135,6 +137,9 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
                     ) : (
                       <span className="text-gray-500">{to.base_table_name}</span>
                     )}
+                  </td>
+                  <td className="px-3 py-1.5 border border-gray-200 whitespace-nowrap text-xs text-gray-500">
+                    {to.source_file || "—"}
                   </td>
                   <td className="px-3 py-1.5 border border-gray-200">
                     {toLayouts.length === 0 ? (

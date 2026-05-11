@@ -67,11 +67,12 @@ function RightPanelContent({ width }: { width: number }) {
   if (!rightPanel) return null;
 
   if (rightPanel.kind === "field") {
-    const { projectId, tableId, tableName, fieldId } = rightPanel;
+    const { projectId, fieldProjectId, tableId, tableName, fieldId } = rightPanel;
     return (
       <FieldPanelInner
         width={width}
         projectId={projectId}
+        fieldProjectId={fieldProjectId}
         tableId={tableId}
         tableName={tableName}
         fieldId={fieldId}
@@ -95,6 +96,7 @@ function RightPanelContent({ width }: { width: number }) {
 function FieldPanelInner({
   width,
   projectId,
+  fieldProjectId,
   tableId,
   tableName,
   fieldId,
@@ -102,17 +104,19 @@ function FieldPanelInner({
 }: {
   width: number;
   projectId: number;
+  fieldProjectId?: number;
   tableId: number;
   tableName: string;
   fieldId: number;
   onClose: () => void;
 }) {
-  const { data: fields = [] } = useTableFields(projectId, tableId);
+  const resolvedProjectId = fieldProjectId ?? projectId;
+  const { data: fields = [] } = useTableFields(resolvedProjectId, tableId);
   const field = fields.find((f) => f.id === fieldId);
   if (!field) return null;
   return (
     <RightPanel title="フィールド詳細" onClose={onClose} width={width}>
-      <FieldDetail field={field} tableName={tableName} projectId={projectId} />
+      <FieldDetail field={field} tableName={tableName} projectId={resolvedProjectId} />
     </RightPanel>
   );
 }

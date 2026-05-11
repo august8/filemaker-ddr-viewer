@@ -42,7 +42,7 @@ pub async fn resolve_layout_field(
 // inner 関数（テスト可能・Tauri State 非依存）
 // ---------------------------------------------------------------------------
 
-/// `get_field_layout_refs` の内部実装。
+/// `get_field_layout_refs` の内部実装（ソリューション全体スコープ）。
 fn get_field_layout_refs_inner(
     conn: &rusqlite::Connection,
     project_id: i64,
@@ -50,20 +50,29 @@ fn get_field_layout_refs_inner(
     field_name: &str,
 ) -> Result<Vec<FieldRefLayout>, rusqlite::Error> {
     let mut stmt = conn.prepare(
-        "SELECT DISTINCT l.id, l.name
+        "SELECT DISTINCT l.id, l.name, l.project_id
          FROM layouts l
          JOIN table_occurrences toc_main
-           ON toc_main.project_id = l.project_id
+           ON toc_main.project_id IN (
+             SELECT id FROM projects
+             WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+           )
           AND toc_main.occurrence_name = l.table_occurrence_name
           AND toc_main.base_table_name = ?2
          JOIN layout_field_refs lfr
            ON lfr.layout_id = l.id
           AND lfr.field_name = ?3
          JOIN table_occurrences toc_field
-           ON toc_field.project_id = ?1
+           ON toc_field.project_id IN (
+             SELECT id FROM projects
+             WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+           )
           AND toc_field.occurrence_name = lfr.table_occurrence
           AND toc_field.base_table_name = ?2
-         WHERE l.project_id = ?1
+         WHERE l.project_id IN (
+           SELECT id FROM projects
+           WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+         )
          ORDER BY l.position, l.name",
     )?;
     let rows = stmt
@@ -71,6 +80,7 @@ fn get_field_layout_refs_inner(
             Ok(FieldRefLayout {
                 layout_id: row.get(0)?,
                 layout_name: row.get(1)?,
+                project_id: row.get(2)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -78,14 +88,19 @@ fn get_field_layout_refs_inner(
 }
 
 /// `resolve_layout_field` の内部実装。
+///
+/// Step1: 同一プロジェクト内で検索。見つかれば `field_project_id = project_id` で返す。
+/// Step2: 見つからない場合、`table_occurrences.source_file` から外部プロジェクトを特定して検索。
 fn resolve_layout_field_inner(
     conn: &rusqlite::Connection,
     project_id: i64,
     occurrence_name: &str,
     field_name: &str,
 ) -> Result<Option<FieldLocation>, rusqlite::Error> {
-    conn.query_row(
-        "SELECT bt.id, f.id, bt.name
+    // Step1: 同一プロジェクト内検索
+    let same_project = conn
+        .query_row(
+            "SELECT bt.id, f.id, bt.name
            FROM fields f
            JOIN base_tables bt ON bt.id = f.table_id
            JOIN table_occurrences toc
@@ -95,12 +110,92 @@ fn resolve_layout_field_inner(
             AND toc.occurrence_name = ?2
             AND f.name = ?3
           LIMIT 1",
-        params![project_id, occurrence_name, field_name],
+            params![project_id, occurrence_name, field_name],
+            |row| {
+                Ok(FieldLocation {
+                    table_id: row.get(0)?,
+                    field_id: row.get(1)?,
+                    table_name: row.get(2)?,
+                    field_project_id: project_id,
+                })
+            },
+        )
+        .optional()?;
+
+    if same_project.is_some() {
+        return Ok(same_project);
+    }
+
+    // Step2: source_file 経由で外部プロジェクトを検索
+    let ext_info: Option<(String, String)> = conn
+        .query_row(
+            "SELECT source_file, base_table_name
+           FROM table_occurrences
+          WHERE project_id = ?1 AND occurrence_name = ?2
+            AND source_file IS NOT NULL AND source_file != ''
+          LIMIT 1",
+            params![project_id, occurrence_name],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .optional()?;
+
+    let (source_file, base_table_name) = match ext_info {
+        Some(v) => v,
+        None => return Ok(None),
+    };
+
+    // external_data_sources から path_list を取得してファイル名ステムを導出する。
+    // 例: source_file="PARTNER", path_list="file:PARTNER_v3" → stem="PARTNER_v3"
+    // projects.name="PARTNER_v3.fmp12" にマッチさせるために必要。
+    let path_stem: String = conn
+        .query_row(
+            "SELECT path_list FROM external_data_sources
+             WHERE project_id = ?1 AND name = ?2
+             LIMIT 1",
+            params![project_id, &source_file],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?
+        .map(|p| {
+            let without_scheme = p.find(':').map_or(p.as_str(), |i| &p[i + 1..]);
+            without_scheme
+                .strip_suffix(".fmp12")
+                .unwrap_or(without_scheme)
+                .to_string()
+        })
+        .unwrap_or_else(|| source_file.clone());
+
+    let ext_project_id: Option<i64> = conn
+        .query_row(
+            "SELECT ext.id FROM projects ext
+          JOIN projects cur ON cur.solution_id = ext.solution_id
+         WHERE cur.id = ?1 AND (ext.name = ?2 OR ext.name = ?2 || '.fmp12')
+         LIMIT 1",
+            params![project_id, &path_stem],
+            |row| row.get(0),
+        )
+        .optional()?;
+
+    let ext_project_id = match ext_project_id {
+        Some(id) => id,
+        None => return Ok(None),
+    };
+
+    conn.query_row(
+        "SELECT bt.id, f.id, bt.name
+           FROM fields f
+           JOIN base_tables bt ON bt.id = f.table_id
+          WHERE bt.project_id = ?1
+            AND bt.name = ?2
+            AND f.name = ?3
+          LIMIT 1",
+        params![ext_project_id, base_table_name, field_name],
         |row| {
             Ok(FieldLocation {
                 table_id: row.get(0)?,
                 field_id: row.get(1)?,
                 table_name: row.get(2)?,
+                field_project_id: ext_project_id,
             })
         },
     )
@@ -113,7 +208,7 @@ fn resolve_layout_field_inner(
 
 #[cfg(test)]
 mod tests {
-    use super::super::helpers::test_helpers::{setup, setup_with_layout_refs};
+    use super::super::helpers::test_helpers::{setup, setup_cross_project, setup_with_layout_refs};
     use super::*;
 
     #[test]
@@ -172,5 +267,175 @@ mod tests {
         let (conn, project_id) = setup();
         let loc = resolve_layout_field_inner(&conn, project_id, "UnknownOcc", "Amount").unwrap();
         assert!(loc.is_none());
+    }
+
+    #[test]
+    fn resolve_layout_field_returns_external_field_via_cross_project_lookup() {
+        let (conn, program_project_id, data_project_id) = setup_cross_project();
+        // プログラムファイルのオカレンス "Customers" 経由でデータファイルのフィールドを解決
+        let loc = resolve_layout_field_inner(&conn, program_project_id, "Customers", "FirstName")
+            .unwrap();
+        assert!(loc.is_some(), "外部フィールドを解決できるべき");
+        let loc = loc.unwrap();
+        assert_eq!(loc.table_name, "Customer");
+        assert_eq!(loc.field_project_id, data_project_id);
+    }
+
+    /// 実DDR では projects.name = "DataFile.fmp12"、source_file = "DataFile"（拡張子なし）になる。
+    #[test]
+    fn resolve_layout_field_handles_fmp12_extension_mismatch() {
+        use crate::db::schema::initialize;
+        use rusqlite::Connection;
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'ProgramFile', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let program_project_id = conn.last_insert_rowid();
+
+        // 実DDRと同様に projects.name には ".fmp12" 拡張子が付く
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'DataFile.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let data_project_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO base_tables(project_id, fm_id, name) VALUES(?1, 1, 'Customer')",
+            [data_project_id],
+        )
+        .unwrap();
+        let table_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO fields(project_id, table_id, fm_id, name, field_type, data_type)
+             VALUES(?1, ?2, 1, 'FirstName', 'Normal', 'Text')",
+            rusqlite::params![data_project_id, table_id],
+        )
+        .unwrap();
+
+        // source_file は拡張子なし（実DDRの FileReference name 属性の形式）
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'Customers', 'Customer', 'DataFile')",
+            [program_project_id],
+        )
+        .unwrap();
+
+        let loc = resolve_layout_field_inner(&conn, program_project_id, "Customers", "FirstName")
+            .unwrap();
+        assert!(
+            loc.is_some(),
+            "source_file='DataFile' と projects.name='DataFile.fmp12' でも解決できるべき"
+        );
+        assert_eq!(loc.unwrap().field_project_id, data_project_id);
+    }
+
+    /// 実DDR の典型パターン:
+    /// source_file="PARTNER"、external_data_sources.path_list="file:PARTNER_v3"、
+    /// projects.name="PARTNER_v3.fmp12" — 3者が異なる文字列。
+    #[test]
+    fn resolve_layout_field_handles_external_data_source_path_stem() {
+        use crate::db::schema::initialize;
+        use rusqlite::Connection;
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'TRIVECTOR_v3.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let prog_id = conn.last_insert_rowid();
+
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'PARTNER_v3.fmp12', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let data_id = conn.last_insert_rowid();
+
+        // data project: base_table + field
+        conn.execute(
+            "INSERT INTO base_tables(project_id, fm_id, name) VALUES(?1, 1, 'パートナー評価区分')",
+            [data_id],
+        )
+        .unwrap();
+        let tbl = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO fields(project_id, table_id, fm_id, name, field_type, data_type)
+             VALUES(?1, ?2, 1, '評価区分名', 'Normal', 'Text')",
+            rusqlite::params![data_id, tbl],
+        )
+        .unwrap();
+
+        // prog project: occurrence → source_file="PARTNER"
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'パートナー評価区分', 'パートナー評価区分', 'PARTNER')",
+            [prog_id],
+        )
+        .unwrap();
+
+        // prog project: external_data_sources で PARTNER → file:PARTNER_v3 のマッピング
+        conn.execute(
+            "INSERT INTO external_data_sources(project_id, fm_id, name, path_list, link)
+             VALUES(?1, 1, 'PARTNER', 'file:PARTNER_v3', '')",
+            [prog_id],
+        )
+        .unwrap();
+
+        let loc =
+            resolve_layout_field_inner(&conn, prog_id, "パートナー評価区分", "評価区分名").unwrap();
+        assert!(
+            loc.is_some(),
+            "source_file='PARTNER'→path_list='file:PARTNER_v3'→projects.name='PARTNER_v3.fmp12' で解決できるべき"
+        );
+        assert_eq!(loc.unwrap().field_project_id, data_id);
+    }
+
+    #[test]
+    fn resolve_layout_field_returns_none_if_external_project_not_imported() {
+        use crate::db::schema::initialize;
+        use rusqlite::Connection;
+        let conn = Connection::open_in_memory().unwrap();
+        initialize(&conn).unwrap();
+
+        conn.execute("INSERT INTO solutions(name) VALUES('sol')", [])
+            .unwrap();
+        let solution_id = conn.last_insert_rowid();
+        conn.execute(
+            "INSERT INTO projects(solution_id, name, fm_version) VALUES(?1, 'ProgramFile', '21')",
+            [solution_id],
+        )
+        .unwrap();
+        let program_project_id = conn.last_insert_rowid();
+
+        // 外部ファイルを参照しているが、そのファイルはインポートされていない
+        conn.execute(
+            "INSERT INTO table_occurrences(project_id, occurrence_name, base_table_name, source_file)
+             VALUES(?1, 'Customers', 'Customer', 'DataFile')",
+            [program_project_id],
+        )
+        .unwrap();
+
+        let loc = resolve_layout_field_inner(&conn, program_project_id, "Customers", "FirstName")
+            .unwrap();
+        assert!(
+            loc.is_none(),
+            "外部プロジェクト未インポート時は None を返すべき"
+        );
     }
 }

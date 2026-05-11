@@ -36,7 +36,7 @@ export function FieldRelationshipReferences({ projectId, tableName, fieldName }:
                 onClick={() =>
                   selectElement({
                     kind: "all_relationships",
-                    projectId,
+                    projectId: ref.project_id,
                     highlightId: ref.relationship_id,
                   })
                 }

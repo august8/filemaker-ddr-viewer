@@ -26,6 +26,7 @@ const mockSummary: ProjectSummary = {
   custom_function_count: 2,
   account_count: 1,
   privilege_set_count: 2,
+  external_data_source_count: 1,
 };
 
 beforeEach(() => {

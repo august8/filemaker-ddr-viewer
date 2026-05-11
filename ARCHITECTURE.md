@@ -103,7 +103,7 @@ filemaker-ddr-viewer/
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
 | `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
 | `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
-| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
+| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel / AllExternalDataSourcesPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
 | `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |
@@ -182,6 +182,43 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 ### フィールド検索結果の親テーブル解決
 
 フィールドの検索結果クリック時に親テーブルを特定するため、`search()` クエリで `fields` テーブルと `base_tables` テーブルを LEFT JOIN して `table_id` と `table_name` を付与している。
+
+### 分離モデル（プログラムファイル + データファイル）対応
+
+FileMaker の分離モデルでは、レイアウト・スクリプトを持つ「プログラムファイル」と、テーブル・フィールドを持つ「データファイル」が別々の project として同一 solution にインポートされる。
+
+**`fetch_occ_names` のソリューションスコープ化**
+
+`table_occurrences` の検索範囲を同一 `solution_id` の全プロジェクトに拡張することで、データファイルの `project_id` を起点にプログラムファイル側のオカレンス名も取得できる。
+
+```sql
+WHERE project_id IN (
+  SELECT id FROM projects
+  WHERE solution_id = (SELECT solution_id FROM projects WHERE id = ?1)
+)
+```
+
+これにより `get_field_refs`, `get_field_calc_refs`, `get_field_layout_refs`, `get_field_relationship_keys` がすべてソリューション全体を対象に検索する。
+
+**`resolve_layout_field` のクロスプロジェクト検索**
+
+`resolve_layout_field_inner` は以下の 2 段階で解決する:
+1. 同一プロジェクト内で `(occurrence_name, field_name)` を検索
+2. 見つからない場合、`table_occurrences.source_file` → 外部プロジェクト名 → `projects.name` で外部プロジェクトを特定してフィールドを検索
+
+**返却型の `project_id` / `field_project_id`**
+
+クロスプロジェクトナビゲーションのため、各返却型にプロジェクト ID を追加している:
+
+| 型 | 追加フィールド | 用途 |
+|----|--------------|------|
+| `FieldLocation` | `field_project_id` | フィールド定義が属するプロジェクト（外部ファイルの場合に異なる） |
+| `FieldRefScript` | `project_id` | スクリプトが属するプロジェクト |
+| `FieldRefLayout` | `project_id` | レイアウトが属するプロジェクト |
+| `FieldCalcRef` | `project_id` | 参照元フィールドが属するプロジェクト |
+| `FieldRelKeyRef` | `project_id` | リレーションが属するプロジェクト |
+
+フロントエンドは `FieldPanelInner` で `fieldProjectId ?? projectId` を使い、`useTableFields` の呼び出しとサブコンポーネントへの `projectId` 渡しを正しいプロジェクトで行う。各参照リストコンポーネントは `ref.project_id` を使って `selectElement` / `setRightPanel` を呼ぶ。
 
 ---
 
@@ -302,6 +339,7 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `list_custom_functions` | catalog.rs | `project_id, limit?, offset?` | `Vec<CustomFunctionRow>` |
 | `list_accounts` | catalog.rs | `project_id, limit?, offset?` | `Vec<AccountRow>` |
 | `list_privilege_sets` | catalog.rs | `project_id, limit?, offset?` | `Vec<PrivilegeSetRow>` |
+| `list_external_data_sources` | catalog.rs | `project_id, limit?, offset?` | `Vec<ExternalDataSourceRow>` |
 | `get_field_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefScript>` |
 | `get_field_calc_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldCalcRef>` |
 | `get_field_layout_refs` | field_refs.rs | `project_id, table_name, field_name` | `Vec<FieldRefLayout>` |

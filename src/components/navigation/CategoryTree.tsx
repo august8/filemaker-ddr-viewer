@@ -153,6 +153,7 @@ export function CategoryTree({ projectId }: Props) {
   const customFunctionCount = summary?.custom_function_count ?? 0;
   const tableOccurrenceCount = summary?.table_occurrence_count ?? 0;
   const relationshipCount = summary?.relationship_count ?? 0;
+  const externalDataSourceCount = summary?.external_data_source_count ?? 0;
 
   return (
     <div className="overflow-auto">
@@ -349,6 +350,27 @@ export function CategoryTree({ projectId }: Props) {
       >
         <span className="text-base">🗺</span>
         リレーショングラフ
+      </button>
+
+      {/* 外部データソース */}
+      <button
+        className={`w-full flex items-center justify-between px-9 py-1.5 text-sm font-semibold transition-colors ${
+          isSelected({ kind: "all_external_data_sources", projectId })
+            ? "bg-blue-100 text-blue-800"
+            : "text-gray-700 hover:bg-gray-100"
+        }`}
+        onClick={() => {
+          setRightPanel(null);
+          selectElement({ kind: "all_external_data_sources", projectId });
+        }}
+      >
+        <span className="flex items-center gap-1.5">
+          <span className="text-base">🔗</span>
+          外部データソース
+        </span>
+        {externalDataSourceCount > 0 && (
+          <span className="text-xs text-gray-400 ml-1">{externalDataSourceCount}</span>
+        )}
       </button>
 
       {/* セキュリティ */}

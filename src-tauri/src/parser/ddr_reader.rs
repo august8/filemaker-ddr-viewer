@@ -2,7 +2,8 @@ use quick_xml::{events::Event, Reader};
 
 use crate::parser::{
     catalog_parser::{
-        parse_accounts, parse_custom_functions, parse_privilege_sets, parse_value_lists,
+        parse_accounts, parse_custom_functions, parse_external_data_sources, parse_privilege_sets,
+        parse_value_lists,
     },
     helpers::{get_attr, skip_element},
     layout_parser::parse_layouts,
@@ -45,6 +46,7 @@ pub fn parse_ddr(xml: &str) -> Result<DdrFile, ParseError> {
     let mut accounts = Vec::new();
     let mut privilege_sets = Vec::new();
     let mut file_script_triggers: Vec<String> = Vec::new();
+    let mut external_data_sources = Vec::new();
 
     loop {
         buf.clear();
@@ -83,6 +85,9 @@ pub fn parse_ddr(xml: &str) -> Result<DdrFile, ParseError> {
                     b"Options" => {
                         file_script_triggers = parse_options(&mut reader, &mut buf)?;
                     }
+                    b"ExternalDataSourcesCatalog" => {
+                        external_data_sources = parse_external_data_sources(&mut reader, &mut buf)?;
+                    }
                     _ => {
                         // Unknown element (e.g. File, ExtendedPrivilegeCatalog) – skip
                         skip_element(&mut reader, &mut buf)?;
@@ -118,6 +123,7 @@ pub fn parse_ddr(xml: &str) -> Result<DdrFile, ParseError> {
         accounts,
         privilege_sets,
         file_script_triggers,
+        external_data_sources,
     })
 }
 

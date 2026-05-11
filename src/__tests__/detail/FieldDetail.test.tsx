@@ -93,6 +93,12 @@ describe("FieldDetail", () => {
     expect(screen.getByText("全て")).toBeInTheDocument();
   });
 
+  it("shows_table_name_at_top", () => {
+    render(<FieldDetail {...defaultProps} />);
+    expect(screen.getByText("テーブル")).toBeInTheDocument();
+    expect(screen.getByText("TestTable")).toBeInTheDocument();
+  });
+
   it("shows_empty_message_for_script_refs", () => {
     render(<FieldDetail {...defaultProps} />);
     expect(

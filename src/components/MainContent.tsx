@@ -18,6 +18,7 @@ import { AllLayoutsPanel } from "./detail/AllLayoutsPanel";
 import { AllValueListsPanel } from "./detail/AllValueListsPanel";
 import { AllCustomFunctionsPanel } from "./detail/AllCustomFunctionsPanel";
 import { AllTableOccurrencesPanel } from "./detail/AllTableOccurrencesPanel";
+import { AllExternalDataSourcesPanel } from "./detail/AllExternalDataSourcesPanel";
 import { AllRelationshipsPanel } from "./detail/AllRelationshipsPanel";
 import { SecurityPanel } from "./detail/SecurityPanel";
 import { RelationshipGraphPanel } from "./detail/RelationshipGraphPanel";
@@ -150,6 +151,12 @@ export function MainContent() {
         return (
           <div className="flex-1 overflow-hidden flex flex-col">
             <AllTableOccurrencesPanel projectId={selectedElement.projectId} />
+          </div>
+        );
+      case "all_external_data_sources":
+        return (
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <AllExternalDataSourcesPanel projectId={selectedElement.projectId} />
           </div>
         );
       case "all_relationships":

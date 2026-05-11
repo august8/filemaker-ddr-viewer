@@ -188,6 +188,18 @@ pub struct PrivilegeSetRow {
     pub comment: Option<String>,
 }
 
+/// DB から取得した外部データソース行。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExternalDataSourceRow {
+    pub id: i64,
+    pub fm_id: i64,
+    pub name: String,
+    /// `pathList` 属性（例: `file:ExternalFile`）
+    pub path_list: String,
+    /// 対応する DDR ファイル名（`link` 属性。例: `ExternalFile_fmp12.xml`）
+    pub link: String,
+}
+
 // ---------------------------------------------------------------------------
 // ナビゲーション用クエリ関数
 // ---------------------------------------------------------------------------
@@ -644,6 +656,32 @@ pub fn list_privilege_sets(
             fm_id: row.get(1)?,
             name: row.get(2)?,
             comment: row.get(3)?,
+        })
+    })?;
+    rows.collect::<Result<Vec<_>, _>>().map_err(DbError::from)
+}
+
+/// プロジェクトの外部データソース一覧を返す（名前順）。
+pub fn list_external_data_sources(
+    db: &Database,
+    project_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<ExternalDataSourceRow>, DbError> {
+    let mut stmt = db.conn.prepare(
+        "SELECT id, fm_id, name, path_list, link
+           FROM external_data_sources
+          WHERE project_id = ?1
+          ORDER BY name
+          LIMIT ?2 OFFSET ?3",
+    )?;
+    let rows = stmt.query_map(params![project_id, limit, offset], |row| {
+        Ok(ExternalDataSourceRow {
+            id: row.get(0)?,
+            fm_id: row.get(1)?,
+            name: row.get(2)?,
+            path_list: row.get(3)?,
+            link: row.get(4)?,
         })
     })?;
     rows.collect::<Result<Vec<_>, _>>().map_err(DbError::from)

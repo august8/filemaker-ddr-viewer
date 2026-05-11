@@ -33,6 +33,7 @@ pub struct FieldRelKeyRef {
     pub operator: String,
     /// "left" or "right" — このフィールドがキーとして使われている側
     pub side: String,
+    pub project_id: i64,
 }
 
 /// 未使用フィールドの情報。
@@ -52,6 +53,7 @@ pub struct FieldCalcRef {
     pub field_name: String,
     pub table_name: String,
     pub table_id: i64,
+    pub project_id: i64,
 }
 
 /// フィールドを参照しているスクリプトの一覧。
@@ -59,6 +61,7 @@ pub struct FieldCalcRef {
 pub struct FieldRefScript {
     pub script_id: i64,
     pub script_name: String,
+    pub project_id: i64,
 }
 
 /// フィールドのテーブルを使用しているレイアウトの一覧。
@@ -66,6 +69,7 @@ pub struct FieldRefScript {
 pub struct FieldRefLayout {
     pub layout_id: i64,
     pub layout_name: String,
+    pub project_id: i64,
 }
 
 /// テーブルオカレンス名とフィールド名から解決したフィールドの位置情報。
@@ -74,6 +78,7 @@ pub struct FieldLocation {
     pub table_id: i64,
     pub field_id: i64,
     pub table_name: String,
+    pub field_project_id: i64,
 }
 
 /// レイアウトフィールド参照のデバッグ情報。

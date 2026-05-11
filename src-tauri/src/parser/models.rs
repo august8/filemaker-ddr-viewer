@@ -53,6 +53,22 @@ pub struct DdrFile {
     pub privilege_sets: Vec<PrivilegeSet>,
     /// ファイルオプション > スクリプトトリガーで呼ばれるスクリプト名（WindowTriggers）
     pub file_script_triggers: Vec<String>,
+    /// `<ExternalDataSourcesCatalog>` — このファイルが参照する外部ファイル一覧
+    pub external_data_sources: Vec<ExternalDataSource>,
+}
+
+// ---------------------------------------------------------------------------
+// External Data Sources
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExternalDataSource {
+    pub fm_id: u32,
+    pub name: String,
+    /// `pathList` 属性（例: `file:ExternalFile`）
+    pub path_list: String,
+    /// `link` 属性 — 対応する DDR ファイル名（例: `ExternalFile_fmp12.xml`）
+    pub link: String,
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 import { useFieldLayoutRefs, useLayoutRefDebugInfo } from "../../../hooks/fieldRefs";
-import { useLayoutList } from "../../../hooks/layout";
 import { useAppStore } from "../../../stores/appStore";
 import { Spinner } from "../../Spinner";
 import { SECTION_HEADER } from "../../../styles/tokens";
@@ -17,15 +16,7 @@ export function FieldLayoutReferences({ projectId, tableName, fieldName }: Props
     tableName,
     fieldName
   );
-  const { data: layouts = [] } = useLayoutList(projectId);
   const { data: debugInfo } = useLayoutRefDebugInfo(projectId);
-
-  function handleLayoutClick(layoutName: string) {
-    const layout = layouts.find((l) => l.name === layoutName);
-    if (layout) {
-      selectElement({ kind: "layout", projectId, id: layout.id, name: layout.name });
-    }
-  }
 
   return (
     <section>
@@ -59,7 +50,14 @@ export function FieldLayoutReferences({ projectId, tableName, fieldName }: Props
             <li key={ref.layout_id}>
               <button
                 className="text-blue-600 hover:underline text-left break-all w-full"
-                onClick={() => handleLayoutClick(ref.layout_name)}
+                onClick={() =>
+                  selectElement({
+                    kind: "layout",
+                    projectId: ref.project_id,
+                    id: ref.layout_id,
+                    name: ref.layout_name,
+                  })
+                }
               >
                 {ref.layout_name}
               </button>

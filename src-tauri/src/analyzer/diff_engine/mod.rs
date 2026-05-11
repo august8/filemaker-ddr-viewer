@@ -273,6 +273,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
         let mut updated = base.clone();
         updated.scripts.push(Script {
@@ -314,6 +315,7 @@ mod tests {
             privilege_sets: vec![],
             table_occurrences: vec![],
             file_script_triggers: vec![],
+            external_data_sources: vec![],
         };
         let new_ddr = DdrFile {
             tables: vec![],

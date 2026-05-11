@@ -8,7 +8,7 @@ use rusqlite::Connection;
 use crate::db::DbError;
 
 /// 現在のスキーマバージョン。
-pub const CURRENT_SCHEMA_VERSION: i32 = 15;
+pub const CURRENT_SCHEMA_VERSION: i32 = 16;
 
 // ---------------------------------------------------------------------------
 // 公開 API
@@ -474,6 +474,19 @@ CREATE TABLE IF NOT EXISTS privilege_sets (
     name       TEXT    NOT NULL,
     comment    TEXT
 );
+
+-- 外部データソース（ExternalDataSourcesCatalog の FileReference 要素）
+CREATE TABLE IF NOT EXISTS external_data_sources (
+    id         INTEGER PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    fm_id      INTEGER NOT NULL,
+    name       TEXT    NOT NULL,
+    path_list  TEXT    NOT NULL DEFAULT '',
+    link       TEXT    NOT NULL DEFAULT '',
+    UNIQUE (project_id, fm_id)
+);
+CREATE INDEX IF NOT EXISTS idx_external_data_sources_project
+    ON external_data_sources(project_id);
 "#;
 
 // ---------------------------------------------------------------------------
