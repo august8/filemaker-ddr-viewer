@@ -182,13 +182,16 @@ export function MainContent() {
         );
       case "upgrade_check":
         return <UpgradeCheckPanel solutionId={selectedElement.solutionId} />;
+      case "solution_dashboard":
+        return (
+          <SolutionDashboard
+            solutionId={selectedElement.solutionId}
+            solutionName={selectedSolution?.name ?? ""}
+          />
+        );
       case "dashboard":
         break; // ダッシュボード表示 → switch を抜けて下のダッシュボード return へ
     }
-  }
-
-  if (selectedSolution && !selectedProject) {
-    return <SolutionDashboard solutionId={selectedSolution.id} solutionName={selectedSolution.name} />;
   }
 
   return (

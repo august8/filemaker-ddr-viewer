@@ -43,7 +43,7 @@ describe("appStore", () => {
     expect(useAppStore.getState().solutions).toEqual([mockSolution]);
   });
 
-  it("selectSolution_resets_project_and_element", () => {
+  it("selectSolution_resets_project_and_sets_solution_dashboard_element", () => {
     // setup with project and element selected
     useAppStore.setState({
       selectedProject: mockProject,
@@ -53,7 +53,9 @@ describe("appStore", () => {
     const state = useAppStore.getState();
     expect(state.selectedSolution).toEqual(mockSolution);
     expect(state.selectedProject).toBeNull();
-    expect(state.selectedElement).toBeNull();
+    expect(state.selectedElement).toEqual({ kind: "solution_dashboard", solutionId: mockSolution.id });
+    expect(state.navHistory).toEqual([{ kind: "solution_dashboard", solutionId: mockSolution.id }]);
+    expect(state.navIndex).toBe(0);
   });
 
   it("selectProject_resets_element", () => {

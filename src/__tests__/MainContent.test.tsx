@@ -91,7 +91,7 @@ describe("MainContent", () => {
     vi.mocked(useAppStore).mockReturnValue({
       selectedProject: null,
       selectedSolution: { id: 5, name: "Sol A", imported_at: "" } as SolutionRow,
-      selectedElement: null,
+      selectedElement: { kind: "solution_dashboard", solutionId: 5 },
       searchQuery: "",
       selectElement: vi.fn(),
     } as unknown as ReturnType<typeof useAppStore>);

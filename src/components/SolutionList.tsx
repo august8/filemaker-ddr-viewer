@@ -129,7 +129,6 @@ export function SolutionList() {
             onClick={() => {
               setRightPanel(null);
               selectSolution(solution);
-              selectProject(null);
             }}
           >
             <div className="flex-1 min-w-0">

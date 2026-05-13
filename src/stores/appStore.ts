@@ -88,6 +88,7 @@ export type SelectedElement =
   | { kind: "security"; projectId: number }
   | { kind: "relationship_graph"; projectId: number }
   | { kind: "upgrade_check"; solutionId: number }
+  | { kind: "solution_dashboard"; solutionId: number }
   | null;
 
 export type RightPanelState =
@@ -122,6 +123,8 @@ function elementKey(el: SelectedElement | undefined): string {
       return `search:${el.query}`;
     case "upgrade_check":
       return `upgrade_check:${el.solutionId}`;
+    case "solution_dashboard":
+      return `solution_dashboard:${el.solutionId}`;
     case "dashboard":
     case "diff":
       return el.kind;
@@ -209,17 +212,21 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchDuration: (duration) => set({ searchDuration: duration }),
   setSearchContains: (v) => set({ searchContains: v }),
   setSearchScope: (v) => set({ searchScope: v }),
-  selectSolution: (solution) =>
-    set({
+  selectSolution: (solution) => {
+    const dashboardEl: SelectedElement = solution
+      ? { kind: "solution_dashboard", solutionId: solution.id }
+      : null;
+    return set({
       selectedSolution: solution,
       selectedProject: null,
-      selectedElement: null,
+      selectedElement: dashboardEl,
       searchScope: "all",
-      navHistory: [],
-      navIndex: -1,
+      navHistory: dashboardEl ? [dashboardEl] : [],
+      navIndex: dashboardEl ? 0 : -1,
       diffContext: null,
       diffState: { ...INITIAL_DIFF_STATE, solA: solution?.id ?? null },
-    }),
+    });
+  },
   selectProject: (project) =>
     set({ selectedProject: project, selectedElement: null, navHistory: [], navIndex: -1, diffContext: null }),
   selectElement: (element) =>

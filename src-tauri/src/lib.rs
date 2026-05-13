@@ -148,6 +148,7 @@ pub fn run() {
             commands::analysis::list_projects,
             commands::analysis::delete_project,
             commands::analysis::get_project_summary,
+            commands::analysis::list_solution_project_summaries,
             commands::analysis::get_broken_refs,
             commands::analysis::get_report_card,
             commands::analysis::resolve_element_by_name,
