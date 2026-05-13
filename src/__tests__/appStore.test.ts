@@ -43,7 +43,7 @@ describe("appStore", () => {
     expect(useAppStore.getState().solutions).toEqual([mockSolution]);
   });
 
-  it("selectSolution_resets_project_and_element", () => {
+  it("selectSolution_resets_project_and_sets_solution_dashboard_element", () => {
     // setup with project and element selected
     useAppStore.setState({
       selectedProject: mockProject,
@@ -53,7 +53,9 @@ describe("appStore", () => {
     const state = useAppStore.getState();
     expect(state.selectedSolution).toEqual(mockSolution);
     expect(state.selectedProject).toBeNull();
-    expect(state.selectedElement).toBeNull();
+    expect(state.selectedElement).toEqual({ kind: "solution_dashboard", solutionId: mockSolution.id });
+    expect(state.navHistory).toEqual([{ kind: "solution_dashboard", solutionId: mockSolution.id }]);
+    expect(state.navIndex).toBe(0);
   });
 
   it("selectProject_resets_element", () => {
@@ -64,6 +66,105 @@ describe("appStore", () => {
     const state = useAppStore.getState();
     expect(state.selectedProject).toEqual(mockProject);
     expect(state.selectedElement).toBeNull();
+  });
+
+  it("selectProject_preserves_navHistory", () => {
+    useAppStore.setState({
+      navHistory: [{ kind: "solution_dashboard", solutionId: 1 }],
+      navIndex: 0,
+    });
+    useAppStore.getState().selectProject(mockProject);
+    const state = useAppStore.getState();
+    expect(state.selectedProject).toEqual(mockProject);
+    expect(state.navHistory).toHaveLength(1); // 履歴は保持される
+  });
+
+  it("navigateToProject_pushes_dashboard_entry_to_history", () => {
+    useAppStore.setState({
+      navHistory: [{ kind: "solution_dashboard", solutionId: 1 }],
+      navIndex: 0,
+      selectedElement: { kind: "solution_dashboard", solutionId: 1 },
+    });
+    useAppStore.getState().navigateToProject(mockProject);
+    const state = useAppStore.getState();
+    expect(state.selectedProject).toEqual(mockProject);
+    expect(state.selectedElement).toBeNull();
+    expect(state.navHistory).toEqual([
+      { kind: "solution_dashboard", solutionId: 1 },
+      { kind: "dashboard" },
+    ]);
+    expect(state.navIndex).toBe(1);
+  });
+
+  it("navigateToProject_allows_navigateBack_to_solution_dashboard", () => {
+    useAppStore.setState({
+      navHistory: [{ kind: "solution_dashboard", solutionId: 1 }],
+      navIndex: 0,
+      selectedElement: { kind: "solution_dashboard", solutionId: 1 },
+    });
+    useAppStore.getState().navigateToProject(mockProject);
+    useAppStore.getState().navigateBack();
+    const state = useAppStore.getState();
+    expect(state.selectedElement).toEqual({ kind: "solution_dashboard", solutionId: 1 });
+  });
+
+  it("navigateBack_resets_selectedProject_when_landing_on_solution_dashboard", () => {
+    useAppStore.setState({
+      navHistory: [{ kind: "solution_dashboard", solutionId: 1 }, { kind: "dashboard" }],
+      navIndex: 1,
+      selectedElement: null,
+      selectedProject: mockProject,
+    });
+    useAppStore.getState().navigateBack();
+    const state = useAppStore.getState();
+    expect(state.selectedElement).toEqual({ kind: "solution_dashboard", solutionId: 1 });
+    expect(state.selectedProject).toBeNull();
+  });
+
+  it("navigateForward_resets_selectedProject_when_landing_on_solution_dashboard", () => {
+    useAppStore.setState({
+      navHistory: [{ kind: "dashboard" }, { kind: "solution_dashboard", solutionId: 3 }],
+      navIndex: 0,
+      selectedElement: null,
+      selectedProject: mockProject,
+    });
+    useAppStore.getState().navigateForward();
+    const state = useAppStore.getState();
+    expect(state.selectedElement).toEqual({ kind: "solution_dashboard", solutionId: 3 });
+    expect(state.selectedProject).toBeNull();
+  });
+
+  it("purgeProjectFromHistory_removes_related_entries", () => {
+    useAppStore.setState({
+      navHistory: [
+        { kind: "solution_dashboard", solutionId: 1 },
+        { kind: "all_scripts", projectId: 10 },
+        { kind: "all_tables", projectId: 20 },
+      ],
+      navIndex: 2,
+    });
+    useAppStore.getState().purgeProjectFromHistory(10);
+    const state = useAppStore.getState();
+    expect(state.navHistory).toEqual([
+      { kind: "solution_dashboard", solutionId: 1 },
+      { kind: "all_tables", projectId: 20 },
+    ]);
+    expect(state.navIndex).toBe(1);
+  });
+
+  it("purgeProjectFromHistory_resets_index_when_current_entry_removed", () => {
+    useAppStore.setState({
+      navHistory: [
+        { kind: "solution_dashboard", solutionId: 1 },
+        { kind: "all_scripts", projectId: 10 },
+      ],
+      navIndex: 1,
+      selectedElement: { kind: "all_scripts", projectId: 10 },
+    });
+    useAppStore.getState().purgeProjectFromHistory(10);
+    const state = useAppStore.getState();
+    expect(state.navHistory).toEqual([{ kind: "solution_dashboard", solutionId: 1 }]);
+    expect(state.navIndex).toBe(0);
   });
 
   it("setSearchQuery_updates_query", () => {

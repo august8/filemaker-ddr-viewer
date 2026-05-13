@@ -89,7 +89,8 @@ filemaker-ddr-viewer/
 | `SearchBar.tsx` / `SearchResults.tsx` | 全文検索・カテゴリフィルター・クリック遷移 |
 | `SolutionList.tsx` | ソリューション一覧・削除 |
 | `ImportButton.tsx` | `概要.xml` インポート |
-| `ProjectSummaryCard.tsx` | 要素数サマリー |
+| `ProjectSummaryCard.tsx` | 要素数サマリー（プロジェクト単位） |
+| `SolutionDashboard.tsx` | ソリューション選択時のサマリー（配下プロジェクト一覧） |
 | `ReportCard.tsx` | 健全性レポート |
 | `BrokenRefsList.tsx` | 壊れた参照一覧 |
 | `OrphanScriptsList.tsx` | 孤立スクリプト一覧 |
@@ -318,6 +319,7 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `list_projects` | analysis.rs | — | `Vec<ProjectRow>` |
 | `delete_project` | analysis.rs | `project_id` | `()` |
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
+| `list_solution_project_summaries` | analysis.rs | `solution_id` | `Vec<ProjectSummary>` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |
 | `get_report_card` | analysis.rs | `project_id` | `ReportCard` |
 | `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `Option<ElementRef>` |

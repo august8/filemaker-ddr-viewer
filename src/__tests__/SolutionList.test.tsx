@@ -135,7 +135,7 @@ describe("SolutionList", () => {
     const row = screen.getByText(/Solution A/).closest("div[class*='cursor-pointer']")!;
     fireEvent.click(row);
     expect(mockSelectSolution).toHaveBeenCalledWith(mockSolutions[0]);
-    expect(mockSelectProject).toHaveBeenCalledWith(null);
+    expect(mockSelectProject).not.toHaveBeenCalled();
     expect(mockSetRightPanel).toHaveBeenCalledWith(null);
   });
 

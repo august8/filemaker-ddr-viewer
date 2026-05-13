@@ -78,6 +78,15 @@ export function useProjectSummary(projectId: number | null) {
   });
 }
 
+// ソリューション配下の全プロジェクトのサマリー一覧
+export function useSolutionProjectSummaries(solutionId: number | null) {
+  return useQuery({
+    queryKey: ["solution_project_summaries", solutionId],
+    queryFn: () => invoke<ProjectSummary[]>("list_solution_project_summaries", { solutionId }),
+    enabled: solutionId !== null,
+  });
+}
+
 // 全プロジェクト一覧（プロジェクト選択ドロップダウン用）
 export function useAllProjects(options?: { enabled?: boolean }) {
   return useQuery({

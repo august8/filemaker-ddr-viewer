@@ -7,7 +7,7 @@ import type { SolutionRow } from "../types/ddr";
 
 function ProjectItems({ solution }: { solution: SolutionRow }) {
   const { data: projects, isLoading } = useSolutionProjects(solution.id);
-  const { selectedProject, selectProject, setRightPanel } = useAppStore();
+  const { selectedProject, selectProject, setRightPanel, purgeProjectFromHistory } = useAppStore();
   const { mutate: deleteProject, isPending: isDeletingProject } = useDeleteProject();
   const [confirmingProjectId, setConfirmingProjectId] = useState<number | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<number | null>(null);
@@ -62,6 +62,7 @@ function ProjectItems({ solution }: { solution: SolutionRow }) {
                     deleteProject(project.id, {
                       onSettled: () => setDeletingProjectId(null),
                     });
+                    purgeProjectFromHistory(project.id);
                     if (selectedProject?.id === project.id) {
                       setRightPanel(null);
                       selectProject(null);
@@ -129,7 +130,6 @@ export function SolutionList() {
             onClick={() => {
               setRightPanel(null);
               selectSolution(solution);
-              selectProject(null);
             }}
           >
             <div className="flex-1 min-w-0">

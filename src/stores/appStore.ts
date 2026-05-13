@@ -88,6 +88,7 @@ export type SelectedElement =
   | { kind: "security"; projectId: number }
   | { kind: "relationship_graph"; projectId: number }
   | { kind: "upgrade_check"; solutionId: number }
+  | { kind: "solution_dashboard"; solutionId: number }
   | null;
 
 export type RightPanelState =
@@ -122,6 +123,8 @@ function elementKey(el: SelectedElement | undefined): string {
       return `search:${el.query}`;
     case "upgrade_check":
       return `upgrade_check:${el.solutionId}`;
+    case "solution_dashboard":
+      return `solution_dashboard:${el.solutionId}`;
     case "dashboard":
     case "diff":
       return el.kind;
@@ -181,6 +184,8 @@ interface AppState {
   setRightPanel: (panel: RightPanelState) => void;
   navigateBack: () => void;
   navigateForward: () => void;
+  purgeProjectFromHistory: (projectId: number) => void;
+  navigateToProject: (project: ProjectRow) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -209,19 +214,23 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchDuration: (duration) => set({ searchDuration: duration }),
   setSearchContains: (v) => set({ searchContains: v }),
   setSearchScope: (v) => set({ searchScope: v }),
-  selectSolution: (solution) =>
-    set({
+  selectSolution: (solution) => {
+    const dashboardEl: SelectedElement = solution
+      ? { kind: "solution_dashboard", solutionId: solution.id }
+      : null;
+    return set({
       selectedSolution: solution,
       selectedProject: null,
-      selectedElement: null,
+      selectedElement: dashboardEl,
       searchScope: "all",
-      navHistory: [],
-      navIndex: -1,
+      navHistory: dashboardEl ? [dashboardEl] : [],
+      navIndex: dashboardEl ? 0 : -1,
       diffContext: null,
       diffState: { ...INITIAL_DIFF_STATE, solA: solution?.id ?? null },
-    }),
+    });
+  },
   selectProject: (project) =>
-    set({ selectedProject: project, selectedElement: null, navHistory: [], navIndex: -1, diffContext: null }),
+    set({ selectedProject: project, selectedElement: null, diffContext: null }),
   selectElement: (element) =>
     set((state) => {
       // 同じ要素なら履歴に積まない
@@ -326,6 +335,7 @@ export const useAppStore = create<AppState>((set) => ({
       const updates: Partial<AppState> = { navIndex: newIndex, selectedElement: entry, diffContext: null };
       // search エントリなら searchQuery を復元、それ以外はクリアして詳細パネルを表示
       updates.searchQuery = entry?.kind === "search" ? entry.query : "";
+      if (entry?.kind === "solution_dashboard") updates.selectedProject = null;
       return updates;
     }),
   navigateForward: () =>
@@ -335,6 +345,43 @@ export const useAppStore = create<AppState>((set) => ({
       const entry = state.navHistory[newIndex];
       const updates: Partial<AppState> = { navIndex: newIndex, selectedElement: entry, diffContext: null };
       updates.searchQuery = entry?.kind === "search" ? entry.query : "";
+      if (entry?.kind === "solution_dashboard") updates.selectedProject = null;
       return updates;
+    }),
+  purgeProjectFromHistory: (projectId: number) =>
+    set((state) => {
+      const filtered = state.navHistory.filter(
+        (el) => !(el && "projectId" in el && el.projectId === projectId)
+      );
+      const currentEntry = state.navHistory[state.navIndex];
+      const currentRemoved = currentEntry && "projectId" in currentEntry && currentEntry.projectId === projectId;
+      const newIndex = currentRemoved
+        ? filtered.length - 1
+        : filtered.indexOf(currentEntry);
+      return { navHistory: filtered, navIndex: Math.max(-1, newIndex) };
+    }),
+  navigateToProject: (project: ProjectRow) =>
+    set((state) => {
+      // 現在の要素を履歴に残しつつ、プロジェクト dashboard エントリを追加する
+      let baseHistory = state.navHistory.slice(0, state.navIndex + 1);
+      const currentEl = state.selectedElement;
+      if (currentEl !== null) {
+        const lastEl = baseHistory[baseHistory.length - 1];
+        if (elementKey(lastEl) !== elementKey(currentEl)) {
+          baseHistory = [...baseHistory, currentEl];
+        }
+      }
+      const dashEntry: SelectedElement = { kind: "dashboard" };
+      const lastEl = baseHistory[baseHistory.length - 1];
+      if (!lastEl || elementKey(lastEl) !== elementKey(dashEntry)) {
+        baseHistory = [...baseHistory, dashEntry];
+      }
+      return {
+        selectedProject: project,
+        selectedElement: null,
+        navHistory: baseHistory,
+        navIndex: baseHistory.length - 1,
+        diffContext: null,
+      };
     }),
 }));

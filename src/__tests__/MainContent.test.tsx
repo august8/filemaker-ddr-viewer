@@ -25,16 +25,24 @@ vi.mock("../hooks/analysis", () => ({
 vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(() => ({
     selectedProject: null,
+    selectedSolution: null,
     selectedElement: null,
     searchQuery: "",
     selectElement: vi.fn(),
   })),
 }));
 
+vi.mock("../components/SolutionDashboard", () => ({
+  SolutionDashboard: ({ solutionId }: { solutionId: number }) => (
+    <div data-testid={`solution-dashboard-${solutionId}`} />
+  ),
+}));
+
 import { useAppStore } from "../stores/appStore";
 import { useScriptList } from "../hooks/script";
 import { useLayoutList } from "../hooks/layout";
 import { useValueListList, useCustomFunctionList } from "../hooks/catalog";
+import type { SolutionRow } from "../types/ddr";
 
 describe("MainContent", () => {
   it("shows_not_found_when_script_missing", () => {
@@ -77,6 +85,19 @@ describe("MainContent", () => {
     render(<MainContent />);
     expect(screen.getByText(/要素が見つかりません/)).toBeInTheDocument();
     expect(screen.getByText(/777/)).toBeInTheDocument();
+  });
+
+  it("shows_solution_dashboard_when_solution_selected_and_no_project", () => {
+    vi.mocked(useAppStore).mockReturnValue({
+      selectedProject: null,
+      selectedSolution: { id: 5, name: "Sol A", imported_at: "" } as SolutionRow,
+      selectedElement: { kind: "solution_dashboard", solutionId: 5 },
+      searchQuery: "",
+      selectElement: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>);
+
+    render(<MainContent />);
+    expect(screen.getByTestId("solution-dashboard-5")).toBeInTheDocument();
   });
 
   it("shows_not_found_when_custom_function_missing", () => {

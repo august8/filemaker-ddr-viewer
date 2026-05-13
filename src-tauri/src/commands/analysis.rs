@@ -210,6 +210,28 @@ pub(crate) fn resolve_element_by_name_inner(
 // Tests
 // ---------------------------------------------------------------------------
 
+/// ソリューション配下の全プロジェクトのサマリーを返す。
+pub(crate) fn list_solution_project_summaries_inner(
+    db: &Database,
+    solution_id: i64,
+) -> Result<Vec<ProjectSummary>, CommandError> {
+    let projects = crate::db::repository::get_solution_projects(db, solution_id)
+        .map_err(CommandError::from)?;
+    projects
+        .iter()
+        .map(|p| build_project_summary(db, p.id))
+        .collect()
+}
+
+#[tauri::command]
+pub async fn list_solution_project_summaries(
+    state: tauri::State<'_, AppState>,
+    solution_id: i64,
+) -> Result<Vec<ProjectSummary>, CommandError> {
+    let db = super::lock_db(&state)?;
+    list_solution_project_summaries_inner(&db, solution_id)
+}
+
 /// アップグレードチェック: ソリューション配下の全プロジェクトを対象にヒット一覧を返す。
 #[tauri::command]
 pub async fn get_upgrade_check(
@@ -443,5 +465,40 @@ mod tests {
         let result =
             resolve_element_by_name_inner(&db.conn, pid, "script", "NonExistentScript").unwrap();
         assert!(result.is_none());
+    }
+
+    // ---- list_solution_project_summaries_inner のテスト ----
+
+    #[test]
+    fn list_solution_project_summaries_returns_one_for_single_project() {
+        use super::list_solution_project_summaries_inner;
+        let (db, _) = setup();
+        let solutions = list_solutions(&db).unwrap();
+        let sid = solutions[0].id;
+        let summaries = list_solution_project_summaries_inner(&db, sid).unwrap();
+        assert_eq!(summaries.len(), 1);
+        assert_eq!(summaries[0].project.name, "TestDB");
+        assert_eq!(summaries[0].table_count, 1);
+    }
+
+    #[test]
+    fn list_solution_project_summaries_returns_empty_for_no_projects() {
+        use super::list_solution_project_summaries_inner;
+        let mut db = Database::open_in_memory().unwrap();
+        let sid = insert_solution(&mut db, "Empty", None).unwrap();
+        let summaries = list_solution_project_summaries_inner(&db, sid).unwrap();
+        assert!(summaries.is_empty());
+    }
+
+    #[test]
+    fn list_solution_project_summaries_multiple_projects() {
+        use super::list_solution_project_summaries_inner;
+        let mut db = Database::open_in_memory().unwrap();
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        let sid = insert_solution(&mut db, "Sol", None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, Some("Second")).unwrap();
+        let summaries = list_solution_project_summaries_inner(&db, sid).unwrap();
+        assert_eq!(summaries.len(), 2);
     }
 }
