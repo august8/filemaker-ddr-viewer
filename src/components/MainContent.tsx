@@ -5,6 +5,7 @@ import { BrokenRefsList } from "./BrokenRefsList";
 import { OrphanScriptsList } from "./OrphanScriptsList";
 import { UnusedFieldsList } from "./UnusedFieldsList";
 import { DiffView } from "./DiffView";
+import { SolutionDashboard } from "./SolutionDashboard";
 import { Spinner } from "./Spinner";
 import { TableDetail } from "./detail/TableDetail";
 import { ScriptDetail } from "./detail/ScriptDetail";
@@ -29,7 +30,7 @@ import { useLayoutList } from "../hooks/layout";
 import { useValueListList, useCustomFunctionList } from "../hooks/catalog";
 
 export function MainContent() {
-  const { selectedProject, selectedElement, searchQuery } = useAppStore();
+  const { selectedProject, selectedSolution, selectedElement, searchQuery } = useAppStore();
   // selectedElement.projectId を優先する（検索結果から別プロジェクトの要素をクリックした場合に正しいプロジェクトを使用するため）。
   // selectedElement が null または projectId を持たない種別（diff 等）の場合は selectedProject にフォールバック。
   const elementProjectId =
@@ -184,6 +185,10 @@ export function MainContent() {
       case "dashboard":
         break; // ダッシュボード表示 → switch を抜けて下のダッシュボード return へ
     }
+  }
+
+  if (selectedSolution && !selectedProject) {
+    return <SolutionDashboard solutionId={selectedSolution.id} solutionName={selectedSolution.name} />;
   }
 
   return (

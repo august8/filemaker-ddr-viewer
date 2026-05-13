@@ -89,7 +89,8 @@ filemaker-ddr-viewer/
 | `SearchBar.tsx` / `SearchResults.tsx` | 全文検索・カテゴリフィルター・クリック遷移 |
 | `SolutionList.tsx` | ソリューション一覧・削除 |
 | `ImportButton.tsx` | `概要.xml` インポート |
-| `ProjectSummaryCard.tsx` | 要素数サマリー |
+| `ProjectSummaryCard.tsx` | 要素数サマリー（プロジェクト単位） |
+| `SolutionDashboard.tsx` | ソリューション選択時のサマリー（配下プロジェクト一覧） |
 | `ReportCard.tsx` | 健全性レポート |
 | `BrokenRefsList.tsx` | 壊れた参照一覧 |
 | `OrphanScriptsList.tsx` | 孤立スクリプト一覧 |
