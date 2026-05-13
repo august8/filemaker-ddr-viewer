@@ -22,7 +22,7 @@ type ColKey = (typeof COLUMNS)[number]["key"];
 
 export function SolutionDashboard({ solutionId, solutionName }: Props) {
   const { data: summaries, isLoading } = useSolutionProjectSummaries(solutionId);
-  const { selectElement, selectProject } = useAppStore();
+  const { selectElement, navigateToProject } = useAppStore();
 
   if (isLoading) {
     return (
@@ -66,7 +66,7 @@ export function SolutionDashboard({ solutionId, solutionName }: Props) {
                 <tr
                   key={s.project.id}
                   className="hover:bg-blue-50 cursor-pointer transition-colors"
-                  onClick={() => selectProject(s.project)}
+                  onClick={() => navigateToProject(s.project)}
                 >
                   <td className="px-4 py-2 font-medium text-blue-700 truncate max-w-[180px]" title={s.project.name}>
                     {s.project.name}
