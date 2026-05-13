@@ -9,7 +9,7 @@ interface Props {
 
 const COLUMNS = [
   { key: "table_count",              label: "テーブル",       kind: "all_tables" },
-  { key: "field_count",              label: "フィールド",     kind: null },
+  { key: "field_count",              label: "フィールド",     kind: "all_fields" },
   { key: "script_count",             label: "スクリプト",     kind: "all_scripts" },
   { key: "layout_count",             label: "レイアウト",     kind: "all_layouts" },
   { key: "table_occurrence_count",   label: "TO",             kind: "all_table_occurrences" },
@@ -74,19 +74,15 @@ export function SolutionDashboard({ solutionId, solutionName }: Props) {
                   <td className="px-2 py-2 text-xs text-gray-400">{s.project.fm_version}</td>
                   {COLUMNS.map(c => (
                     <td key={c.key} className="px-3 py-2 text-right">
-                      {c.kind ? (
-                        <button
-                          className="text-blue-600 hover:text-blue-800 hover:underline"
-                          onClick={e => {
-                            e.stopPropagation();
-                            selectElement({ kind: c.kind, projectId: s.project.id });
-                          }}
-                        >
-                          {s[c.key]}
-                        </button>
-                      ) : (
-                        s[c.key]
-                      )}
+                      <button
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        onClick={e => {
+                          e.stopPropagation();
+                          selectElement({ kind: c.kind, projectId: s.project.id });
+                        }}
+                      >
+                        {s[c.key]}
+                      </button>
                     </td>
                   ))}
                 </tr>

@@ -319,6 +319,7 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `list_projects` | analysis.rs | — | `Vec<ProjectRow>` |
 | `delete_project` | analysis.rs | `project_id` | `()` |
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
+| `list_solution_project_summaries` | analysis.rs | `solution_id` | `Vec<ProjectSummary>` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |
 | `get_report_card` | analysis.rs | `project_id` | `ReportCard` |
 | `resolve_element_by_name` | analysis.rs | `project_id, element_type, name` | `Option<ElementRef>` |

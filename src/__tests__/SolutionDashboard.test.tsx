@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { SolutionDashboard } from "../components/SolutionDashboard";
 
 vi.mock("../hooks/solutions", () => ({
@@ -11,6 +11,7 @@ vi.mock("../stores/appStore", () => ({
 }));
 
 import { useSolutionProjectSummaries } from "../hooks/solutions";
+import { useAppStore } from "../stores/appStore";
 import type { ProjectSummary } from "../types/ddr";
 
 const makeSummary = (id: number, name: string, n: number): ProjectSummary => ({
@@ -69,5 +70,21 @@ describe("SolutionDashboard", () => {
     render(<SolutionDashboard solutionId={1} solutionName="My Solution" />);
     const totalRow = screen.getByTestId("solution-total-row");
     expect(totalRow).toHaveTextContent("10"); // table_count: 3+7=10
+  });
+
+  it("field_count_cell_calls_selectElement_with_all_fields", () => {
+    const mockSelectElement = vi.fn();
+    vi.mocked(useAppStore).mockReturnValue({
+      selectElement: mockSelectElement,
+      navigateToProject: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useSolutionProjectSummaries).mockReturnValue({
+      data: [makeSummary(10, "File A", 1)],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useSolutionProjectSummaries>);
+    render(<SolutionDashboard solutionId={1} solutionName="Sol" />);
+    // n=1: field_count=2。他の列の値(1,3,4,5,6)と重複しない
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(mockSelectElement).toHaveBeenCalledWith({ kind: "all_fields", projectId: 10 });
   });
 });

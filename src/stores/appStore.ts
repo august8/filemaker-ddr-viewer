@@ -335,6 +335,7 @@ export const useAppStore = create<AppState>((set) => ({
       const updates: Partial<AppState> = { navIndex: newIndex, selectedElement: entry, diffContext: null };
       // search エントリなら searchQuery を復元、それ以外はクリアして詳細パネルを表示
       updates.searchQuery = entry?.kind === "search" ? entry.query : "";
+      if (entry?.kind === "solution_dashboard") updates.selectedProject = null;
       return updates;
     }),
   navigateForward: () =>
@@ -344,6 +345,7 @@ export const useAppStore = create<AppState>((set) => ({
       const entry = state.navHistory[newIndex];
       const updates: Partial<AppState> = { navIndex: newIndex, selectedElement: entry, diffContext: null };
       updates.searchQuery = entry?.kind === "search" ? entry.query : "";
+      if (entry?.kind === "solution_dashboard") updates.selectedProject = null;
       return updates;
     }),
   purgeProjectFromHistory: (projectId: number) =>

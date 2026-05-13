@@ -223,7 +223,6 @@ pub(crate) fn list_solution_project_summaries_inner(
         .collect()
 }
 
-/// ソリューション配下の全プロジェクトのサマリーを返す。
 #[tauri::command]
 pub async fn list_solution_project_summaries(
     state: tauri::State<'_, AppState>,
