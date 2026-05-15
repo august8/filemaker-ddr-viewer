@@ -57,6 +57,11 @@ export interface BrokenRef {
   target_script_name: string;
 }
 
+export interface BrokenRefWithProject extends BrokenRef {
+  project_id: number;
+  project_name: string;
+}
+
 export type Severity = "Info" | "Warning" | "Error";
 
 export interface ReportIssue {

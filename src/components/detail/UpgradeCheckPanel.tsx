@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppStore } from "../../stores/appStore";
-import { useUpgradeCheck } from "../../hooks/analysis";
-import type { UpgradeHit } from "../../types/ddr";
+import { useSolutionBrokenRefs, useUpgradeCheck } from "../../hooks/analysis";
+import type { BrokenRefWithProject, UpgradeHit } from "../../types/ddr";
 import { CARD, SECTION_HEADER } from "../../styles/tokens";
 import { Spinner } from "../Spinner";
 
@@ -48,10 +48,19 @@ async function exportCsv(hits: UpgradeHit[]) {
   await invoke("write_text_file", { path, content: csv });
 }
 
+const BROKEN_REF_KIND_LABEL: Record<BrokenRefWithProject["kind"], string> = {
+  performScript: "Perform Script",
+  scriptTrigger: "スクリプトトリガー",
+  brokenFieldRef: "フィールド参照",
+  brokenLayoutRef: "レイアウト参照",
+};
+
 export function UpgradeCheckPanel({ solutionId }: Props) {
-  const { checkItems, selectElement, setRightPanel } = useAppStore();
+  const { checkItems, showBrokenRefsInUpgradeCheck, selectElement, setRightPanel } = useAppStore();
   const { data: hits = [], isLoading } = useUpgradeCheck(solutionId, checkItems);
+  const { data: brokenRefs = [] } = useSolutionBrokenRefs(solutionId);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [brokenRefsOpen, setBrokenRefsOpen] = useState(false);
 
   function toggleGroup(itemId: string) {
     setOpenGroups((prev) => {
@@ -135,6 +144,41 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
           CSV エクスポート
         </button>
       </div>
+
+      {/* 壊れた参照セクション */}
+      {showBrokenRefsInUpgradeCheck && (
+        <div className={CARD}>
+          <button
+            className="w-full flex items-center justify-between text-left"
+            onClick={() => setBrokenRefsOpen((v) => !v)}
+          >
+            <span className={SECTION_HEADER}>壊れた参照</span>
+            <span className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">{brokenRefs.length} 件</span>
+              <span className="text-gray-400 text-xs">{brokenRefsOpen ? "▲" : "▼"}</span>
+            </span>
+          </button>
+          {brokenRefsOpen && (
+            <div className="mt-3 divide-y divide-gray-100">
+              {brokenRefs.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-2">壊れた参照なし</p>
+              ) : (
+                brokenRefs.map((ref, i) => (
+                  <div key={i} className="py-2 flex flex-col gap-0.5">
+                    <span className="text-xs text-gray-400">{ref.project_name}</span>
+                    <span className="text-xs text-indigo-500">{BROKEN_REF_KIND_LABEL[ref.kind]}</span>
+                    <span className="text-sm text-gray-700">
+                      {ref.source_name}
+                      <span className="text-gray-400 mx-1">→</span>
+                      <span className="text-red-600">{ref.target_script_name}</span>
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {groups.length === 0 ? (
         <div className={CARD}>

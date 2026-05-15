@@ -17,6 +17,7 @@ export interface CheckItem {
 }
 
 const CHECK_ITEMS_KEY = "fm-ddr-check-items";
+const BROKEN_REFS_KEY = "fm-ddr-show-broken-refs";
 
 const BUILTIN_CHECK_ITEMS: CheckItem[] = [
   { id: "print",              label: "印刷",                       category: "step",            detectionType: "step_type_id",      detectionValue: "43",                enabled: true,  builtin: true },
@@ -33,6 +34,14 @@ const BUILTIN_CHECK_ITEMS: CheckItem[] = [
   { id: "container",          label: "コンテナフィールド",          category: "field",           detectionType: "field_attr",        detectionValue: "container",         enabled: false, builtin: true },
   { id: "custom_function_call", label: "カスタム関数呼び出し",      category: "custom_function", detectionType: "any_custom_function", detectionValue: "",                enabled: true,  builtin: true },
 ];
+
+function loadShowBrokenRefs(): boolean {
+  try {
+    const stored = localStorage.getItem(BROKEN_REFS_KEY);
+    if (stored !== null) return stored === "true";
+  } catch {}
+  return true;
+}
 
 function loadCheckItems(): CheckItem[] {
   try {
@@ -166,7 +175,9 @@ interface AppState {
   searchContains: boolean;
   searchScope: "all" | "solution" | "project";
   checkItems: CheckItem[];
+  showBrokenRefsInUpgradeCheck: boolean;
   setCheckItems: (items: CheckItem[]) => void;
+  setShowBrokenRefsInUpgradeCheck: (v: boolean) => void;
   setSolutions: (solutions: SolutionRow[]) => void;
   setSearchDuration: (duration: number | null) => void;
   setSearchContains: (v: boolean) => void;
@@ -206,9 +217,14 @@ export const useAppStore = create<AppState>((set) => ({
   searchContains: false,
   searchScope: "all",
   checkItems: loadCheckItems(),
+  showBrokenRefsInUpgradeCheck: loadShowBrokenRefs(),
   setCheckItems: (items) => {
     try { localStorage.setItem(CHECK_ITEMS_KEY, JSON.stringify(items)); } catch {}
     set({ checkItems: items });
+  },
+  setShowBrokenRefsInUpgradeCheck: (v) => {
+    try { localStorage.setItem(BROKEN_REFS_KEY, String(v)); } catch {}
+    set({ showBrokenRefsInUpgradeCheck: v });
   },
   setSolutions: (solutions) => set({ solutions }),
   setSearchDuration: (duration) => set({ searchDuration: duration }),
