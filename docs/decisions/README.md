@@ -15,3 +15,4 @@
 | [0009](0009-remove-upsert-solution.md) | upsert_solution を削除しインポートは常に新規追加とする | Accepted |
 | [0010](0010-utf16-lossy-fallback.md) | UTF-16 デコード失敗時に lossy フォールバックを追加する | Accepted |
 | [0011](0011-e2e-testing.md) | E2E テスト基盤の技術選定（Playwright + WebView2 CDP） | Accepted |
+| [0012](0012-agent-instruction-split.md) | Claude Code と Codex の入口ドキュメントを分離する | Accepted |

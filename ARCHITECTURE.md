@@ -38,8 +38,23 @@ filemaker-ddr-viewer/
 │   └── integration_ddr.rs          # 統合テスト
 ├── tests/ddr/                      # バージョン別 DDR XML サンプル（FM17〜22、統合テスト用）
 ├── tests/fixtures/                 # 小さな単体テスト用 XML（minimal.xml 等）
+├── docs/agent/                     # Claude Code / Codex 共通・ツール別運用ルール
 └── docs/decisions/                 # 設計判断記録（ADR）
 ```
+
+---
+
+## エージェント運用ドキュメント
+
+Claude Code と Codex の入口ファイルは薄く保ち、共通ルールは `docs/agent/` を正本とする。
+
+| ファイル | 役割 |
+|---|---|
+| `AGENTS.md` | Codex 用入口 |
+| `CLAUDE.md` | Claude Code 用入口 |
+| `docs/agent/README.md` | ツール非依存のプロジェクト概要・開発規約・作業フロー |
+| `docs/agent/CODEX.md` | Codex 固有の代替手順と `.codex/` の扱い |
+| `docs/agent/CLAUDE.md` | Claude Code 固有の slash command / Plan mode 手順 |
 
 ---
 

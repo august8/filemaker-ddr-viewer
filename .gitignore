@@ -28,6 +28,9 @@ playwright-report/
 .claude/settings.local.json
 CLAUDE.local.md
 
+# Codex personal overrides/hooks
+.codex/
+
 # DDR Sample
 .DDRSample/*
 

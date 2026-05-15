@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "result=$(npm run test 2>&1 | tail -60); jq -n --arg res \"$result\" '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":(\"### セッション開始 自動テスト結果\\n\" + $res)}}'",
+            "command": "result=$(npm run agent:session-start 2>&1 | tail -80); jq -n --arg res \"$result\" '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":$res}}'",
             "timeout": 90
           }
         ]

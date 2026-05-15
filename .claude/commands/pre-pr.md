@@ -5,72 +5,27 @@ description: PR作成前のスコープ完全性・テスト通過を確認す�
 # /pre-pr — PR作成前チェックリスト
 
 `gh pr create` を実行する前に必ずこのコマンドを実行する。
-全チェックを通過してから PR を作成すること。
+Claude Code と Codex の確認内容を揃えるため、共通の npm script を使う。
 
 ## 実行手順
 
-### 1. 変更ファイルの列挙
-
 ```bash
-git diff origin/main...HEAD --name-only
+npm run agent:pre-pr
 ```
 
-変更ファイルを列挙し、以下のチェックに使用する。
+このコマンドは以下を確認する:
 
-### 2. スコープ完全性チェック
+- 変更ファイルの列挙
+- 実装変更とテスト変更の対応
+- `ARCHITECTURE.md` 更新要否
+- 未完了マーカー（`TODO` / `FIXME` / `HACK` / `todo!()` / `unimplemented!()`）
+- `npm run test`
+- `npm run build`
+- `cargo fmt --check`
+- `cargo clippy -- -D warnings`
+- `cargo test`
 
-変更ファイルを以下の観点で確認する:
-
-**バックエンド → フロントエンドの対応:**
-- `src-tauri/src/commands/` が変更されている場合、対応する `src/hooks/` の変更が存在するか
-- バックエンドに新しい IPC コマンドが追加された場合、フロントエンドの hook と UI が実装されているか
-
-**実装 → テストの対応:**
-- `src/components/**/*.tsx` が変更されている場合、`src/__tests__/**/*.test.tsx` も変更されているか
-- `src-tauri/src/**/*.rs` が変更されている場合、`#[cfg(test)]` または `src-tauri/tests/` にテストが追加されているか
-
-**TDD 順序の確認:**
-- `git log --oneline origin/main...HEAD` でコミット履歴を確認し、テストコミットが実装コミットより後になっていないか
-
-**ARCHITECTURE.md 更新の確認:**
-- `src/**` または `src-tauri/src/**` に実装変更が含まれる場合、`ARCHITECTURE.md` も変更されているか確認する
-- 変更されていない場合: 結果レポートに「❌ ARCHITECTURE.md が更新されていません（ワークフロー Step 6）」を含める
-
-### 3. 未完了マーカーの確認
-
-```bash
-git diff origin/main...HEAD
-```
-
-以下のマーカーが含まれていないか確認する:
-- `TODO` / `FIXME` / `HACK`
-- Rust: `todo!()` / `unimplemented!()`
-- コメントアウトされた未実装箇所
-
-### 4. テスト実行
-
-```bash
-npm run test
-```
-
-Rust ファイルが変更されている場合は追加で:
-```bash
-cargo test
-```
-
-全テストがグリーンであることを確認する。
-
-### 5. 結果レポート
-
-全チェックが通過した場合:
-```
-✅ PR作成可能です
-```
-
-問題がある場合:
-```
-❌ 以下を修正してからPRを作成してください:
-- [具体的な問題点を列挙]
-```
+全チェックを通過してから PR を作成すること。
 
 $ARGUMENTS
+
