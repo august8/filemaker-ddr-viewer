@@ -11,9 +11,9 @@ console.log("- テスト: npm run test を実行");
 await run("npm", ["run", "test"]);
 
 console.log("\n### セッション開始チェック完了");
-console.log(`- ARCHITECTURE.md: 確認済み（最終更新: ${formatDate(architecture.mtime)})`);
+console.log(`- ARCHITECTURE.md: 確認対象（最終更新: ${formatDate(architecture.mtime)})`);
 console.log("- テスト: npm run test passed");
-console.log("- 気になった点: なし");
+console.log("- 実装照合: 手動確認が必要");
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -41,4 +41,3 @@ function run(command, args) {
     });
   });
 }
-

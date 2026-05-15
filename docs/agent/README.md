@@ -70,7 +70,7 @@ OSS: https://github.com/august8/filemaker-ddr-viewer
 ### セッション開始チェック完了
 - ARCHITECTURE.md: 確認済み（最終更新: YYYY-MM-DD）
 - テスト: X passed / X failed
-- 気になった点: なし
+- 実装照合: 手動確認が必要
 ```
 
 ## 実装前確認
@@ -129,6 +129,8 @@ docs(agent): Codex と Claude の運用ルールを整理
 4. 関連ドキュメント更新
 
 ドキュメントのみの変更は TDD 対象外です。
+`npm run agent:tdd-guard` は、実装変更とテスト変更の共存チェック、およびコミット履歴から分かる範囲の順序確認を行います。
+未コミット差分内の実作業順序は Git から復元できないため、Red 確認は作業者が明示的に行います。
 
 ## テスト仕様
 
@@ -203,7 +205,7 @@ Claude Code の専門 agent で担っていた観点は、Codex でも以下を�
 | E2E | `npm run test:e2e` |
 | 状態確認 | `npm run agent:status` |
 | セッション開始チェック | `npm run agent:session-start` |
-| TDD 順序チェック | `npm run agent:tdd-guard` |
+| TDD ガード | `npm run agent:tdd-guard` |
 | agent docs 参照チェック | `npm run agent:docs-check` |
 | PR 前一括チェック | `npm run agent:pre-pr` |
 

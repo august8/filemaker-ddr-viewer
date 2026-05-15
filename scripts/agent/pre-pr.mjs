@@ -109,7 +109,7 @@ function hasUnfinishedMarker(diff) {
       continue;
     }
 
-    if (!isMarkerCheckedFile(currentFile) || line.includes("markerPattern")) {
+    if (!isMarkerCheckedFile(currentFile)) {
       continue;
     }
 

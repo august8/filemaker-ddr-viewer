@@ -19,7 +19,7 @@ Claude Code 専用の slash command は Codex では直接実行できないた�
 | `EnterPlanMode` | ユーザーに作業範囲とタスクリストを提示し、承認後に編集する |
 | `/commit-ja` | `git diff --cached` を確認し、Conventional Commits 形式の日本語コミットメッセージ本文だけを提案する |
 | `/test-spec` | 追加するテスト観点を会話内または対象テストファイルに明示する |
-| `/tdd-guard` | `npm run agent:tdd-guard` を実行し、必要に応じて `git diff` も確認する |
+| `/tdd-guard` | `npm run agent:tdd-guard` を実行し、Red 確認と未コミット差分の順序は目視でも確認する |
 | `/pre-pr` | `npm run agent:pre-pr` を実行する |
 | `/bump` | バージョン更新対象 3 ファイルだけを変更する。必要なら別途スクリプト化する |
 | `/changelog` | git tag と commit subject から `CHANGELOG.md` を更新する。コミット文面は翻訳しない |
@@ -27,8 +27,9 @@ Claude Code 専用の slash command は Codex では直接実行できないた�
 
 ## ブランチ作成
 
-Codex では作業開始前に `git switch -c <branch>` を実行します。
+Codex では `main` 上で未着手の場合、作業開始前に `git switch -c <branch>` を実行します。
 Windows の権限や Git refs の制約でスラッシュ付きブランチ名が作れない場合は、理由を報告してスラッシュなしの名前を使います。
+既に作業ブランチ上、またはユーザーや他ツール由来の未コミット変更がある場合は、`git status` で状態を確認し、既存差分を勝手に戻さず現在のブランチ上で作業します。
 
 ## 進め方
 
@@ -40,6 +41,8 @@ Windows の権限や Git refs の制約でスラッシュ付きブランチ名�
 - セッション開始時の自動確認が必要な場合は `npm run agent:session-start` を使う。
 - 状態確認には `npm run agent:status` を使う。
 - コミットメッセージを提案・作成するときは `/commit-ja` 相当として日本語 description を使う。
+- TDD ではテストを先に作成して Red を確認し、可能ならテスト初出を実装より前または同一コミットに収める。
+- `npm run agent:tdd-guard` は未コミット差分内の作業順序を復元できないため、同時差分の場合は作業者が順序を確認する。
 
 ## コミット
 

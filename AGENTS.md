@@ -29,7 +29,7 @@ Claude Code 専用コマンドは Codex では直接実行できません。
 | `EnterPlanMode` | 作業範囲とタスクリストを提示し、ユーザー承認後に編集する |
 | `/commit-ja` | `git diff --cached` を確認し、日本語 Conventional Commits メッセージを提案する |
 | `/test-spec` | テスト観点を会話内または対象テストファイルに明示する |
-| `/tdd-guard` | `git diff` と作業順序を確認する |
+| `/tdd-guard` | `npm run agent:tdd-guard` を実行し、Red 確認と未コミット差分の順序は目視でも確認する |
 | `/pre-pr` | `npm run agent:pre-pr` を実行する |
 
 ## セッション開始報告
@@ -38,7 +38,7 @@ Claude Code 専用コマンドは Codex では直接実行できません。
 ### セッション開始チェック完了
 - ARCHITECTURE.md: 確認済み（最終更新: YYYY-MM-DD）
 - テスト: X passed / X failed
-- 気になった点: なし
+- 実装照合: 手動確認が必要
 ```
 
 ## `.codex/`
