@@ -58,7 +58,9 @@ const BROKEN_REF_KIND_LABEL: Record<BrokenRefWithProject["kind"], string> = {
 export function UpgradeCheckPanel({ solutionId }: Props) {
   const { checkItems, showBrokenRefsInUpgradeCheck, selectElement, setRightPanel } = useAppStore();
   const { data: hits = [], isLoading } = useUpgradeCheck(solutionId, checkItems);
-  const { data: brokenRefs = [] } = useSolutionBrokenRefs(solutionId);
+  const { data: brokenRefs = [], isLoading: brokenRefsLoading } = useSolutionBrokenRefs(
+    showBrokenRefsInUpgradeCheck ? solutionId : null
+  );
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [brokenRefsOpen, setBrokenRefsOpen] = useState(false);
 
@@ -154,17 +156,21 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
           >
             <span className={SECTION_HEADER}>壊れた参照</span>
             <span className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">{brokenRefs.length} 件</span>
+              <span className="text-xs text-gray-400">
+                {brokenRefsLoading ? "…" : `${brokenRefs.length} 件`}
+              </span>
               <span className="text-gray-400 text-xs">{brokenRefsOpen ? "▲" : "▼"}</span>
             </span>
           </button>
           {brokenRefsOpen && (
             <div className="mt-3 divide-y divide-gray-100">
-              {brokenRefs.length === 0 ? (
+              {brokenRefsLoading ? (
+                <div className="flex justify-center py-4"><Spinner className="w-4 h-4" /></div>
+              ) : brokenRefs.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-2">壊れた参照なし</p>
               ) : (
-                brokenRefs.map((ref, i) => (
-                  <div key={i} className="py-2 flex flex-col gap-0.5">
+                brokenRefs.map((ref) => (
+                  <div key={`${ref.project_id}-${ref.kind}-${ref.source_name}-${ref.target_script_name}`} className="py-2 flex flex-col gap-0.5">
                     <span className="text-xs text-gray-400">{ref.project_name}</span>
                     <span className="text-xs text-indigo-500">{BROKEN_REF_KIND_LABEL[ref.kind]}</span>
                     <span className="text-sm text-gray-700">

@@ -74,6 +74,23 @@ const mockHits: UpgradeHit[] = [
   },
 ];
 
+const mockBrokenRefs: BrokenRefWithProject[] = [
+  {
+    kind: "performScript",
+    source_name: "MainScript",
+    target_script_name: "DeletedScript",
+    project_id: 1,
+    project_name: "DB_A",
+  },
+  {
+    kind: "scriptTrigger",
+    source_name: "Layout1",
+    target_script_name: "MissingScript",
+    project_id: 2,
+    project_name: "DB_B",
+  },
+];
+
 describe("UpgradeCheckPanel", () => {
   it("shows_group_header_with_count", () => {
     vi.mocked(useUpgradeCheck).mockReturnValue(
@@ -170,23 +187,6 @@ describe("UpgradeCheckPanel", () => {
   });
 });
 
-const mockBrokenRefs: BrokenRefWithProject[] = [
-  {
-    kind: "performScript",
-    source_name: "MainScript",
-    target_script_name: "DeletedScript",
-    project_id: 1,
-    project_name: "DB_A",
-  },
-  {
-    kind: "scriptTrigger",
-    source_name: "Layout1",
-    target_script_name: "MissingScript",
-    project_id: 2,
-    project_name: "DB_B",
-  },
-];
-
 describe("壊れた参照セクション", () => {
   beforeEach(() => {
     vi.mocked(useSolutionBrokenRefs).mockReturnValue(
@@ -230,5 +230,16 @@ describe("壊れた参照セクション", () => {
     await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
     expect(screen.getByText("MainScript")).toBeInTheDocument();
     expect(screen.getByText("DeletedScript")).toBeInTheDocument();
+  });
+
+  it("broken_refs_shows_loading_indicator", async () => {
+    vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+    );
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    expect(screen.getByText("…")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    expect(document.querySelector(".animate-spin")).toBeInTheDocument();
   });
 });
