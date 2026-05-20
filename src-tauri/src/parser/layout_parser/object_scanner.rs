@@ -223,26 +223,35 @@ pub(super) fn scan_object<R: BufRead>(
 
             // ---- Script (self-closing) ----
             Event::Empty(ref e) if e.name().as_ref() == b"Script" => {
-                if let Ok(name) = get_attr(e, b"name") {
-                    if !name.is_empty() {
-                        button_scripts.push(name);
+                let file = get_attr(e, b"file").unwrap_or_default();
+                if file.is_empty() {
+                    if let Ok(name) = get_attr(e, b"name") {
+                        if !name.is_empty() {
+                            button_scripts.push(name);
+                        }
                     }
                 }
             }
             // ---- Script (with children) ----
             Event::Start(ref e) if e.name().as_ref() == b"Script" => {
-                if let Ok(name) = get_attr(e, b"name") {
-                    if !name.is_empty() {
-                        button_scripts.push(name);
+                let file = get_attr(e, b"file").unwrap_or_default();
+                if file.is_empty() {
+                    if let Ok(name) = get_attr(e, b"name") {
+                        if !name.is_empty() {
+                            button_scripts.push(name);
+                        }
                     }
                 }
                 skip_element(reader, buf)?;
             }
             // ---- ScriptReference (self-closing) ----
             Event::Empty(ref e) if e.name().as_ref() == b"ScriptReference" => {
-                if let Ok(name) = get_attr(e, b"name") {
-                    if !name.is_empty() {
-                        button_scripts.push(name);
+                let file = get_attr(e, b"file").unwrap_or_default();
+                if file.is_empty() {
+                    if let Ok(name) = get_attr(e, b"name") {
+                        if !name.is_empty() {
+                            button_scripts.push(name);
+                        }
                     }
                 }
             }

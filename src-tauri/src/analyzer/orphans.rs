@@ -34,9 +34,12 @@ pub fn find_orphan_scripts(ddr: &DdrFile) -> Vec<OrphanScript> {
     // 呼ばれているスクリプト名のセット
     let mut called: HashSet<&str> = HashSet::new();
 
-    // Perform Script ステップによる参照
+    // Perform Script ステップによる参照（無効ステップは除外）
     for script in &ddr.scripts {
         for step in &script.steps {
+            if !step.enabled {
+                continue;
+            }
             let Some(ref script_ref) = step.script_ref else {
                 continue;
             };
@@ -233,6 +236,108 @@ mod tests {
 
         let orphans = find_orphan_scripts(&ddr);
         assert!(!orphans.iter().any(|o| o.script_name == "OnLoad"));
+    }
+
+    /// ボタンが外部ファイルのスクリプトを参照していても、
+    /// 同名のローカルスクリプトは孤立と判定されるべき。
+    #[test]
+    fn external_button_ref_does_not_hide_local_orphan() {
+        // LocalScript は定義されているが、ボタンから呼ばれるのは外部ファイルの同名スクリプト。
+        // ローカルの LocalScript はどこからも呼ばれていないので孤立のはず。
+        const XML: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<FMPReport type="Report" version="21.0v1" creationDate="2024/01/01" creationTime="12:00:00">
+  <File name="TestDB">
+    <BaseTableCatalog/>
+    <RelationshipGraph><TableList/><RelationshipList/></RelationshipGraph>
+    <LayoutCatalog>
+      <Layout id="1" encryptionState="NotProtected" name="Main" tableOccurrenceName="Contact">
+        <ObjectList>
+          <Object type="Button" key="1" name="">
+            <Script name="LocalScript" file="OtherFile.fmp12"/>
+          </Object>
+        </ObjectList>
+      </Layout>
+    </LayoutCatalog>
+    <ScriptCatalog>
+      <Script id="1" name="LocalScript" runFullAccess="False" includeInMenu="False">
+        <StepList/>
+      </Script>
+    </ScriptCatalog>
+    <ValueListCatalog/>
+    <AccountCatalog/>
+    <PrivilegesCatalog/>
+    <ExtendedPrivilegeCatalog/>
+    <CustomFunctionCatalog/>
+    <Options/>
+  </File>
+</FMPReport>"#;
+        let ddr = crate::parser::parse_ddr(XML).unwrap();
+        let orphans = find_orphan_scripts(&ddr);
+        assert!(
+            orphans.iter().any(|o| o.script_name == "LocalScript"),
+            "外部ファイルの同名参照によって LocalScript が孤立から除外されてはいけない: {orphans:?}"
+        );
+    }
+
+    /// 無効化（disabled）された Perform Script ステップからのみ参照されるスクリプトは
+    /// 孤立と判定されるべき。
+    #[test]
+    fn disabled_perform_script_does_not_hide_orphan() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 21,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![
+                Script {
+                    id: ScriptId(1),
+                    name: "Caller".into(),
+                    run_with_full_access: false,
+                    steps: vec![ScriptStep {
+                        step_id: 89,
+                        name: "Perform Script".into(),
+                        enabled: false, // ← 無効化されている
+                        script_ref: Some(ScriptRef {
+                            name: "OnlyCalledWhenDisabled".into(),
+                            file_name: "".into(),
+                        }),
+                        calculation: None,
+                        step_text: None,
+                        broken_field_table: None,
+                        has_broken_layout_ref: false,
+                    }],
+                },
+                Script {
+                    id: ScriptId(2),
+                    name: "OnlyCalledWhenDisabled".into(),
+                    run_with_full_access: false,
+                    steps: vec![],
+                },
+            ],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let orphans = find_orphan_scripts(&ddr);
+        assert!(
+            orphans
+                .iter()
+                .any(|o| o.script_name == "OnlyCalledWhenDisabled"),
+            "無効ステップからのみ参照されるスクリプトは孤立と判定されるべき: {orphans:?}"
+        );
     }
 
     #[test]
