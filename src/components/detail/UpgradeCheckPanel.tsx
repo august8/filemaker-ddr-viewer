@@ -53,6 +53,7 @@ const BROKEN_REF_KIND_LABEL: Record<BrokenRefWithProject["kind"], string> = {
   scriptTrigger: "スクリプトトリガー",
   brokenFieldRef: "フィールド参照",
   brokenLayoutRef: "レイアウト参照",
+  unknownRef: "参照先不明",
 };
 
 export function UpgradeCheckPanel({ solutionId }: Props) {

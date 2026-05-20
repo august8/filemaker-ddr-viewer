@@ -22,6 +22,9 @@ pub enum BrokenRefKind {
     BrokenFieldRef,
     /// Go to Layout 等のステップが存在しないレイアウトを参照している。
     BrokenLayoutRef,
+    /// step_text に `<不明>` が含まれており、他の broken ref 種別で未検出のケース。
+    /// 例: ファイルを開く・Perform Script の外部参照先不明 等。
+    UnknownRef,
 }
 
 /// 単一の壊れた参照。
@@ -78,7 +81,8 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
             }
         }
 
-        // 壊れたフィールド参照（Set Field 等）
+        // 壊れたフィールド参照（Set Field 等）、レイアウト参照、
+        // および step_text に <不明> を含む未分類の参照切れを検出
         for step in script.steps.iter().filter(|s| s.enabled) {
             if step.broken_field_table.is_some() {
                 let target = step.step_text.as_deref().unwrap_or("(broken field ref)");
@@ -87,14 +91,31 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     source_name: script.name.clone(),
                     target_script_name: target.to_string(),
                 });
-            }
-            if step.has_broken_layout_ref {
+            } else if step.has_broken_layout_ref {
                 let target = step.step_text.as_deref().unwrap_or("(broken layout ref)");
                 result.push(BrokenRef {
                     kind: BrokenRefKind::BrokenLayoutRef,
                     source_name: script.name.clone(),
                     target_script_name: target.to_string(),
                 });
+            } else {
+                // step_text に <不明> が含まれるケース（ファイルを開く・Perform Script 外部参照等）
+                let is_script_ref_unknown = step
+                    .script_ref
+                    .as_ref()
+                    .is_some_and(|r| r.name.starts_with('<'));
+                let has_unknown_in_text = step
+                    .step_text
+                    .as_deref()
+                    .is_some_and(|t| t.contains("<不明>"));
+                if has_unknown_in_text || is_script_ref_unknown {
+                    let target = step.step_text.clone().unwrap_or_else(|| step.name.clone());
+                    result.push(BrokenRef {
+                        kind: BrokenRefKind::UnknownRef,
+                        source_name: script.name.clone(),
+                        target_script_name: target,
+                    });
+                }
             }
         }
     }
@@ -425,6 +446,149 @@ mod tests {
         assert_eq!(refs[0].kind, BrokenRefKind::ScriptTrigger);
         assert_eq!(refs[0].source_name, "MainLayout");
         assert_eq!(refs[0].target_script_name, "MissingScript");
+    }
+
+    #[test]
+    fn detects_open_file_unknown_step() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "物件管理を開く！".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 148,
+                    name: "ファイルを開く".into(),
+                    enabled: true,
+                    script_ref: None,
+                    calculation: None,
+                    step_text: Some("ファイルを開く [ <不明> ]".into()),
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].kind, BrokenRefKind::UnknownRef);
+        assert_eq!(refs[0].source_name, "物件管理を開く！");
+        assert!(refs[0].target_script_name.contains("不明"));
+    }
+
+    #[test]
+    fn detects_perform_script_with_angle_bracket_ref() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "Caller".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 89,
+                    name: "Perform Script".into(),
+                    enabled: true,
+                    script_ref: Some(ScriptRef {
+                        name: "<不明>".into(),
+                        file_name: "".into(),
+                    }),
+                    calculation: None,
+                    step_text: Some("Perform Script [ \"<不明>\"; off ]".into()),
+                    broken_field_table: None,
+                    has_broken_layout_ref: false,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].kind, BrokenRefKind::UnknownRef);
+        assert_eq!(refs[0].source_name, "Caller");
+    }
+
+    #[test]
+    fn no_duplicate_for_broken_layout_ref() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        // has_broken_layout_ref=true のステップは BrokenLayoutRef のみ（UnknownRef との重複なし）
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![Script {
+                id: ScriptId(1),
+                name: "NavScript".into(),
+                run_with_full_access: false,
+                steps: vec![ScriptStep {
+                    step_id: 6,
+                    name: "レイアウト切り替え".into(),
+                    enabled: true,
+                    script_ref: None,
+                    calculation: None,
+                    step_text: Some("レイアウト切り替え [ <不明> ]".into()),
+                    broken_field_table: None,
+                    has_broken_layout_ref: true,
+                }],
+            }],
+            layouts: vec![],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(
+            refs.len(),
+            1,
+            "BrokenLayoutRef のみ、UnknownRef との重複なし: {refs:?}"
+        );
+        assert_eq!(refs[0].kind, BrokenRefKind::BrokenLayoutRef);
     }
 
     #[test]

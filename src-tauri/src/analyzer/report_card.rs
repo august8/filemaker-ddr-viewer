@@ -92,7 +92,8 @@ pub fn generate_report_card(ddr: &DdrFile) -> ReportCard {
                 (Some("layout".into()), Some(r.source_name.clone()))
             }
             crate::analyzer::broken_refs::BrokenRefKind::BrokenFieldRef
-            | crate::analyzer::broken_refs::BrokenRefKind::BrokenLayoutRef => {
+            | crate::analyzer::broken_refs::BrokenRefKind::BrokenLayoutRef
+            | crate::analyzer::broken_refs::BrokenRefKind::UnknownRef => {
                 (Some("script".into()), Some(r.source_name.clone()))
             }
         };

@@ -52,7 +52,7 @@ export interface SearchResult {
 }
 
 export interface BrokenRef {
-  kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef";
+  kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef" | "unknownRef";
   source_name: string;
   target_script_name: string;
 }
