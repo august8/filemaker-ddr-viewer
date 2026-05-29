@@ -107,6 +107,31 @@ describe("LayoutDetail", () => {
     });
   });
 
+  it("broken_field_placement_row_has_red_background", () => {
+    vi.mocked(useLayoutTriggers).mockReturnValue(
+      { data: [], isLoading: false } as unknown as ReturnType<typeof useLayoutTriggers>
+    );
+    vi.mocked(useLayoutObjects).mockReturnValue({
+      data: [makeLayoutObjectRow({ id: 10, object_key: 7, object_type: "Field", field_table_occurrence: "", field_name: "" })],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useLayoutObjects>);
+    render(<LayoutDetail layout={mockLayout} projectId={1} />);
+    const row = screen.getByText("Field").closest("tr")!;
+    expect(row.className).toMatch(/bg-red-50/);
+  });
+
+  it("broken_field_placement_shows_deleted_label_in_field_column", () => {
+    vi.mocked(useLayoutTriggers).mockReturnValue(
+      { data: [], isLoading: false } as unknown as ReturnType<typeof useLayoutTriggers>
+    );
+    vi.mocked(useLayoutObjects).mockReturnValue({
+      data: [makeLayoutObjectRow({ id: 10, object_key: 7, object_type: "Field", field_table_occurrence: "", field_name: "" })],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useLayoutObjects>);
+    render(<LayoutDetail layout={mockLayout} projectId={1} />);
+    expect(screen.getByText(/(削除済み).*#7/)).toBeInTheDocument();
+  });
+
   it("diff_context_shows_added_badge_for_new_object", () => {
     const newObj = makeLayoutObjectRow({ id: 1, object_key: 1, object_type: "Field" });
     vi.mocked(useAppStore).mockReturnValue({
