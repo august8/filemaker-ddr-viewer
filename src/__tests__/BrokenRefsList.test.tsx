@@ -169,7 +169,19 @@ describe("BrokenRefsList", () => {
       { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
     );
     render(<BrokenRefsList projectId={1} />);
-    fireEvent.click(screen.getByTitle("MainScript を表示"));
+    fireEvent.click(screen.getByRole("button", { name: /MainScript/ }));
     expect(mockSelectElement).not.toHaveBeenCalled();
+  });
+
+  it("button_is_disabled_when_source_id_is_null", () => {
+    const refs: BrokenRef[] = [
+      { kind: "performScript", source_name: "MainScript", target_script_name: "Missing" },
+    ];
+    vi.mocked(useBrokenRefs).mockReturnValue(
+      { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
+    );
+    render(<BrokenRefsList projectId={1} />);
+    const btn = screen.getByRole("button", { name: /MainScript/ });
+    expect(btn).toBeDisabled();
   });
 });

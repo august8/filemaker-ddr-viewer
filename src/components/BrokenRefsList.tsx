@@ -55,7 +55,8 @@ export function BrokenRefsList({ projectId }: Props) {
             <button
               className={`${LIST_ROW} rounded`}
               onClick={() => handleClick(ref)}
-              title={`${ref.source_name} を表示`}
+              disabled={ref.source_id == null}
+              title={ref.source_id != null ? `${ref.source_name} を表示` : undefined}
             >
               <span className={`mr-2 ${BADGE_VARIANTS.gray}`}>{KIND_LABELS[ref.kind] ?? ref.kind}</span>
               <span className="text-gray-700">{ref.source_name}</span>

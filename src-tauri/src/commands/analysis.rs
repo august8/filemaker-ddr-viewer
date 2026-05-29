@@ -529,7 +529,9 @@ mod tests {
         let mut refs = find_broken_refs(&ddr);
         // コマンドと同じ ID 解決ロジックを適用
         for r in &mut refs {
-            let etype = if r.kind == BrokenRefKind::ScriptTrigger {
+            let etype = if r.kind == BrokenRefKind::ScriptTrigger
+                || r.kind == BrokenRefKind::BrokenFieldPlacement
+            {
                 "layout"
             } else {
                 "script"

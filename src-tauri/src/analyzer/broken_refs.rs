@@ -129,7 +129,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
         }
     }
 
-    // ScriptTrigger の確認（区切り線レイアウト "-" からの参照は除外）
+    // ScriptTrigger と BrokenFieldPlacement の確認（区切り線レイアウト "-" は除外）
     for layout in ddr.layouts.iter().filter(|l| l.name != "-") {
         for trigger in &layout.script_triggers {
             if !trigger.file_name.is_empty() || trigger.script_name.is_empty() {
@@ -144,14 +144,13 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                 });
             }
         }
-    }
-
-    // レイアウト上のフィールドオブジェクトで name/table が空のケース（フィールド削除済み等）
-    for layout in ddr.layouts.iter().filter(|l| l.name != "-") {
         for obj in &layout.layout_objects {
             if obj.object_type == "Field" {
-                let is_broken = obj.field_table_occurrence.as_deref() == Some("")
-                    || obj.field_name.as_deref() == Some("");
+                let is_broken = obj
+                    .field_table_occurrence
+                    .as_deref()
+                    .is_some_and(|s| s.is_empty())
+                    || obj.field_name.as_deref().is_some_and(|s| s.is_empty());
                 if is_broken {
                     result.push(BrokenRef {
                         kind: BrokenRefKind::BrokenFieldPlacement,
