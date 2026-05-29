@@ -104,7 +104,7 @@ pub fn generate_report_card(ddr: &DdrFile) -> ReportCard {
             severity: Severity::Error,
             category: "broken_ref".into(),
             message: format!(
-                "[{:?}] '{}' references non-existent script '{}'",
+                "[{:?}] '{}' → '{}'",
                 r.kind, r.source_name, r.target_script_name
             ),
             element_kind,

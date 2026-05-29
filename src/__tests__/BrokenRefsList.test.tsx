@@ -137,9 +137,9 @@ describe("BrokenRefsList", () => {
   });
 
   it("broken_field_placement_shows_label", () => {
-    const refs = [
-      { kind: "brokenFieldPlacement" as const, source_name: "CustomerLayout", source_id: 20, target_script_name: "(フィールド削除済み) #7" },
-    ] as Parameters<typeof useBrokenRefs>[0] extends never ? never : BrokenRef[];
+    const refs: BrokenRef[] = [
+      { kind: "brokenFieldPlacement", source_name: "CustomerLayout", source_id: 20, target_script_name: "(フィールド削除済み) #7" },
+    ];
     vi.mocked(useBrokenRefs).mockReturnValue(
       { data: refs as BrokenRef[], isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
     );

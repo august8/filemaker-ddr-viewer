@@ -8,7 +8,7 @@ interface Props {
   projectId: number | null;
 }
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<BrokenRef["kind"], string> = {
   performScript: "Perform Script",
   scriptTrigger: "Script Trigger",
   brokenFieldRef: "壊れたフィールド参照",
@@ -53,7 +53,7 @@ export function BrokenRefsList({ projectId }: Props) {
         {brokenRefs.map((ref, idx) => (
           <li key={idx}>
             <button
-              className={`${LIST_ROW} rounded`}
+              className={`${LIST_ROW} rounded disabled:opacity-40 disabled:cursor-not-allowed`}
               onClick={() => handleClick(ref)}
               disabled={ref.source_id == null}
               title={ref.source_id != null ? `${ref.source_name} を表示` : undefined}
