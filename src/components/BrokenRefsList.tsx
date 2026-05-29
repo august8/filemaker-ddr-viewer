@@ -1,6 +1,4 @@
 import { useBrokenRefs } from "../hooks/analysis";
-import { useScriptList } from "../hooks/script";
-import { useLayoutList } from "../hooks/layout";
 import { useAppStore } from "../stores/appStore";
 import type { BrokenRef } from "../types/ddr";
 import { BADGE_VARIANTS, LIST_ROW } from "../styles/tokens";
@@ -15,12 +13,11 @@ const KIND_LABELS: Record<string, string> = {
   scriptTrigger: "Script Trigger",
   brokenFieldRef: "壊れたフィールド参照",
   brokenLayoutRef: "壊れたレイアウト参照",
+  unknownRef: "参照先不明",
 };
 
 export function BrokenRefsList({ projectId }: Props) {
   const { data: brokenRefs, isLoading } = useBrokenRefs(projectId);
-  const { data: scripts = [] } = useScriptList(projectId);
-  const { data: layouts = [] } = useLayoutList(projectId);
   const { selectElement } = useAppStore();
 
   if (projectId === null) return null;
@@ -36,14 +33,13 @@ export function BrokenRefsList({ projectId }: Props) {
   }
 
   function handleClick(ref: BrokenRef) {
-    if (!projectId) return;
-    if (ref.kind === "performScript" || ref.kind === "brokenFieldRef" || ref.kind === "brokenLayoutRef") {
-      const script = scripts.find((s) => s.name === ref.source_name);
-      if (script) selectElement({ kind: "script", projectId, id: script.id, name: script.name });
-    } else if (ref.kind === "scriptTrigger") {
-      const layout = layouts.find((l) => l.name === ref.source_name);
-      if (layout) selectElement({ kind: "layout", projectId, id: layout.id, name: layout.name });
-    }
+    if (!projectId || ref.source_id == null) return;
+    selectElement({
+      kind: ref.kind === "scriptTrigger" ? "layout" : "script",
+      projectId,
+      id: ref.source_id,
+      name: ref.source_name,
+    });
   }
 
   return (

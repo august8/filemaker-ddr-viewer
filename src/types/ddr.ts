@@ -55,6 +55,7 @@ export interface BrokenRef {
   kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef" | "unknownRef";
   source_name: string;
   target_script_name: string;
+  source_id?: number;
 }
 
 export interface BrokenRefWithProject extends BrokenRef {

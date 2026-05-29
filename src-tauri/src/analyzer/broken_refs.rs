@@ -35,6 +35,8 @@ pub struct BrokenRef {
     pub source_name: String,
     /// 参照しようとしているスクリプト名。
     pub target_script_name: String,
+    /// 参照元要素の SQLite DB ID（コマンド層で解決される。解決不能な場合は None）。
+    pub source_id: Option<i64>,
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +79,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     kind: BrokenRefKind::PerformScript,
                     source_name: script.name.clone(),
                     target_script_name: script_ref.name.clone(),
+                    source_id: None,
                 });
             }
         }
@@ -90,6 +93,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     kind: BrokenRefKind::BrokenFieldRef,
                     source_name: script.name.clone(),
                     target_script_name: target.to_string(),
+                    source_id: None,
                 });
             } else if step.has_broken_layout_ref {
                 let target = step.step_text.as_deref().unwrap_or("(broken layout ref)");
@@ -97,6 +101,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     kind: BrokenRefKind::BrokenLayoutRef,
                     source_name: script.name.clone(),
                     target_script_name: target.to_string(),
+                    source_id: None,
                 });
             } else {
                 // step_text に <不明> が含まれるケース（ファイルを開く・Perform Script 外部参照等）
@@ -114,6 +119,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                         kind: BrokenRefKind::UnknownRef,
                         source_name: script.name.clone(),
                         target_script_name: target,
+                        source_id: None,
                     });
                 }
             }
@@ -131,6 +137,7 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     kind: BrokenRefKind::ScriptTrigger,
                     source_name: layout.name.clone(),
                     target_script_name: trigger.script_name.clone(),
+                    source_id: None,
                 });
             }
         }

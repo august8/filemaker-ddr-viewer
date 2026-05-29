@@ -78,6 +78,7 @@ const mockBrokenRefs: BrokenRefWithProject[] = [
   {
     kind: "performScript",
     source_name: "MainScript",
+    source_id: 5,
     target_script_name: "DeletedScript",
     project_id: 1,
     project_name: "DB_A",
@@ -85,6 +86,7 @@ const mockBrokenRefs: BrokenRefWithProject[] = [
   {
     kind: "scriptTrigger",
     source_name: "Layout1",
+    source_id: 15,
     target_script_name: "MissingScript",
     project_id: 2,
     project_name: "DB_B",
@@ -230,6 +232,48 @@ describe("壊れた参照セクション", () => {
     await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
     expect(screen.getByText("MainScript")).toBeInTheDocument();
     expect(screen.getByText("DeletedScript")).toBeInTheDocument();
+  });
+
+  it("broken_ref_performscript_click_selects_script", async () => {
+    const selectElement = vi.fn();
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    // MainScript の行をクリック
+    await user.click(screen.getByRole("button", { name: /MainScript/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "script",
+      projectId: 1,
+      id: 5,
+      name: "MainScript",
+    });
+  });
+
+  it("broken_ref_script_trigger_click_selects_layout", async () => {
+    const selectElement = vi.fn();
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    // Layout1 の行をクリック
+    await user.click(screen.getByRole("button", { name: /Layout1/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "layout",
+      projectId: 2,
+      id: 15,
+      name: "Layout1",
+    });
   });
 
   it("broken_refs_shows_loading_indicator", async () => {

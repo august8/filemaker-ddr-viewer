@@ -110,6 +110,16 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
     }
   }
 
+  function handleBrokenRefClick(ref: BrokenRefWithProject) {
+    if (ref.source_id == null) return;
+    selectElement({
+      kind: ref.kind === "scriptTrigger" ? "layout" : "script",
+      projectId: ref.project_id,
+      id: ref.source_id,
+      name: ref.source_name,
+    });
+  }
+
   function handleFieldClick(hit: UpgradeHit) {
     if (hit.field_id != null && hit.table_id != null && hit.table_name != null) {
       selectElement({ kind: "table", projectId: hit.project_id, id: hit.table_id, name: hit.table_name });
@@ -171,7 +181,13 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
                 <p className="text-sm text-gray-400 text-center py-2">壊れた参照なし</p>
               ) : (
                 brokenRefs.map((ref) => (
-                  <div key={`${ref.project_id}-${ref.kind}-${ref.source_name}-${ref.target_script_name}`} className="py-2 flex flex-col gap-0.5">
+                  <button
+                    key={`${ref.project_id}-${ref.kind}-${ref.source_name}-${ref.target_script_name}`}
+                    className="w-full text-left py-2 flex flex-col gap-0.5 hover:bg-gray-50 rounded transition-colors disabled:cursor-default"
+                    onClick={() => handleBrokenRefClick(ref)}
+                    disabled={ref.source_id == null}
+                    title={ref.source_id != null ? `${ref.source_name} を表示` : undefined}
+                  >
                     <span className="text-xs text-gray-400">{ref.project_name}</span>
                     <span className="text-xs text-indigo-500">{BROKEN_REF_KIND_LABEL[ref.kind]}</span>
                     <span className="text-sm text-gray-700">
@@ -179,7 +195,7 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
                       <span className="text-gray-400 mx-1">→</span>
                       <span className="text-red-600">{ref.target_script_name}</span>
                     </span>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
