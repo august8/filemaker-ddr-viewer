@@ -27,7 +27,7 @@ const EMPTY_CUSTOM: Omit<CheckItem, "id" | "builtin"> = {
 };
 
 export function UpgradeSettingsPanel({ onClose }: { onClose: () => void }) {
-  const { checkItems, setCheckItems } = useAppStore();
+  const { checkItems, setCheckItems, showBrokenRefsInUpgradeCheck, setShowBrokenRefsInUpgradeCheck } = useAppStore();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState<Omit<CheckItem, "id" | "builtin">>(EMPTY_CUSTOM);
 
@@ -100,6 +100,23 @@ export function UpgradeSettingsPanel({ onClose }: { onClose: () => void }) {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* 解析セクション */}
+      <div className={`${CARD} mb-4`}>
+        <p className={`${SECTION_HEADER} mb-3`}>解析</p>
+        <div className="py-2 flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="broken-refs-toggle"
+            checked={showBrokenRefsInUpgradeCheck}
+            onChange={(e) => setShowBrokenRefsInUpgradeCheck(e.target.checked)}
+            className="shrink-0"
+          />
+          <label htmlFor="broken-refs-toggle" className="flex-1 text-sm text-gray-700 cursor-pointer">
+            壊れた参照（Perform Script / スクリプトトリガー等）
+          </label>
         </div>
       </div>
 

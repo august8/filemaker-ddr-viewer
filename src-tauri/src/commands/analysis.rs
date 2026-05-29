@@ -1,11 +1,11 @@
-﻿//! プロジェクト管理・サマリー取得コマンド。
+//! プロジェクト管理・サマリー取得コマンド。
 
 use rusqlite::{params, OptionalExtension as _};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     analyzer::{
-        broken_refs::{find_broken_refs, BrokenRef},
+        broken_refs::{find_broken_refs, BrokenRef, BrokenRefKind},
         report_card::{generate_report_card, ReportCard},
     },
     commands::CommandError,
@@ -156,7 +156,23 @@ pub async fn get_broken_refs(
     project_id: i64,
 ) -> Result<Vec<BrokenRef>, CommandError> {
     let ddr = get_ddr(&state, project_id)?;
-    Ok(find_broken_refs(&ddr))
+    let mut refs = find_broken_refs(&ddr);
+    let db = super::lock_db(&state)?;
+    for r in &mut refs {
+        let etype = if r.kind == BrokenRefKind::ScriptTrigger
+            || r.kind == BrokenRefKind::BrokenFieldPlacement
+        {
+            "layout"
+        } else {
+            "script"
+        };
+        if let Ok(Some(elem)) =
+            resolve_element_by_name_inner(&db.conn, project_id, etype, &r.source_name)
+        {
+            r.source_id = Some(elem.id);
+        }
+    }
+    Ok(refs)
 }
 
 /// プロジェクトの健全性レポートを返す。
@@ -500,5 +516,36 @@ mod tests {
         insert_ddr_file(&mut db, &ddr, sid, Some("Second")).unwrap();
         let summaries = list_solution_project_summaries_inner(&db, sid).unwrap();
         assert_eq!(summaries.len(), 2);
+    }
+
+    // ---- get_broken_refs の source_id 解決テスト ----
+
+    #[test]
+    fn get_broken_refs_resolves_source_id_from_db() {
+        use super::resolve_element_by_name_inner;
+        use crate::analyzer::broken_refs::{find_broken_refs, BrokenRefKind};
+        let (db, pid) = setup();
+        let ddr = parse_ddr(MINIMAL_XML).unwrap();
+        let mut refs = find_broken_refs(&ddr);
+        // コマンドと同じ ID 解決ロジックを適用
+        for r in &mut refs {
+            let etype = if r.kind == BrokenRefKind::ScriptTrigger
+                || r.kind == BrokenRefKind::BrokenFieldPlacement
+            {
+                "layout"
+            } else {
+                "script"
+            };
+            if let Ok(Some(elem)) =
+                resolve_element_by_name_inner(&db.conn, pid, etype, &r.source_name)
+            {
+                r.source_id = Some(elem.id);
+            }
+        }
+        assert!(!refs.is_empty(), "minimal.xml は壊れた参照を含むこと");
+        assert!(
+            refs.iter().any(|r| r.source_id.is_some()),
+            "少なくとも 1 件の broken ref は source_id が DB から解決されること"
+        );
     }
 }

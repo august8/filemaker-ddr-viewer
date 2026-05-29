@@ -1,6 +1,4 @@
 import { useBrokenRefs } from "../hooks/analysis";
-import { useScriptList } from "../hooks/script";
-import { useLayoutList } from "../hooks/layout";
 import { useAppStore } from "../stores/appStore";
 import type { BrokenRef } from "../types/ddr";
 import { BADGE_VARIANTS, LIST_ROW } from "../styles/tokens";
@@ -10,17 +8,17 @@ interface Props {
   projectId: number | null;
 }
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<BrokenRef["kind"], string> = {
   performScript: "Perform Script",
   scriptTrigger: "Script Trigger",
   brokenFieldRef: "壊れたフィールド参照",
   brokenLayoutRef: "壊れたレイアウト参照",
+  unknownRef: "参照先不明",
+  brokenFieldPlacement: "レイアウト上の削除フィールド",
 };
 
 export function BrokenRefsList({ projectId }: Props) {
   const { data: brokenRefs, isLoading } = useBrokenRefs(projectId);
-  const { data: scripts = [] } = useScriptList(projectId);
-  const { data: layouts = [] } = useLayoutList(projectId);
   const { selectElement } = useAppStore();
 
   if (projectId === null) return null;
@@ -36,14 +34,13 @@ export function BrokenRefsList({ projectId }: Props) {
   }
 
   function handleClick(ref: BrokenRef) {
-    if (!projectId) return;
-    if (ref.kind === "performScript" || ref.kind === "brokenFieldRef" || ref.kind === "brokenLayoutRef") {
-      const script = scripts.find((s) => s.name === ref.source_name);
-      if (script) selectElement({ kind: "script", projectId, id: script.id, name: script.name });
-    } else if (ref.kind === "scriptTrigger") {
-      const layout = layouts.find((l) => l.name === ref.source_name);
-      if (layout) selectElement({ kind: "layout", projectId, id: layout.id, name: layout.name });
-    }
+    if (!projectId || ref.source_id == null) return;
+    selectElement({
+      kind: (ref.kind === "scriptTrigger" || ref.kind === "brokenFieldPlacement") ? "layout" : "script",
+      projectId,
+      id: ref.source_id,
+      name: ref.source_name,
+    });
   }
 
   return (
@@ -56,9 +53,10 @@ export function BrokenRefsList({ projectId }: Props) {
         {brokenRefs.map((ref, idx) => (
           <li key={idx}>
             <button
-              className={`${LIST_ROW} rounded`}
+              className={`${LIST_ROW} rounded disabled:opacity-40 disabled:cursor-not-allowed`}
               onClick={() => handleClick(ref)}
-              title={`${ref.source_name} を表示`}
+              disabled={ref.source_id == null}
+              title={ref.source_id != null ? `${ref.source_name} を表示` : undefined}
             >
               <span className={`mr-2 ${BADGE_VARIANTS.gray}`}>{KIND_LABELS[ref.kind] ?? ref.kind}</span>
               <span className="text-gray-700">{ref.source_name}</span>

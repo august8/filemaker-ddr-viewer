@@ -215,9 +215,14 @@ export function LayoutDetail({ layout, projectId }: Props) {
                 !obj.isPhantom &&
                 rightPanel?.kind === "layout_object" &&
                 rightPanel.layoutObjectId === obj.id;
+              const isBrokenField =
+                obj.object_type === "Field" &&
+                (obj.field_table_occurrence === "" || obj.field_name === "");
               const dk = obj.diffKind;
               const rowBg = dk
                 ? DIFF_ROW_BG[dk]
+                : isBrokenField
+                ? "bg-red-50"
                 : isSelected
                 ? "bg-blue-100 text-blue-800"
                 : "hover:bg-blue-50";
@@ -245,7 +250,9 @@ export function LayoutDetail({ layout, projectId }: Props) {
                     {obj.button_label ?? <span className="text-gray-300">—</span>}
                   </td>
                   <td className={`px-3 py-2 border border-gray-200 ${textClass}`}>
-                    {obj.field_table_occurrence && obj.field_name
+                    {isBrokenField
+                      ? <span className="text-red-500 text-xs">(削除済み) #{obj.object_key}</span>
+                      : obj.field_table_occurrence && obj.field_name
                       ? `${obj.field_table_occurrence}::${obj.field_name}`
                       : <span className="text-gray-400">—</span>}
                   </td>

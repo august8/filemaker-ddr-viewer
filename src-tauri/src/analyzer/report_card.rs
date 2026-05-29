@@ -92,15 +92,19 @@ pub fn generate_report_card(ddr: &DdrFile) -> ReportCard {
                 (Some("layout".into()), Some(r.source_name.clone()))
             }
             crate::analyzer::broken_refs::BrokenRefKind::BrokenFieldRef
-            | crate::analyzer::broken_refs::BrokenRefKind::BrokenLayoutRef => {
+            | crate::analyzer::broken_refs::BrokenRefKind::BrokenLayoutRef
+            | crate::analyzer::broken_refs::BrokenRefKind::UnknownRef => {
                 (Some("script".into()), Some(r.source_name.clone()))
+            }
+            crate::analyzer::broken_refs::BrokenRefKind::BrokenFieldPlacement => {
+                (Some("layout".into()), Some(r.source_name.clone()))
             }
         };
         issues.push(ReportIssue {
             severity: Severity::Error,
             category: "broken_ref".into(),
             message: format!(
-                "[{:?}] '{}' references non-existent script '{}'",
+                "[{:?}] '{}' → '{}'",
                 r.kind, r.source_name, r.target_script_name
             ),
             element_kind,

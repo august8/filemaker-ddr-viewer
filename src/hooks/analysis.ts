@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { useQuery } from "@tanstack/react-query";
 import type {
   BrokenRef,
+  BrokenRefWithProject,
+  ProjectRow,
   ReportCard,
   OrphanScript,
   UnusedFieldRow,
@@ -42,6 +44,24 @@ export function useUnusedFields(projectId: number | null) {
     queryKey: ["unused_fields", projectId],
     queryFn: () => invoke<UnusedFieldRow[]>("list_unused_fields", { projectId }),
     enabled: projectId !== null,
+  });
+}
+
+// ソリューション全体の壊れた参照（全プロジェクトをまとめて取得）
+export function useSolutionBrokenRefs(solutionId: number | null) {
+  return useQuery({
+    queryKey: ["solution_broken_refs", solutionId],
+    queryFn: async (): Promise<BrokenRefWithProject[]> => {
+      const projects = await invoke<ProjectRow[]>("get_solution_projects", { solutionId });
+      const allRefs = await Promise.all(
+        projects.map(async (p) => {
+          const refs = await invoke<BrokenRef[]>("get_broken_refs", { projectId: p.id });
+          return refs.map((r) => ({ ...r, project_id: p.id, project_name: p.name }));
+        })
+      );
+      return allRefs.flat();
+    },
+    enabled: solutionId !== null,
   });
 }
 

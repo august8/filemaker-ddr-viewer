@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UpgradeCheckPanel } from "../../components/detail/UpgradeCheckPanel";
-import type { UpgradeHit } from "../../types/ddr";
+import type { BrokenRefWithProject, UpgradeHit } from "../../types/ddr";
 
 vi.mock("../../hooks/analysis", () => ({
   useUpgradeCheck: vi.fn(),
+  useSolutionBrokenRefs: vi.fn(),
 }));
 
 vi.mock("../../stores/appStore", () => ({
@@ -13,6 +14,7 @@ vi.mock("../../stores/appStore", () => ({
     checkItems: [
       { id: "item1", label: "Perform Script", enabled: true, detectionType: "step_type_id", detectionValue: "89" },
     ],
+    showBrokenRefsInUpgradeCheck: false,
     selectElement: vi.fn(),
     setRightPanel: vi.fn(),
   })),
@@ -22,7 +24,22 @@ vi.mock("../../stores/appStore", () => ({
 vi.mock("@tauri-apps/plugin-dialog", () => ({ save: vi.fn().mockResolvedValue(null) }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
-import { useUpgradeCheck } from "../../hooks/analysis";
+import { useUpgradeCheck, useSolutionBrokenRefs } from "../../hooks/analysis";
+import { useAppStore } from "../../stores/appStore";
+
+beforeEach(() => {
+  vi.mocked(useAppStore).mockImplementation(() => ({
+    checkItems: [
+      { id: "item1", label: "Perform Script", enabled: true, detectionType: "step_type_id", detectionValue: "89" },
+    ],
+    showBrokenRefsInUpgradeCheck: false,
+    selectElement: vi.fn(),
+    setRightPanel: vi.fn(),
+  } as unknown as ReturnType<typeof useAppStore>));
+  vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+    { data: [], isLoading: false } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+  );
+});
 
 const mockHits: UpgradeHit[] = [
   {
@@ -54,6 +71,25 @@ const mockHits: UpgradeHit[] = [
     field_name: null,
     table_id: null,
     table_name: null,
+  },
+];
+
+const mockBrokenRefs: BrokenRefWithProject[] = [
+  {
+    kind: "performScript",
+    source_name: "MainScript",
+    source_id: 5,
+    target_script_name: "DeletedScript",
+    project_id: 1,
+    project_name: "DB_A",
+  },
+  {
+    kind: "scriptTrigger",
+    source_name: "Layout1",
+    source_id: 15,
+    target_script_name: "MissingScript",
+    project_id: 2,
+    project_name: "DB_B",
   },
 ];
 
@@ -128,14 +164,14 @@ describe("UpgradeCheckPanel", () => {
 
   it("click_script_hit_calls_selectElement", async () => {
     const selectElement = vi.fn();
-    const { useAppStore } = await import("../../stores/appStore");
-    vi.mocked(useAppStore).mockReturnValue({
+    vi.mocked(useAppStore).mockImplementation(() => ({
       checkItems: [
         { id: "item1", label: "Perform Script", enabled: true, detectionType: "step_type_id", detectionValue: "89" },
       ],
+      showBrokenRefsInUpgradeCheck: false,
       selectElement,
       setRightPanel: vi.fn(),
-    } as unknown as ReturnType<typeof useAppStore>);
+    } as unknown as ReturnType<typeof useAppStore>));
     vi.mocked(useUpgradeCheck).mockReturnValue(
       { data: mockHits, isLoading: false } as unknown as ReturnType<typeof useUpgradeCheck>
     );
@@ -150,5 +186,138 @@ describe("UpgradeCheckPanel", () => {
       id: 10,
       name: "Script A",
     });
+  });
+});
+
+describe("壊れた参照セクション", () => {
+  beforeEach(() => {
+    vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+      { data: mockBrokenRefs, isLoading: false } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+    );
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement: vi.fn(),
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    vi.mocked(useUpgradeCheck).mockReturnValue(
+      { data: [], isLoading: false } as unknown as ReturnType<typeof useUpgradeCheck>
+    );
+  });
+
+  it("broken_refs_section_shown_when_enabled", () => {
+    render(<UpgradeCheckPanel solutionId={1} />);
+    expect(screen.getByRole("button", { name: /壊れた参照/ })).toBeInTheDocument();
+  });
+
+  it("broken_refs_section_hidden_when_disabled", () => {
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: false,
+      selectElement: vi.fn(),
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    render(<UpgradeCheckPanel solutionId={1} />);
+    expect(screen.queryByRole("button", { name: /壊れた参照/ })).not.toBeInTheDocument();
+  });
+
+  it("broken_refs_section_shows_count", () => {
+    render(<UpgradeCheckPanel solutionId={1} />);
+    expect(screen.getByText("2 件")).toBeInTheDocument();
+  });
+
+  it("broken_refs_section_expands_on_click", async () => {
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    expect(screen.getByText("MainScript")).toBeInTheDocument();
+    expect(screen.getByText("DeletedScript")).toBeInTheDocument();
+  });
+
+  it("broken_ref_performscript_click_selects_script", async () => {
+    const selectElement = vi.fn();
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    // MainScript の行をクリック
+    await user.click(screen.getByRole("button", { name: /MainScript/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "script",
+      projectId: 1,
+      id: 5,
+      name: "MainScript",
+    });
+  });
+
+  it("broken_ref_script_trigger_click_selects_layout", async () => {
+    const selectElement = vi.fn();
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    // Layout1 の行をクリック
+    await user.click(screen.getByRole("button", { name: /Layout1/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "layout",
+      projectId: 2,
+      id: 15,
+      name: "Layout1",
+    });
+  });
+
+  it("broken_field_placement_click_selects_layout", async () => {
+    const selectElement = vi.fn();
+    const refsWithPlacement: BrokenRefWithProject[] = [
+      ...mockBrokenRefs,
+      {
+        kind: "brokenFieldPlacement" as BrokenRefWithProject["kind"],
+        source_name: "CustomerLayout",
+        source_id: 30,
+        target_script_name: "(フィールド削除済み) #7",
+        project_id: 1,
+        project_name: "DB_A",
+      },
+    ];
+    vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+      { data: refsWithPlacement, isLoading: false } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+    );
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    await user.click(screen.getByRole("button", { name: /CustomerLayout/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "layout",
+      projectId: 1,
+      id: 30,
+      name: "CustomerLayout",
+    });
+  });
+
+  it("broken_refs_shows_loading_indicator", async () => {
+    vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+      { data: undefined, isLoading: true } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+    );
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    expect(screen.getByText("…")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    expect(document.querySelector(".animate-spin")).toBeInTheDocument();
   });
 });

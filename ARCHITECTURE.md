@@ -109,11 +109,11 @@ filemaker-ddr-viewer/
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |
 | `detail/SecurityPanel.tsx` | アカウント・権限セット |
-| `detail/UpgradeCheckPanel.tsx` / `UpgradeSettingsPanel.tsx` | アップグレードチェック |
+| `detail/UpgradeCheckPanel.tsx` / `UpgradeSettingsPanel.tsx` | アップグレードチェック（DBスキャン項目 + 壊れた参照セクション）。壊れた参照は `useSolutionBrokenRefs` で全プロジェクトを集約して表示 |
 | `detail/field/FieldBasicProperties.tsx` 他 | FieldDetail のサブコンポーネント群（FieldAutoEnter / FieldCalcReferences / FieldLayoutReferences / FieldRelationshipReferences / FieldScriptReferences / FieldStorage / FieldValidationRules） |
 | `DiffView.tsx` | 差分比較ビュー |
 | `stores/appStore.ts` | グローバル状態（zustand） |
-| `hooks/` | ドメイン別 Tauri IPC フック（analysis / catalog / diff / fieldRefs / layout / script / search / security / solutions / table） |
+| `hooks/` | ドメイン別 Tauri IPC フック（analysis / catalog / diff / fieldRefs / layout / script / search / security / solutions / table）。`hooks/analysis.ts` の `useSolutionBrokenRefs` はソリューション全プロジェクトの壊れた参照を `Promise.all` で集約 |
 | `hooks/useSearchFiltering.ts` | 検索フィルタリングロジック |
 | `styles/tokens.ts` | デザイントークン定数 |
 

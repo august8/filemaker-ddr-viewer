@@ -52,9 +52,15 @@ export interface SearchResult {
 }
 
 export interface BrokenRef {
-  kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef";
+  kind: "performScript" | "scriptTrigger" | "brokenFieldRef" | "brokenLayoutRef" | "unknownRef" | "brokenFieldPlacement";
   source_name: string;
   target_script_name: string;
+  source_id?: number;
+}
+
+export interface BrokenRefWithProject extends BrokenRef {
+  project_id: number;
+  project_name: string;
 }
 
 export type Severity = "Info" | "Warning" | "Error";
