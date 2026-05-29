@@ -54,6 +54,7 @@ const BROKEN_REF_KIND_LABEL: Record<BrokenRefWithProject["kind"], string> = {
   brokenFieldRef: "フィールド参照",
   brokenLayoutRef: "レイアウト参照",
   unknownRef: "参照先不明",
+  brokenFieldPlacement: "レイアウト上の削除フィールド",
 };
 
 export function UpgradeCheckPanel({ solutionId }: Props) {
@@ -113,7 +114,7 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
   function handleBrokenRefClick(ref: BrokenRefWithProject) {
     if (ref.source_id == null) return;
     selectElement({
-      kind: ref.kind === "scriptTrigger" ? "layout" : "script",
+      kind: (ref.kind === "scriptTrigger" || ref.kind === "brokenFieldPlacement") ? "layout" : "script",
       projectId: ref.project_id,
       id: ref.source_id,
       name: ref.source_name,

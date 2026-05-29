@@ -276,6 +276,40 @@ describe("壊れた参照セクション", () => {
     });
   });
 
+  it("broken_field_placement_click_selects_layout", async () => {
+    const selectElement = vi.fn();
+    const refsWithPlacement: BrokenRefWithProject[] = [
+      ...mockBrokenRefs,
+      {
+        kind: "brokenFieldPlacement" as BrokenRefWithProject["kind"],
+        source_name: "CustomerLayout",
+        source_id: 30,
+        target_script_name: "(フィールド削除済み) #7",
+        project_id: 1,
+        project_name: "DB_A",
+      },
+    ];
+    vi.mocked(useSolutionBrokenRefs).mockReturnValue(
+      { data: refsWithPlacement, isLoading: false } as unknown as ReturnType<typeof useSolutionBrokenRefs>
+    );
+    vi.mocked(useAppStore).mockImplementation(() => ({
+      checkItems: [],
+      showBrokenRefsInUpgradeCheck: true,
+      selectElement,
+      setRightPanel: vi.fn(),
+    } as unknown as ReturnType<typeof useAppStore>));
+    const user = userEvent.setup();
+    render(<UpgradeCheckPanel solutionId={1} />);
+    await user.click(screen.getByRole("button", { name: /壊れた参照/ }));
+    await user.click(screen.getByRole("button", { name: /CustomerLayout/ }));
+    expect(selectElement).toHaveBeenCalledWith({
+      kind: "layout",
+      projectId: 1,
+      id: 30,
+      name: "CustomerLayout",
+    });
+  });
+
   it("broken_refs_shows_loading_indicator", async () => {
     vi.mocked(useSolutionBrokenRefs).mockReturnValue(
       { data: undefined, isLoading: true } as unknown as ReturnType<typeof useSolutionBrokenRefs>

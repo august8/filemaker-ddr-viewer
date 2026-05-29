@@ -14,6 +14,7 @@ const KIND_LABELS: Record<string, string> = {
   brokenFieldRef: "壊れたフィールド参照",
   brokenLayoutRef: "壊れたレイアウト参照",
   unknownRef: "参照先不明",
+  brokenFieldPlacement: "レイアウト上の削除フィールド",
 };
 
 export function BrokenRefsList({ projectId }: Props) {
@@ -35,7 +36,7 @@ export function BrokenRefsList({ projectId }: Props) {
   function handleClick(ref: BrokenRef) {
     if (!projectId || ref.source_id == null) return;
     selectElement({
-      kind: ref.kind === "scriptTrigger" ? "layout" : "script",
+      kind: (ref.kind === "scriptTrigger" || ref.kind === "brokenFieldPlacement") ? "layout" : "script",
       projectId,
       id: ref.source_id,
       name: ref.source_name,

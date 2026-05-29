@@ -96,6 +96,9 @@ pub fn generate_report_card(ddr: &DdrFile) -> ReportCard {
             | crate::analyzer::broken_refs::BrokenRefKind::UnknownRef => {
                 (Some("script".into()), Some(r.source_name.clone()))
             }
+            crate::analyzer::broken_refs::BrokenRefKind::BrokenFieldPlacement => {
+                (Some("layout".into()), Some(r.source_name.clone()))
+            }
         };
         issues.push(ReportIssue {
             severity: Severity::Error,

@@ -159,7 +159,9 @@ pub async fn get_broken_refs(
     let mut refs = find_broken_refs(&ddr);
     let db = super::lock_db(&state)?;
     for r in &mut refs {
-        let etype = if r.kind == BrokenRefKind::ScriptTrigger {
+        let etype = if r.kind == BrokenRefKind::ScriptTrigger
+            || r.kind == BrokenRefKind::BrokenFieldPlacement
+        {
             "layout"
         } else {
             "script"

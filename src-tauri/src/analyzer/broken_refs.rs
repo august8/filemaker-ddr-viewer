@@ -25,6 +25,9 @@ pub enum BrokenRefKind {
     /// step_text に `<不明>` が含まれており、他の broken ref 種別で未検出のケース。
     /// 例: ファイルを開く・Perform Script の外部参照先不明 等。
     UnknownRef,
+    /// レイアウト上のフィールドオブジェクトが存在しないフィールドを参照している
+    /// （フィールド削除済み・外部データソース切断など）。
+    BrokenFieldPlacement,
 }
 
 /// 単一の壊れた参照。
@@ -139,6 +142,24 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     target_script_name: trigger.script_name.clone(),
                     source_id: None,
                 });
+            }
+        }
+    }
+
+    // レイアウト上のフィールドオブジェクトで name/table が空のケース（フィールド削除済み等）
+    for layout in ddr.layouts.iter().filter(|l| l.name != "-") {
+        for obj in &layout.layout_objects {
+            if obj.object_type == "Field" {
+                let is_broken = obj.field_table_occurrence.as_deref() == Some("")
+                    || obj.field_name.as_deref() == Some("");
+                if is_broken {
+                    result.push(BrokenRef {
+                        kind: BrokenRefKind::BrokenFieldPlacement,
+                        source_name: layout.name.clone(),
+                        target_script_name: format!("(フィールド削除済み) #{}", obj.object_key),
+                        source_id: None,
+                    });
+                }
             }
         }
     }
@@ -596,6 +617,117 @@ mod tests {
             "BrokenLayoutRef のみ、UnknownRef との重複なし: {refs:?}"
         );
         assert_eq!(refs[0].kind, BrokenRefKind::BrokenLayoutRef);
+    }
+
+    #[test]
+    fn detects_broken_layout_field_placement() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![],
+            layouts: vec![Layout {
+                id: LayoutId(1),
+                name: "CustomerLayout".into(),
+                table_occurrence_name: None,
+                script_triggers: vec![],
+                button_script_refs: vec![],
+                field_refs: vec![],
+                layout_objects: vec![LayoutObject {
+                    object_type: "Field".into(),
+                    object_key: 7,
+                    object_name: None,
+                    button_label: None,
+                    field_table_occurrence: Some("".into()),
+                    field_name: Some("".into()),
+                    tooltip: None,
+                    hide_condition: None,
+                    bounds: None,
+                    conditional_formats: vec![],
+                }],
+            }],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert_eq!(refs.len(), 1);
+        assert_eq!(refs[0].kind, BrokenRefKind::BrokenFieldPlacement);
+        assert_eq!(refs[0].source_name, "CustomerLayout");
+        assert!(
+            refs[0].target_script_name.contains("フィールド削除済み"),
+            "expected description, got: {}",
+            refs[0].target_script_name
+        );
+        assert!(
+            refs[0].target_script_name.contains("#7"),
+            "expected object key #7, got: {}",
+            refs[0].target_script_name
+        );
+    }
+
+    #[test]
+    fn non_field_objects_not_detected_as_broken_placement() {
+        use crate::parser::models::*;
+        use crate::parser::version::FmVersion;
+
+        let ddr = DdrFile {
+            file_name: "Test".into(),
+            fm_version: FmVersion {
+                major: 22,
+                minor: 0,
+                patch: "v1".into(),
+            },
+            tables: vec![],
+            scripts: vec![],
+            layouts: vec![Layout {
+                id: LayoutId(1),
+                name: "CustomerLayout".into(),
+                table_occurrence_name: None,
+                script_triggers: vec![],
+                button_script_refs: vec![],
+                field_refs: vec![],
+                layout_objects: vec![LayoutObject {
+                    object_type: "Text".into(), // Text object, not Field
+                    object_key: 3,
+                    object_name: None,
+                    button_label: None,
+                    field_table_occurrence: None,
+                    field_name: None,
+                    tooltip: None,
+                    hide_condition: None,
+                    bounds: None,
+                    conditional_formats: vec![],
+                }],
+            }],
+            relationships: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            table_occurrences: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        };
+
+        let refs = find_broken_refs(&ddr);
+        assert!(
+            refs.is_empty(),
+            "Text objects should not be detected as broken: {refs:?}"
+        );
     }
 
     #[test]
