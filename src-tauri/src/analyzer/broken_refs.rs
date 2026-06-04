@@ -155,7 +155,10 @@ pub fn find_broken_refs(ddr: &DdrFile) -> Vec<BrokenRef> {
                     result.push(BrokenRef {
                         kind: BrokenRefKind::BrokenFieldPlacement,
                         source_name: layout.name.clone(),
-                        target_script_name: format!("(フィールド削除済み) #{}", obj.object_key),
+                        target_script_name: format!(
+                            "フィールドが見つかりません #{}",
+                            obj.object_key
+                        ),
                         source_id: None,
                     });
                 }
@@ -667,7 +670,9 @@ mod tests {
         assert_eq!(refs[0].kind, BrokenRefKind::BrokenFieldPlacement);
         assert_eq!(refs[0].source_name, "CustomerLayout");
         assert!(
-            refs[0].target_script_name.contains("フィールド削除済み"),
+            refs[0]
+                .target_script_name
+                .contains("フィールドが見つかりません"),
             "expected description, got: {}",
             refs[0].target_script_name
         );

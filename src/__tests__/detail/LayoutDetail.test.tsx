@@ -129,7 +129,7 @@ describe("LayoutDetail", () => {
       isLoading: false,
     } as unknown as ReturnType<typeof useLayoutObjects>);
     render(<LayoutDetail layout={mockLayout} projectId={1} />);
-    expect(screen.getByText(/(削除済み).*#7/)).toBeInTheDocument();
+    expect(screen.getByText(/フィールドが見つかりません.*#7/)).toBeInTheDocument();
   });
 
   it("diff_context_shows_added_badge_for_new_object", () => {

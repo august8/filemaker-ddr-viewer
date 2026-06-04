@@ -138,18 +138,18 @@ describe("BrokenRefsList", () => {
 
   it("broken_field_placement_shows_label", () => {
     const refs: BrokenRef[] = [
-      { kind: "brokenFieldPlacement", source_name: "CustomerLayout", source_id: 20, target_script_name: "(フィールド削除済み) #7" },
+      { kind: "brokenFieldPlacement", source_name: "CustomerLayout", source_id: 20, target_script_name: "フィールドが見つかりません #7" },
     ];
     vi.mocked(useBrokenRefs).mockReturnValue(
       { data: refs as BrokenRef[], isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
     );
     render(<BrokenRefsList projectId={1} />);
-    expect(screen.getByText("レイアウト上の削除フィールド")).toBeInTheDocument();
+    expect(screen.getByText("レイアウト上の不明フィールド")).toBeInTheDocument();
   });
 
   it("broken_field_placement_click_selects_layout", () => {
     const refs = [
-      { kind: "brokenFieldPlacement" as const, source_name: "CustomerLayout", source_id: 20, target_script_name: "(フィールド削除済み) #7" },
+      { kind: "brokenFieldPlacement" as const, source_name: "CustomerLayout", source_id: 20, target_script_name: "フィールドが見つかりません #7" },
     ] as BrokenRef[];
     vi.mocked(useBrokenRefs).mockReturnValue(
       { data: refs, isLoading: false } as unknown as ReturnType<typeof useBrokenRefs>
