@@ -172,7 +172,7 @@ CREATE VIRTUAL TABLE search_index USING fts5(
 |---|---|
 | `script` | 全ステップの `step_text` を結合 |
 | `field` | `comment` + `calculation` |
-| `layout` | `table_occurrence_name` |
+| `layout` | `table_occurrence_name` + レイアウト上オブジェクトの `object_name` / `button_label` / `field_name` / `tooltip` / `hide_condition`（壊れたフィールドプレースメントがある場合は `フィールドが見つかりません` も追記） |
 | `relationship` | 述語文字列（`A::x = B::y` 形式） |
 | `table_occurrence` | `base_table_name` |
 | `custom_function` | `parameters` + `calculation` |

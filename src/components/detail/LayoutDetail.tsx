@@ -251,7 +251,7 @@ export function LayoutDetail({ layout, projectId }: Props) {
                   </td>
                   <td className={`px-3 py-2 border border-gray-200 ${textClass}`}>
                     {isBrokenField
-                      ? <span className="text-red-500 text-xs">(削除済み) #{obj.object_key}</span>
+                      ? <span className="text-red-500 text-xs">フィールドが見つかりません #{obj.object_key}</span>
                       : obj.field_table_occurrence && obj.field_name
                       ? `${obj.field_table_occurrence}::${obj.field_name}`
                       : <span className="text-gray-400">—</span>}

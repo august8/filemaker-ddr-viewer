@@ -284,7 +284,7 @@ describe("壊れた参照セクション", () => {
         kind: "brokenFieldPlacement" as BrokenRefWithProject["kind"],
         source_name: "CustomerLayout",
         source_id: 30,
-        target_script_name: "(フィールド削除済み) #7",
+        target_script_name: "フィールドが見つかりません #7",
         project_id: 1,
         project_name: "DB_A",
       },

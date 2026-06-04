@@ -14,7 +14,7 @@ const KIND_LABELS: Record<BrokenRef["kind"], string> = {
   brokenFieldRef: "壊れたフィールド参照",
   brokenLayoutRef: "壊れたレイアウト参照",
   unknownRef: "参照先不明",
-  brokenFieldPlacement: "レイアウト上の削除フィールド",
+  brokenFieldPlacement: "レイアウト上の不明フィールド",
 };
 
 export function BrokenRefsList({ projectId }: Props) {
