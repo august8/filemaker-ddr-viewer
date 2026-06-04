@@ -95,11 +95,57 @@ pub fn insert_ddr_file(
     // 4. layouts + triggers + field refs + layout objects
     for (pos, layout) in ddr.layouts.iter().enumerate() {
         let layout_db_id = insert_layout_inner(&tx, project_id, layout, pos as i64)?;
+        let (has_broken_field, obj_parts): (bool, Vec<String>) = layout.layout_objects.iter().fold(
+            (false, Vec::new()),
+            |(mut broken, mut parts), obj| {
+                if obj.object_type == "Field"
+                    && (obj
+                        .field_table_occurrence
+                        .as_deref()
+                        .is_some_and(|s| s.is_empty())
+                        || obj.field_name.as_deref().is_some_and(|s| s.is_empty()))
+                {
+                    broken = true;
+                }
+                for s in [
+                    obj.object_name.as_deref(),
+                    obj.button_label.as_deref(),
+                    obj.field_name.as_deref(),
+                    obj.tooltip.as_deref(),
+                    obj.hide_condition.as_deref(),
+                ]
+                .into_iter()
+                .flatten()
+                .filter(|s| !s.is_empty())
+                {
+                    parts.push(s.to_string());
+                }
+                (broken, parts)
+            },
+        );
+        let obj_content = obj_parts.join(" ");
+        let layout_fts_content = {
+            let mut parts: Vec<String> = vec![];
+            if let Some(toc) = layout
+                .table_occurrence_name
+                .as_deref()
+                .filter(|s| !s.is_empty())
+            {
+                parts.push(toc.to_string());
+            }
+            if has_broken_field {
+                parts.push("フィールドが見つかりません".to_string());
+            }
+            if !obj_content.is_empty() {
+                parts.push(obj_content);
+            }
+            parts.join(" ")
+        };
         search_entries.push(SearchEntry {
             element_type: "layout",
             element_id: layout_db_id,
             name: layout.name.clone(),
-            content: layout.table_occurrence_name.clone().unwrap_or_default(),
+            content: layout_fts_content,
         });
         for trigger in &layout.script_triggers {
             insert_trigger_inner(&tx, layout_db_id, trigger)?;
@@ -657,9 +703,43 @@ mod tests {
         delete_project, delete_solution, insert_solution, list_layout_object_conditions,
     };
     use crate::db::Database;
+    use crate::parser::models::LayoutId;
     use crate::parser::parse_ddr;
+    use crate::parser::version::FmVersion;
 
     const MINIMAL_XML: &str = include_str!("../../../../tests/fixtures/minimal.xml");
+
+    fn make_single_layout_ddr(layout: Layout) -> DdrFile {
+        DdrFile {
+            file_name: "TestDB".to_string(),
+            fm_version: FmVersion {
+                major: 21,
+                minor: 0,
+                patch: "v1".to_string(),
+            },
+            tables: vec![],
+            scripts: vec![],
+            layouts: vec![layout],
+            relationships: vec![],
+            table_occurrences: vec![],
+            value_lists: vec![],
+            custom_functions: vec![],
+            accounts: vec![],
+            privilege_sets: vec![],
+            file_script_triggers: vec![],
+            external_data_sources: vec![],
+        }
+    }
+
+    fn fts_layout_content(db: &Database, layout_name: &str) -> String {
+        db.conn
+            .query_row(
+                "SELECT content FROM search_index WHERE element_type='layout' AND name=?1",
+                [layout_name],
+                |r| r.get(0),
+            )
+            .unwrap()
+    }
 
     fn db_with_minimal() -> (Database, i64, i64) {
         let mut db = Database::open_in_memory().unwrap();
@@ -899,6 +979,147 @@ mod tests {
         assert_eq!(
             after, 0,
             "delete_solution 後は search_index からも削除される"
+        );
+    }
+
+    #[test]
+    fn layout_with_broken_field_adds_fts_content() {
+        let ddr = make_single_layout_ddr(Layout {
+            id: LayoutId(1),
+            name: "BrokenLayout".to_string(),
+            table_occurrence_name: Some("Contacts".to_string()),
+            script_triggers: vec![],
+            button_script_refs: vec![],
+            field_refs: vec![],
+            layout_objects: vec![LayoutObject {
+                object_type: "Field".to_string(),
+                object_key: 7,
+                object_name: None,
+                button_label: None,
+                field_table_occurrence: Some("".to_string()),
+                field_name: Some("".to_string()),
+                tooltip: None,
+                hide_condition: None,
+                bounds: None,
+                conditional_formats: vec![],
+            }],
+        });
+        let mut db = Database::open_in_memory().unwrap();
+        let sid = insert_solution(&mut db, "S", None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+
+        let content = fts_layout_content(&db, "BrokenLayout");
+        assert!(
+            content.contains("フィールドが見つかりません"),
+            "FTS content に「フィールドが見つかりません」が含まれること: got={}",
+            content
+        );
+        assert!(
+            content.contains("Contacts"),
+            "FTS content に table_occurrence_name が含まれること: got={}",
+            content
+        );
+    }
+
+    #[test]
+    fn layout_with_only_table_occurrence_empty_also_adds_fts_content() {
+        let ddr = make_single_layout_ddr(Layout {
+            id: LayoutId(1),
+            name: "PartiallyBrokenLayout".to_string(),
+            table_occurrence_name: None,
+            script_triggers: vec![],
+            button_script_refs: vec![],
+            field_refs: vec![],
+            layout_objects: vec![LayoutObject {
+                object_type: "Field".to_string(),
+                object_key: 3,
+                object_name: None,
+                button_label: None,
+                field_table_occurrence: Some("".to_string()),
+                field_name: Some("SomeField".to_string()),
+                tooltip: None,
+                hide_condition: None,
+                bounds: None,
+                conditional_formats: vec![],
+            }],
+        });
+        let mut db = Database::open_in_memory().unwrap();
+        let sid = insert_solution(&mut db, "S", None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+
+        let content = fts_layout_content(&db, "PartiallyBrokenLayout");
+        assert!(
+            content.contains("フィールドが見つかりません"),
+            "table_occurrence のみ空でも FTS content に追記されること: got={}",
+            content
+        );
+    }
+
+    #[test]
+    fn layout_object_content_added_to_fts() {
+        let ddr = make_single_layout_ddr(Layout {
+            id: LayoutId(1),
+            name: "ObjectLayout".to_string(),
+            table_occurrence_name: None,
+            script_triggers: vec![],
+            button_script_refs: vec![],
+            field_refs: vec![],
+            layout_objects: vec![
+                LayoutObject {
+                    object_type: "Button".to_string(),
+                    object_key: 1,
+                    object_name: Some("SaveButton".to_string()),
+                    button_label: Some("保存する".to_string()),
+                    field_table_occurrence: None,
+                    field_name: None,
+                    tooltip: Some("クリックして保存".to_string()),
+                    hide_condition: None,
+                    bounds: None,
+                    conditional_formats: vec![],
+                },
+                LayoutObject {
+                    object_type: "Field".to_string(),
+                    object_key: 2,
+                    object_name: None,
+                    button_label: None,
+                    field_table_occurrence: Some("Contacts".to_string()),
+                    field_name: Some("Email".to_string()),
+                    tooltip: None,
+                    hide_condition: Some("IsEmpty(Contacts::Email)".to_string()),
+                    bounds: None,
+                    conditional_formats: vec![],
+                },
+            ],
+        });
+        let mut db = Database::open_in_memory().unwrap();
+        let sid = insert_solution(&mut db, "S", None).unwrap();
+        insert_ddr_file(&mut db, &ddr, sid, None).unwrap();
+
+        let content = fts_layout_content(&db, "ObjectLayout");
+        assert!(
+            content.contains("SaveButton"),
+            "object_name が含まれること: got={}",
+            content
+        );
+        assert!(
+            content.contains("保存する"),
+            "button_label が含まれること: got={}",
+            content
+        );
+        assert!(
+            content.contains("Email"),
+            "field_name が含まれること: got={}",
+            content
+        );
+        assert!(
+            content.contains("IsEmpty(Contacts::Email)"),
+            "hide_condition が含まれること: got={}",
+            content
+        );
+        assert!(
+            content.contains("クリックして保存"),
+            "tooltip が含まれること: got={}",
+            content
         );
     }
 
