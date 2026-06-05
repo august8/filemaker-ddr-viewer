@@ -123,7 +123,7 @@ function FieldPanelInner({
 
 function RightPanel2Content({ width }: { width: number }) {
   const { rightPanel2, setRightPanel2 } = useAppStore();
-  if (!rightPanel2 || rightPanel2.kind !== "field") return null;
+  if (!rightPanel2) return null;
   const { projectId, fieldProjectId, tableId, tableName, fieldId } = rightPanel2;
   return (
     <FieldPanelInner

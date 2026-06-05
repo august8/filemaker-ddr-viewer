@@ -105,6 +105,8 @@ export type RightPanelState =
   | { kind: "layout_object"; layoutObjectId: number; layoutId: number }
   | null;
 
+export type FieldRightPanelState = Extract<RightPanelState, { kind: "field" }> | null;
+
 /** SelectedElement の同一性を O(1) で比較するためのキー文字列を返す。 */
 function elementKey(el: SelectedElement | undefined): string {
   if (el == null) return "null"; // null と undefined の両方を捕捉
@@ -167,7 +169,7 @@ interface AppState {
   showAbout: boolean;
   showUpgradeSettings: boolean;
   rightPanel: RightPanelState;
-  rightPanel2: RightPanelState;
+  rightPanel2: FieldRightPanelState;
   navHistory: SelectedElement[];
   navIndex: number;
   diffState: DiffStateData;
@@ -194,7 +196,7 @@ interface AppState {
   setShowAbout: (show: boolean) => void;
   setShowUpgradeSettings: (show: boolean) => void;
   setRightPanel: (panel: RightPanelState) => void;
-  setRightPanel2: (panel: RightPanelState) => void;
+  setRightPanel2: (panel: FieldRightPanelState) => void;
   navigateBack: () => void;
   navigateForward: () => void;
   purgeProjectFromHistory: (projectId: number) => void;
