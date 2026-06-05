@@ -150,7 +150,7 @@ export function MainContent() {
         );
       case "all_table_occurrences":
         return (
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-hidden flex flex-col" data-testid="detail-panel">
             <AllTableOccurrencesPanel projectId={selectedElement.projectId} />
           </div>
         );
@@ -162,7 +162,7 @@ export function MainContent() {
         );
       case "all_relationships":
         return (
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-hidden flex flex-col" data-testid="detail-panel">
             <AllRelationshipsPanel projectId={selectedElement.projectId} highlightId={selectedElement.highlightId} />
           </div>
         );
