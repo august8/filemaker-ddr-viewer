@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 /**
  * テーブルの列幅をドラッグでリサイズするフック。
@@ -18,9 +18,28 @@ export function useColumnResize(count: number) {
     frozenWidths: number[];
   } | null>(null);
 
-  const setThRef = (colIndex: number) => (el: HTMLTableCellElement | null) => {
-    thRefs.current[colIndex] = el;
-  };
+  // 安定したコールバックをマウント時に一度だけ生成（毎レンダーで新規生成しない）
+  const thRefCallbacks = useRef<((el: HTMLTableCellElement | null) => void)[]>(
+    Array.from({ length: count }, (_, i) => (el: HTMLTableCellElement | null) => {
+      thRefs.current[i] = el;
+    })
+  );
+
+  const setThRef = (colIndex: number) => thRefCallbacks.current[colIndex];
+
+  // アンマウント時にドラッグ中のリスナーを確実に除去する
+  const activeListeners = useRef<{
+    onMouseMove: ((ev: MouseEvent) => void) | null;
+    onMouseUp: (() => void) | null;
+  }>({ onMouseMove: null, onMouseUp: null });
+
+  useEffect(() => {
+    return () => {
+      const { onMouseMove, onMouseUp } = activeListeners.current;
+      if (onMouseMove) document.removeEventListener("mousemove", onMouseMove);
+      if (onMouseUp) document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   const getResizeHandleProps = (colIndex: number) => ({
     onMouseDown: (e: React.MouseEvent) => {
@@ -55,10 +74,14 @@ export function useColumnResize(count: number) {
 
       const onMouseUp = () => {
         dragging.current = null;
+        activeListeners.current.onMouseMove = null;
+        activeListeners.current.onMouseUp = null;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
       };
 
+      activeListeners.current.onMouseMove = onMouseMove;
+      activeListeners.current.onMouseUp = onMouseUp;
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     },

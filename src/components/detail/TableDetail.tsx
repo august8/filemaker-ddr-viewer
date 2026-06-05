@@ -127,21 +127,21 @@ export function TableDetail({ projectId, tableId, name }: Props) {
         <p className="text-gray-500">フィールドなし</p>
       ) : (
         <table className="w-full text-sm border-separate border-spacing-0 table-fixed [&_td]:overflow-hidden [&_th]:overflow-hidden">
-            <colgroup>
-              {widths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
-            </colgroup>
-            <thead className="sticky top-0 bg-white z-10">
-              <tr className="bg-gray-100 text-left">
-                <th ref={setThRef(0)} className="px-3 py-2 border border-gray-200 relative">フィールド名<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(0)} /></th>
-                <th ref={setThRef(1)} className="px-3 py-2 border border-gray-200 relative">データ型<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(1)} /></th>
-                <th ref={setThRef(2)} className="px-3 py-2 border border-gray-200 relative">種別<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(2)} /></th>
-                <th ref={setThRef(3)} className="px-3 py-2 border border-gray-200 relative">グローバル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(3)} /></th>
-                <th ref={setThRef(4)} className="px-3 py-2 border border-gray-200 relative">繰り返し<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(4)} /></th>
-                <th ref={setThRef(5)} className="px-3 py-2 border border-gray-200 relative">計算式<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(5)} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {allRows.map((field) => {
+          <colgroup>
+            {widths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
+          </colgroup>
+          <thead className="sticky top-0 bg-white z-10">
+            <tr className="bg-gray-100 text-left">
+              <th ref={setThRef(0)} className="px-3 py-2 border border-gray-200 relative">フィールド名<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(0)} /></th>
+              <th ref={setThRef(1)} className="px-3 py-2 border border-gray-200 relative">データ型<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(1)} /></th>
+              <th ref={setThRef(2)} className="px-3 py-2 border border-gray-200 relative">種別<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(2)} /></th>
+              <th ref={setThRef(3)} className="px-3 py-2 border border-gray-200 relative">グローバル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(3)} /></th>
+              <th ref={setThRef(4)} className="px-3 py-2 border border-gray-200 relative">繰り返し<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(4)} /></th>
+              <th ref={setThRef(5)} className="px-3 py-2 border border-gray-200 relative">計算式<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(5)} /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {allRows.map((field) => {
                 const isSelected =
                   !field.isPhantom &&
                   rightPanel?.kind === "field" &&
@@ -190,8 +190,8 @@ export function TableDetail({ projectId, tableId, name }: Props) {
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
+            })}
+          </tbody>
           </table>
       )}
       </div>
