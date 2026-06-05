@@ -7,7 +7,10 @@ export const test = base.extend<{ page: Page }>({
   async page({}, use) {
     const browser = await chromium.connectOverCDP(CDP_URL);
     const context = browser.contexts()[0];
-    const page = context.pages()[0];
+    // CDP 応答後も WebView2 がページを開くまでわずかな遅延があるため、
+    // pages() が空の場合はページ生成イベントを待つ
+    const page = context.pages()[0]
+      ?? await context.waitForEvent("page", { timeout: 10_000 });
     await use(page);
     // browser.close() は呼ばない（globalTeardown でプロセスごと終了するため）
   },
