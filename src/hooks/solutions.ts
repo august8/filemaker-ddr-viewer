@@ -87,6 +87,18 @@ export function useSolutionProjectSummaries(solutionId: number | null) {
   });
 }
 
+// プロジェクト名変更
+export function useRenameProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ projectId, newName }: { projectId: number; newName: string }) =>
+      invoke<void>("rename_project", { projectId, newName }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["solutions"] });
+    },
+  });
+}
+
 // 全プロジェクト一覧（プロジェクト選択ドロップダウン用）
 export function useAllProjects(options?: { enabled?: boolean }) {
   return useQuery({

@@ -13,7 +13,8 @@ use crate::{
         repository::{
             delete_project as db_delete_project, delete_solution as db_delete_solution,
             get_project, list_projects as db_list_projects, list_solutions as db_list_solutions,
-            run_upgrade_check, CheckItemConfig, ProjectRow, SolutionRow, UpgradeHit,
+            run_upgrade_check, update_project_name as db_update_project_name, CheckItemConfig,
+            ProjectRow, SolutionRow, UpgradeHit,
         },
         Database,
     },
@@ -137,6 +138,17 @@ pub async fn delete_project(
 ) -> Result<(), CommandError> {
     let mut db = super::lock_db(&state)?;
     db_delete_project(&mut db, project_id).map_err(CommandError::from)
+}
+
+/// プロジェクト名を変更する。
+#[tauri::command]
+pub async fn rename_project(
+    state: tauri::State<'_, AppState>,
+    project_id: i64,
+    new_name: String,
+) -> Result<(), CommandError> {
+    let mut db = super::lock_db(&state)?;
+    db_update_project_name(&mut db, project_id, &new_name).map_err(CommandError::from)
 }
 
 /// プロジェクトの統計サマリーを返す。

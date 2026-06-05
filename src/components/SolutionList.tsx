@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects } from "../hooks/solutions";
+import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects, useRenameProject } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { CategoryTree } from "./navigation/CategoryTree";
 import { Spinner } from "./Spinner";
@@ -7,10 +7,13 @@ import type { SolutionRow } from "../types/ddr";
 
 function ProjectItems({ solution }: { solution: SolutionRow }) {
   const { data: projects, isLoading } = useSolutionProjects(solution.id);
-  const { selectedProject, selectProject, setRightPanel, purgeProjectFromHistory } = useAppStore();
+  const { selectedProject, selectProject, setRightPanel, purgeProjectFromHistory, renameProjectInStore } = useAppStore();
   const { mutate: deleteProject, isPending: isDeletingProject } = useDeleteProject();
+  const { mutate: renameProject } = useRenameProject();
   const [confirmingProjectId, setConfirmingProjectId] = useState<number | null>(null);
   const [deletingProjectId, setDeletingProjectId] = useState<number | null>(null);
+  const [renamingProjectId, setRenamingProjectId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   if (isLoading) {
     return <li className="flex items-center gap-1.5 px-6 py-1 text-xs text-gray-400"><Spinner className="w-3 h-3" />読み込み中...</li>;
@@ -28,28 +31,65 @@ function ProjectItems({ solution }: { solution: SolutionRow }) {
         return (
           <li key={project.id} className={isDeleting ? "opacity-50 pointer-events-none" : ""}>
             <div
-              className={`flex items-center justify-between px-6 py-1.5 cursor-pointer text-sm hover:bg-blue-50 ${
+              className={`group flex items-center justify-between px-6 py-1.5 cursor-pointer text-sm hover:bg-blue-50 ${
                 isSelected ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-700"
               }`}
-              onClick={() => { setRightPanel(null); selectProject(project); }}
+              onClick={() => { if (renamingProjectId !== project.id) { setRightPanel(null); selectProject(project); } }}
             >
-              <span className="truncate" title={project.name}>
-                📄 {project.name}
-                <span className="ml-1 text-xs text-gray-400">{project.fm_version}</span>
-              </span>
+              {renamingProjectId === project.id ? (
+                <input
+                  className="flex-1 min-w-0 px-1 text-sm border border-blue-400 rounded outline-none"
+                  value={renameValue}
+                  autoFocus
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const trimmed = renameValue.trim();
+                      if (trimmed && trimmed !== project.name) {
+                        renameProject(
+                          { projectId: project.id, newName: trimmed },
+                          { onSuccess: () => renameProjectInStore(project.id, trimmed) }
+                        );
+                      }
+                      setRenamingProjectId(null);
+                    } else if (e.key === "Escape") {
+                      setRenamingProjectId(null);
+                    }
+                  }}
+                />
+              ) : (
+                <span className="truncate" title={project.name}>
+                  📄 {project.name}
+                  <span className="ml-1 text-xs text-gray-400">{project.fm_version}</span>
+                </span>
+              )}
               {isDeleting ? (
                 <Spinner className="w-3.5 h-3.5 ml-1" />
               ) : (
-                <button
-                  className="ml-1 text-gray-300 hover:text-red-500 flex-shrink-0 text-lg leading-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmingProjectId(project.id);
-                  }}
-                  aria-label="削除"
-                >
-                  ×
-                </button>
+                <span className="flex items-center gap-0.5 flex-shrink-0">
+                  <button
+                    className="text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 text-sm leading-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRenamingProjectId(project.id);
+                      setRenameValue(project.name);
+                    }}
+                    aria-label="名前を変更"
+                  >
+                    ✏
+                  </button>
+                  <button
+                    className="ml-0.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 text-lg leading-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmingProjectId(project.id);
+                    }}
+                    aria-label="削除"
+                  >
+                    ×
+                  </button>
+                </span>
               )}
             </div>
             {confirmingProjectId === project.id && (

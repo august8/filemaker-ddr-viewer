@@ -178,6 +178,22 @@ pub fn get_project(db: &Database, project_id: i64) -> Result<ProjectRow, DbError
         })
 }
 
+/// プロジェクト名を更新する。
+pub fn update_project_name(
+    db: &mut Database,
+    project_id: i64,
+    new_name: &str,
+) -> Result<(), DbError> {
+    let affected = db.conn.execute(
+        "UPDATE projects SET name = ?1 WHERE id = ?2",
+        params![new_name, project_id],
+    )?;
+    if affected == 0 {
+        return Err(DbError::NotFound(format!("project:{project_id}")));
+    }
+    Ok(())
+}
+
 /// プロジェクトを CASCADE 削除する（関連データも全削除）。
 pub fn delete_project(db: &mut Database, project_id: i64) -> Result<(), DbError> {
     // FTS5 仮想テーブルは CASCADE DELETE に対応しないため手動で削除する
@@ -306,5 +322,21 @@ mod tests {
     fn delete_project_not_found_returns_err() {
         let mut db = Database::open_in_memory().unwrap();
         assert!(delete_project(&mut db, 9999).is_err());
+    }
+
+    // ---- update_project_name ----
+
+    #[test]
+    fn update_project_name_changes_name() {
+        let (mut db, _sid, pid) = db_with_minimal();
+        update_project_name(&mut db, pid, "新しい名前").unwrap();
+        let row = get_project(&db, pid).unwrap();
+        assert_eq!(row.name, "新しい名前");
+    }
+
+    #[test]
+    fn update_project_name_not_found_returns_err() {
+        let mut db = Database::open_in_memory().unwrap();
+        assert!(update_project_name(&mut db, 9999, "X").is_err());
     }
 }
