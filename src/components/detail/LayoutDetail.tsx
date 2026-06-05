@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useLayoutTriggers, useLayoutObjects, useLayoutList } from "../../hooks/layout";
 import { useScriptList } from "../../hooks/script";
 import { useAppStore } from "../../stores/appStore";
+import { useColumnResize } from "../../hooks/useColumnResize";
 import type { LayoutRow, LayoutObjectRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 import { SECTION_HEADER } from "../../styles/tokens";
@@ -52,6 +53,7 @@ export function LayoutDetail({ layout, projectId }: Props) {
   const { data: objects = [], isLoading: objectsLoading } = useLayoutObjects(layout.id);
   const { data: scripts = [] } = useScriptList(projectId);
   const { setRightPanel, rightPanel, selectElement, diffContext } = useAppStore();
+  const { widths: objWidths, setThRef: setObjThRef, getResizeHandleProps: getObjResizeHandleProps } = useColumnResize(6);
 
   // diff ハイライト用: 比較元プロジェクトの同名レイアウトのオブジェクトを取得
   const compareProjectId = diffContext?.compareProjectId ?? null;
@@ -104,109 +106,116 @@ export function LayoutDetail({ layout, projectId }: Props) {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-bold mb-4 text-gray-800">{layout.name}</h2>
+    <div className="flex flex-col h-full">
+      <div className="px-4 pt-4 pb-2 shrink-0">
+        <h2 className="text-lg font-bold mb-2 text-gray-800">{layout.name}</h2>
 
-      {/* テーブルオカレンス */}
-      <div className="mb-4">
-        <span className="text-sm font-semibold text-gray-600">テーブルオカレンス: </span>
-        <span className="text-sm text-gray-800">
-          {layout.table_occurrence_name ?? "—"}
-        </span>
+        {/* テーブルオカレンス */}
+        <div className="mb-2">
+          <span className="text-sm font-semibold text-gray-600">テーブルオカレンス: </span>
+          <span className="text-sm text-gray-800">
+            {layout.table_occurrence_name ?? "—"}
+          </span>
+        </div>
+
+        {/* トリガー一覧 */}
+        <h3 className={SECTION_HEADER}>スクリプトトリガー</h3>
+        {triggers.length === 0 ? (
+          <p className="text-gray-500 text-sm mb-2">トリガーなし</p>
+        ) : (
+          <table className="w-full text-sm border-separate border-spacing-0 mb-2">
+            <thead>
+              <tr className="bg-gray-100 text-left">
+                <th className="px-3 py-2 border border-gray-200">イベント</th>
+                <th className="px-3 py-2 border border-gray-200">スクリプト名</th>
+                <th className="px-3 py-2 border border-gray-200">ファイル</th>
+              </tr>
+            </thead>
+            <tbody>
+              {triggers.map((trigger) => {
+                const targetScript = scripts.find((s) => s.name === trigger.script_name);
+                return (
+                  <tr key={trigger.id} className="hover:bg-blue-50">
+                    <td className="px-3 py-2 border border-gray-200 font-mono text-xs">
+                      {trigger.event}
+                    </td>
+                    <td className="px-3 py-2 border border-gray-200">
+                      {targetScript ? (
+                        <button
+                          className="text-blue-600 hover:underline text-left"
+                          onClick={() => {
+                            setRightPanel(null);
+                            selectElement({
+                              kind: "script",
+                              projectId,
+                              id: targetScript.id,
+                              name: targetScript.name,
+                            });
+                          }}
+                        >
+                          {trigger.script_name}
+                        </button>
+                      ) : (
+                        <span className="text-gray-500">{trigger.script_name}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 border border-gray-200 text-gray-500 text-xs">
+                      {trigger.file_name}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {/* オブジェクト一覧ヘッダー */}
+        <h3 className={SECTION_HEADER}>
+          オブジェクト一覧
+          <span className="ml-2 text-xs font-normal text-gray-400">
+            クリックで詳細を表示
+          </span>
+        </h3>
+        {compareProjectId && diffMap.size > 0 && (
+          <div className="flex gap-3 text-xs mb-1">
+            {[...new Set(diffMap.values())].includes("Added") && (
+              <span className="inline-flex items-center gap-1 text-green-700">
+                <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                追加
+              </span>
+            )}
+            {[...new Set(diffMap.values())].includes("Removed") && (
+              <span className="inline-flex items-center gap-1 text-red-600">
+                <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                削除
+              </span>
+            )}
+            {[...new Set(diffMap.values())].includes("Modified") && (
+              <span className="inline-flex items-center gap-1 text-yellow-700">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                変更
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* トリガー一覧 */}
-      <h3 className={SECTION_HEADER}>スクリプトトリガー</h3>
-      {triggers.length === 0 ? (
-        <p className="text-gray-500 text-sm mb-6">トリガーなし</p>
-      ) : (
-        <table className="w-full text-sm border-collapse mb-6">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="px-3 py-2 border border-gray-200">イベント</th>
-              <th className="px-3 py-2 border border-gray-200">スクリプト名</th>
-              <th className="px-3 py-2 border border-gray-200">ファイル</th>
-            </tr>
-          </thead>
-          <tbody>
-            {triggers.map((trigger) => {
-              const targetScript = scripts.find((s) => s.name === trigger.script_name);
-              return (
-                <tr key={trigger.id} className="hover:bg-blue-50">
-                  <td className="px-3 py-2 border border-gray-200 font-mono text-xs">
-                    {trigger.event}
-                  </td>
-                  <td className="px-3 py-2 border border-gray-200">
-                    {targetScript ? (
-                      <button
-                        className="text-blue-600 hover:underline text-left"
-                        onClick={() => {
-                          setRightPanel(null);
-                          selectElement({
-                            kind: "script",
-                            projectId,
-                            id: targetScript.id,
-                            name: targetScript.name,
-                          });
-                        }}
-                      >
-                        {trigger.script_name}
-                      </button>
-                    ) : (
-                      <span className="text-gray-500">{trigger.script_name}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 border border-gray-200 text-gray-500 text-xs">
-                    {trigger.file_name}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-
-      {/* オブジェクト一覧 */}
-      <h3 className={SECTION_HEADER}>
-        オブジェクト一覧
-        <span className="ml-2 text-xs font-normal text-gray-400">
-          クリックで詳細を表示
-        </span>
-      </h3>
-      {compareProjectId && diffMap.size > 0 && (
-        <div className="flex gap-3 text-xs mb-2">
-          {[...new Set(diffMap.values())].includes("Added") && (
-            <span className="inline-flex items-center gap-1 text-green-700">
-              <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-              追加
-            </span>
-          )}
-          {[...new Set(diffMap.values())].includes("Removed") && (
-            <span className="inline-flex items-center gap-1 text-red-600">
-              <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-              削除
-            </span>
-          )}
-          {[...new Set(diffMap.values())].includes("Modified") && (
-            <span className="inline-flex items-center gap-1 text-yellow-700">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
-              変更
-            </span>
-          )}
-        </div>
-      )}
+      <div className="flex-1 overflow-auto [scrollbar-gutter:stable] px-4 pb-4">
       {allObjects.length === 0 ? (
         <p className="text-gray-500 text-sm">オブジェクトなし</p>
       ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
+        <table className="w-full text-sm border-separate border-spacing-0 table-fixed [&_td]:overflow-hidden [&_th]:overflow-hidden">
+          <colgroup>
+            {objWidths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
+          </colgroup>
+          <thead className="sticky top-0 bg-white z-10">
             <tr className="bg-gray-100 text-left">
-              <th className="px-3 py-2 border border-gray-200">種別</th>
-              <th className="px-3 py-2 border border-gray-200">オブジェクト名</th>
-              <th className="px-3 py-2 border border-gray-200">ラベル</th>
-              <th className="px-3 py-2 border border-gray-200">フィールド</th>
-              <th className="px-3 py-2 border border-gray-200">ツールチップ</th>
-              <th className="px-3 py-2 border border-gray-200">条件非表示</th>
+              <th ref={setObjThRef(0)} className="px-3 py-2 border border-gray-200 relative">種別<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(0)} /></th>
+              <th ref={setObjThRef(1)} className="px-3 py-2 border border-gray-200 relative">オブジェクト名<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(1)} /></th>
+              <th ref={setObjThRef(2)} className="px-3 py-2 border border-gray-200 relative">ラベル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(2)} /></th>
+              <th ref={setObjThRef(3)} className="px-3 py-2 border border-gray-200 relative">フィールド<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(3)} /></th>
+              <th ref={setObjThRef(4)} className="px-3 py-2 border border-gray-200 relative">ツールチップ<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(4)} /></th>
+              <th ref={setObjThRef(5)} className="px-3 py-2 border border-gray-200 relative">条件非表示<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getObjResizeHandleProps(5)} /></th>
             </tr>
           </thead>
           <tbody>
@@ -268,6 +277,7 @@ export function LayoutDetail({ layout, projectId }: Props) {
           </tbody>
         </table>
       )}
+      </div>
     </div>
   );
 }

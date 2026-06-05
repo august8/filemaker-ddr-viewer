@@ -3,6 +3,7 @@ import { useCustomFunctionList } from "../../hooks/catalog";
 import { useAppStore } from "../../stores/appStore";
 import { Spinner } from "../Spinner";
 import { PAGE_SIZE } from "../../constants";
+import { useColumnResize } from "../../hooks/useColumnResize";
 
 
 interface Props {
@@ -15,6 +16,7 @@ export function AllCustomFunctionsPanel({ projectId }: Props) {
 
   const { data: customFunctions = [], isLoading } = useCustomFunctionList(projectId, PAGE_SIZE, page * PAGE_SIZE);
   const { selectElement } = useAppStore();
+  const { widths, setThRef, getResizeHandleProps } = useColumnResize(2);
 
   const isLastPage = customFunctions.length < PAGE_SIZE;
 
@@ -74,12 +76,15 @@ export function AllCustomFunctionsPanel({ projectId }: Props) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-4 pb-4">
-        <table className="w-full text-sm border-collapse">
+      <div className="flex-1 overflow-auto [scrollbar-gutter:stable] px-4 pb-4">
+        <table className="w-full text-sm border-separate border-spacing-0 table-fixed [&_td]:overflow-hidden [&_th]:overflow-hidden">
+          <colgroup>
+            {widths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
+          </colgroup>
           <thead className="sticky top-0 bg-white z-10">
             <tr className="bg-gray-100 text-left">
-              <th className="px-3 py-2 border border-gray-200">カスタム関数名</th>
-              <th className="px-3 py-2 border border-gray-200">パラメータ</th>
+              <th ref={setThRef(0)} className="px-3 py-2 border border-gray-200 relative">カスタム関数名<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(0)} /></th>
+              <th ref={setThRef(1)} className="px-3 py-2 border border-gray-200 relative">パラメータ<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(1)} /></th>
             </tr>
           </thead>
           <tbody>
