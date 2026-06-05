@@ -8,6 +8,7 @@ vi.mock("../hooks/solutions", () => ({
   useDeleteSolution: vi.fn(),
   useSolutionProjects: vi.fn(),
   useDeleteProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRenameProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock("../stores/appStore", () => ({
@@ -19,7 +20,7 @@ vi.mock("../components/navigation/CategoryTree", () => ({
   CategoryTree: () => null,
 }));
 
-import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject } from "../hooks/solutions";
+import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject, useRenameProject } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 
 const mockSolutions: SolutionRow[] = [
@@ -31,6 +32,7 @@ const mockSelectSolution = vi.fn();
 const mockSelectProject = vi.fn();
 const mockSelectElement = vi.fn();
 const mockSetRightPanel = vi.fn();
+const mockRenameProjectInStore = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -41,6 +43,7 @@ beforeEach(() => {
     selectProject: mockSelectProject,
     selectElement: mockSelectElement,
     setRightPanel: mockSetRightPanel,
+    renameProjectInStore: mockRenameProjectInStore,
   } as unknown as ReturnType<typeof useAppStore>);
   vi.mocked(useDeleteSolution).mockReturnValue(
     { mutate: vi.fn(), isPending: false } as unknown as ReturnType<typeof useDeleteSolution>
@@ -248,6 +251,7 @@ describe("SolutionList", () => {
       selectProject: mockSelectProject,
       selectElement: mockSelectElement,
       setRightPanel: mockSetRightPanel,
+      renameProjectInStore: mockRenameProjectInStore,
     } as unknown as ReturnType<typeof useAppStore>);
     vi.mocked(useSolutions).mockReturnValue(
       { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
@@ -260,5 +264,84 @@ describe("SolutionList", () => {
     const projectRow = screen.getByText(/MyDB/).closest("div[class*='cursor-pointer']")!;
     fireEvent.click(projectRow);
     expect(mockSelectProject).toHaveBeenCalledWith(mockProject);
+  });
+
+  it("rename_button_shows_inline_input", () => {
+    const mockProject = { id: 10, name: "MyDB", fm_version: "19", file_path: "", imported_at: "" };
+    vi.mocked(useAppStore).mockReturnValue({
+      selectedSolution: mockSolutions[0],
+      selectedProject: null,
+      selectSolution: mockSelectSolution,
+      selectProject: mockSelectProject,
+      selectElement: mockSelectElement,
+      setRightPanel: mockSetRightPanel,
+      renameProjectInStore: mockRenameProjectInStore,
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    vi.mocked(useSolutionProjects).mockReturnValue(
+      { data: [mockProject], isLoading: false } as unknown as ReturnType<typeof useSolutionProjects>
+    );
+    render(<SolutionList />);
+    fireEvent.click(screen.getByRole("button", { name: "名前を変更" }));
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("MyDB")).toBeInTheDocument();
+  });
+
+  it("rename_escape_cancels_edit", () => {
+    const mockProject = { id: 10, name: "MyDB", fm_version: "19", file_path: "", imported_at: "" };
+    vi.mocked(useAppStore).mockReturnValue({
+      selectedSolution: mockSolutions[0],
+      selectedProject: null,
+      selectSolution: mockSelectSolution,
+      selectProject: mockSelectProject,
+      selectElement: mockSelectElement,
+      setRightPanel: mockSetRightPanel,
+      renameProjectInStore: mockRenameProjectInStore,
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    vi.mocked(useSolutionProjects).mockReturnValue(
+      { data: [mockProject], isLoading: false } as unknown as ReturnType<typeof useSolutionProjects>
+    );
+    render(<SolutionList />);
+    fireEvent.click(screen.getByRole("button", { name: "名前を変更" }));
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Escape" });
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("rename_enter_calls_mutation_with_new_name", () => {
+    const mutateMock = vi.fn();
+    vi.mocked(useRenameProject).mockReturnValue(
+      { mutate: mutateMock, isPending: false } as unknown as ReturnType<typeof useRenameProject>
+    );
+    const mockProject = { id: 10, name: "MyDB", fm_version: "19", file_path: "", imported_at: "" };
+    vi.mocked(useAppStore).mockReturnValue({
+      selectedSolution: mockSolutions[0],
+      selectedProject: null,
+      selectSolution: mockSelectSolution,
+      selectProject: mockSelectProject,
+      selectElement: mockSelectElement,
+      setRightPanel: mockSetRightPanel,
+      renameProjectInStore: mockRenameProjectInStore,
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    vi.mocked(useSolutionProjects).mockReturnValue(
+      { data: [mockProject], isLoading: false } as unknown as ReturnType<typeof useSolutionProjects>
+    );
+    render(<SolutionList />);
+    fireEvent.click(screen.getByRole("button", { name: "名前を変更" }));
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "新しい名前" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(mutateMock).toHaveBeenCalledWith(
+      { projectId: 10, newName: "新しい名前" },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    );
   });
 });
