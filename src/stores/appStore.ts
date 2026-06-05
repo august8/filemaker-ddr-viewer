@@ -201,7 +201,7 @@ interface AppState {
   navigateForward: () => void;
   purgeProjectFromHistory: (projectId: number) => void;
   navigateToProject: (project: ProjectRow) => void;
-  renameProjectInStore: (projectId: number, newName: string) => void;
+  renameSolutionInStore: (solutionId: number, newName: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -391,12 +391,12 @@ export const useAppStore = create<AppState>((set) => ({
         : filtered.indexOf(currentEntry);
       return { navHistory: filtered, navIndex: Math.max(-1, newIndex) };
     }),
-  renameProjectInStore: (projectId, newName) =>
+  renameSolutionInStore: (solutionId, newName) =>
     set((state) => ({
-      selectedProject:
-        state.selectedProject?.id === projectId
-          ? { ...state.selectedProject, name: newName }
-          : state.selectedProject,
+      selectedSolution:
+        state.selectedSolution?.id === solutionId
+          ? { ...state.selectedSolution, name: newName }
+          : state.selectedSolution,
     })),
   navigateToProject: (project: ProjectRow) =>
     set((state) => {

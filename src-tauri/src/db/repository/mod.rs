@@ -18,7 +18,7 @@ mod solution;
 
 pub use solution::{
     delete_project, delete_solution, get_project, get_solution, get_solution_projects,
-    insert_solution, list_projects, list_solutions, update_project_name, ProjectRow, SolutionRow,
+    insert_solution, list_projects, list_solutions, update_solution_name, ProjectRow, SolutionRow,
     SolutionWithProjects,
 };
 

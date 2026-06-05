@@ -87,12 +87,12 @@ export function useSolutionProjectSummaries(solutionId: number | null) {
   });
 }
 
-// プロジェクト名変更
-export function useRenameProject() {
+// ソリューション名変更
+export function useRenameSolution() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ projectId, newName }: { projectId: number; newName: string }) =>
-      invoke<void>("rename_project", { projectId, newName }),
+    mutationFn: ({ solutionId, newName }: { solutionId: number; newName: string }) =>
+      invoke<void>("rename_solution", { solutionId, newName }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["solutions"] });
     },
