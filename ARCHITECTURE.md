@@ -99,12 +99,12 @@ filemaker-ddr-viewer/
 | `StatusBar.tsx` | 下部ステータスバー |
 | `Spinner.tsx` | ローディングスピナー |
 | `ErrorBoundary.tsx` | React エラーバウンダリ |
-| `detail/TableDetail.tsx` | テーブル詳細・フィールド一覧 |
+| `detail/TableDetail.tsx` | テーブル詳細・フィールド一覧。タイトルを `shrink-0` ヘッダーに固定し、フィールドテーブルは `flex-1 overflow-auto` 内でスクロール。`useColumnResize` でカラム幅ドラッグ変更可能 |
 | `detail/FieldDetail.tsx` | フィールド詳細・Where Used |
 | `detail/ScriptDetail.tsx` | スクリプト詳細・ステップ一覧・diff表示 |
-| `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト |
+| `detail/LayoutDetail.tsx` | レイアウト詳細・トリガー・オブジェクト。タイトル・テーブルオカレンス・トリガーテーブルを `shrink-0` ヘッダーに固定し、オブジェクト一覧は `flex-1 overflow-auto` 内でスクロール。`useColumnResize` でカラム幅ドラッグ変更可能 |
 | `detail/LayoutObjectDetail.tsx` | レイアウトオブジェクト詳細 |
-| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel / AllExternalDataSourcesPanel）。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
+| `detail/All*Panel.tsx` | 各エンティティの横断一覧（AllTablesPanel / AllFieldsPanel / AllScriptsPanel / AllLayoutsPanel / AllTableOccurrencesPanel / AllRelationshipsPanel / AllValueListsPanel / AllCustomFunctionsPanel / AllExternalDataSourcesPanel）。全パネル共通でタイトル・フィルター・ページネーションを `shrink-0` ヘッダーに固定し、テーブルは `flex-1 overflow-auto` 内でスクロール。`useColumnResize` でカラム幅ドラッグ変更可能。AllFieldsPanel は `@tanstack/react-virtual` の `useVirtualizer` で仮想スクロール化済み |
 | `detail/RelationshipGraphPanel.tsx` | リレーショングラフ（dagre + SVG、pan/zoom 対応） |
 | `detail/CallChainTree.tsx` | コールチェーンツリー |
 | `detail/WhereUsed.tsx` | 参照元一覧 |
@@ -114,6 +114,7 @@ filemaker-ddr-viewer/
 | `DiffView.tsx` | 差分比較ビュー |
 | `stores/appStore.ts` | グローバル状態（zustand） |
 | `hooks/` | ドメイン別 Tauri IPC フック（analysis / catalog / diff / fieldRefs / layout / script / search / security / solutions / table）。`hooks/analysis.ts` の `useSolutionBrokenRefs` はソリューション全プロジェクトの壊れた参照を `Promise.all` で集約 |
+| `hooks/useColumnResize.ts` | テーブルのカラム幅ドラッグリサイズフック。`table-layout:fixed` + `<colgroup>` と組み合わせて使用。ドラッグ開始時に全列幅を DOM から実測して固定し、N 列を広げると N+1 列が縮む（合計幅一定）。最終列のみ単独変更 |
 | `hooks/useSearchFiltering.ts` | 検索フィルタリングロジック |
 | `styles/tokens.ts` | デザイントークン定数 |
 

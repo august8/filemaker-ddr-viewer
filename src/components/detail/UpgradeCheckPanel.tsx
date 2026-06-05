@@ -214,7 +214,7 @@ export function UpgradeCheckPanel({ solutionId }: Props) {
           {groups.length > 0 && (
             <div className={`${CARD} overflow-x-auto`}>
               <p className={`${SECTION_HEADER} mb-3`}>サマリー</p>
-              <table className="w-full text-xs border-collapse">
+              <table className="w-full text-xs border-separate border-spacing-0">
                 <thead>
                   <tr>
                     <th className="text-left py-1 pr-3 text-gray-500 font-medium whitespace-nowrap">チェック項目</th>

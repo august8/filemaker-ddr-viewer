@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { useTableFields, useTableList } from "../../hooks/table";
 import { useAppStore } from "../../stores/appStore";
+import { useColumnResize } from "../../hooks/useColumnResize";
 import type { FieldRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 import { BADGE_VARIANTS } from "../../styles/tokens";
@@ -34,6 +35,7 @@ const DIFF_NAME_CLASS: Record<DiffKind, string> = {
 export function TableDetail({ projectId, tableId, name }: Props) {
   const { data: fields = [], isLoading } = useTableFields(projectId, tableId);
   const { rightPanel, setRightPanel, diffContext } = useAppStore();
+  const { widths, setThRef, getResizeHandleProps } = useColumnResize(6);
 
   // diff ハイライト用: 比較元プロジェクトのフィールドを取得
   const compareProjectId = diffContext?.compareProjectId ?? null;
@@ -94,47 +96,52 @@ export function TableDetail({ projectId, tableId, name }: Props) {
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-bold mb-4 text-gray-800">{name}</h2>
-      {compareProjectId && diffMap.size > 0 && (
-        <div className="flex gap-3 text-xs mb-3">
-          {[...new Set(diffMap.values())].includes("Added") && (
-            <span className="inline-flex items-center gap-1 text-green-700">
-              <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
-              追加
-            </span>
-          )}
-          {[...new Set(diffMap.values())].includes("Removed") && (
-            <span className="inline-flex items-center gap-1 text-red-600">
-              <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-              削除
-            </span>
-          )}
-          {[...new Set(diffMap.values())].includes("Modified") && (
-            <span className="inline-flex items-center gap-1 text-yellow-700">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
-              変更
-            </span>
-          )}
-        </div>
-      )}
+    <div className="flex flex-col h-full">
+      <div className="px-4 pt-4 pb-2 shrink-0">
+        <h2 className="text-lg font-bold mb-2 text-gray-800">{name}</h2>
+        {compareProjectId && diffMap.size > 0 && (
+          <div className="flex gap-3 text-xs mb-1">
+            {[...new Set(diffMap.values())].includes("Added") && (
+              <span className="inline-flex items-center gap-1 text-green-700">
+                <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                追加
+              </span>
+            )}
+            {[...new Set(diffMap.values())].includes("Removed") && (
+              <span className="inline-flex items-center gap-1 text-red-600">
+                <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                削除
+              </span>
+            )}
+            {[...new Set(diffMap.values())].includes("Modified") && (
+              <span className="inline-flex items-center gap-1 text-yellow-700">
+                <span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />
+                変更
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex-1 overflow-auto [scrollbar-gutter:stable] px-4 pb-4">
       {allRows.length === 0 ? (
         <p className="text-gray-500">フィールドなし</p>
       ) : (
-        <div className="overflow-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="px-3 py-2 border border-gray-200">フィールド名</th>
-                <th className="px-3 py-2 border border-gray-200">データ型</th>
-                <th className="px-3 py-2 border border-gray-200">種別</th>
-                <th className="px-3 py-2 border border-gray-200">グローバル</th>
-                <th className="px-3 py-2 border border-gray-200">繰り返し</th>
-                <th className="px-3 py-2 border border-gray-200">計算式</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allRows.map((field) => {
+        <table className="w-full text-sm border-separate border-spacing-0 table-fixed [&_td]:overflow-hidden [&_th]:overflow-hidden">
+          <colgroup>
+            {widths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
+          </colgroup>
+          <thead className="sticky top-0 bg-white z-10">
+            <tr className="bg-gray-100 text-left">
+              <th ref={setThRef(0)} className="px-3 py-2 border border-gray-200 relative">フィールド名<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(0)} /></th>
+              <th ref={setThRef(1)} className="px-3 py-2 border border-gray-200 relative">データ型<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(1)} /></th>
+              <th ref={setThRef(2)} className="px-3 py-2 border border-gray-200 relative">種別<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(2)} /></th>
+              <th ref={setThRef(3)} className="px-3 py-2 border border-gray-200 relative">グローバル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(3)} /></th>
+              <th ref={setThRef(4)} className="px-3 py-2 border border-gray-200 relative">繰り返し<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(4)} /></th>
+              <th ref={setThRef(5)} className="px-3 py-2 border border-gray-200 relative">計算式<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(5)} /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {allRows.map((field) => {
                 const isSelected =
                   !field.isPhantom &&
                   rightPanel?.kind === "field" &&
@@ -183,11 +190,11 @@ export function TableDetail({ projectId, tableId, name }: Props) {
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
+            })}
+          </tbody>
           </table>
-        </div>
       )}
+      </div>
     </div>
   );
 }

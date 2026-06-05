@@ -3,6 +3,7 @@ import { useRelationshipList } from "../../hooks/table";
 import type { RelationshipRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 import { PAGE_SIZE } from "../../constants";
+import { useColumnResize } from "../../hooks/useColumnResize";
 
 interface Props {
   projectId: number;
@@ -20,6 +21,7 @@ export function AllRelationshipsPanel({ projectId, highlightId }: Props) {
   const [filter, setFilter] = useState("");
   const { data: relationships = [], isLoading } = useRelationshipList(projectId, PAGE_SIZE, page * PAGE_SIZE);
   const highlightRef = useRef<HTMLTableRowElement>(null);
+  const { widths, setThRef, getResizeHandleProps } = useColumnResize(3);
   const isLastPage = relationships.length < PAGE_SIZE;
 
   useEffect(() => {
@@ -91,13 +93,16 @@ export function AllRelationshipsPanel({ projectId, highlightId }: Props) {
       </div>
 
       {/* テーブル */}
-      <div className="flex-1 overflow-auto px-4 pb-4">
-        <table className="w-full text-sm border-collapse">
+      <div className="flex-1 overflow-auto [scrollbar-gutter:stable] px-4 pb-4">
+        <table className="w-full text-sm border-separate border-spacing-0 table-fixed [&_td]:overflow-hidden [&_th]:overflow-hidden">
+          <colgroup>
+            {widths.map((w, i) => <col key={i} style={w !== undefined ? { width: `${w}px` } : undefined} />)}
+          </colgroup>
           <thead className="sticky top-0 bg-white z-10">
             <tr className="bg-gray-100 text-left">
-              <th className="px-3 py-2 border border-gray-200 whitespace-nowrap">左テーブル</th>
-              <th className="px-3 py-2 border border-gray-200 whitespace-nowrap">右テーブル</th>
-              <th className="px-3 py-2 border border-gray-200">結合条件</th>
+              <th ref={setThRef(0)} className="px-3 py-2 border border-gray-200 whitespace-nowrap relative">左テーブル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(0)} /></th>
+              <th ref={setThRef(1)} className="px-3 py-2 border border-gray-200 whitespace-nowrap relative">右テーブル<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(1)} /></th>
+              <th ref={setThRef(2)} className="px-3 py-2 border border-gray-200 relative">結合条件<div className="absolute inset-y-0 right-0 w-1 cursor-col-resize select-none hover:bg-blue-400" {...getResizeHandleProps(2)} /></th>
             </tr>
           </thead>
           <tbody>
