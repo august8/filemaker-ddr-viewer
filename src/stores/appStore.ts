@@ -246,10 +246,12 @@ export const useAppStore = create<AppState>((set) => ({
       navIndex: dashboardEl ? 0 : -1,
       diffContext: null,
       diffState: { ...INITIAL_DIFF_STATE, solA: solution?.id ?? null },
+      rightPanel: null,
+      rightPanel2: null,
     });
   },
   selectProject: (project) =>
-    set({ selectedProject: project, selectedElement: null, diffContext: null }),
+    set({ selectedProject: project, selectedElement: null, diffContext: null, rightPanel: null, rightPanel2: null }),
   selectElement: (element) =>
     set((state) => {
       // 同じ要素なら履歴に積まない
@@ -285,6 +287,9 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: newHistory,
         navIndex: newHistory.length - 1,
         diffContext: null,
+        // Panel 2 があれば Panel 1 に昇格、なければ Panel 1 も閉じる
+        rightPanel: state.rightPanel2 ?? null,
+        rightPanel2: null,
       };
     }),
   navigateFromDiff: (element, compareProjectId) =>
@@ -316,6 +321,9 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: newHistory,
         navIndex: newHistory.length - 1,
         diffContext: { compareProjectId },
+        // Panel 2 があれば Panel 1 に昇格、なければ Panel 1 も閉じる
+        rightPanel: state.rightPanel2 ?? null,
+        rightPanel2: null,
       };
     }),
   setDiffState: (diffState) => set({ diffState }),
@@ -402,6 +410,8 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: baseHistory,
         navIndex: baseHistory.length - 1,
         diffContext: null,
+        rightPanel: null,
+        rightPanel2: null,
       };
     }),
 }));
