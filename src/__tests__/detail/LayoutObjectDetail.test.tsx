@@ -34,6 +34,7 @@ const compareObj = {
 const mockLayout = makeLayoutRow({ id: 10, fm_id: 1, name: "ContactLayout", table_occurrence_name: "Contact" });
 
 const mockSetRightPanel = vi.fn();
+const mockSetRightPanel2 = vi.fn();
 
 function setupStore(diffContext: { compareProjectId: number } | null) {
   vi.mocked(useAppStore).mockReturnValue({
@@ -41,6 +42,7 @@ function setupStore(diffContext: { compareProjectId: number } | null) {
     selectedElement: { kind: "layout" as const, projectId: 1, id: 10, name: "ContactLayout" },
     diffContext,
     setRightPanel: mockSetRightPanel,
+    setRightPanel2: mockSetRightPanel2,
   } as unknown as ReturnType<typeof useAppStore>);
 }
 
@@ -115,7 +117,7 @@ describe("LayoutObjectDetail", () => {
     expect(screen.getByText(/位置/)).toBeInTheDocument();
   });
 
-  it("field_click_passes_field_project_id_to_set_right_panel", async () => {
+  it("field_click_calls_setRightPanel2_with_field_location", async () => {
     const { fireEvent } = await import("@testing-library/react");
     setupStore(null);
     vi.mocked(useResolveLayoutField).mockReturnValue({
@@ -124,7 +126,7 @@ describe("LayoutObjectDetail", () => {
     render(<LayoutObjectDetail layoutObjectId={1} layoutId={10} />);
     const btn = screen.getByRole("button", { name: /Contact::Name/ });
     fireEvent.click(btn);
-    expect(mockSetRightPanel).toHaveBeenCalledWith(
+    expect(mockSetRightPanel2).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: "field",
         fieldProjectId: 99,
@@ -132,6 +134,7 @@ describe("LayoutObjectDetail", () => {
         fieldId: 42,
       })
     );
+    expect(mockSetRightPanel).not.toHaveBeenCalled();
   });
 
   it("shows_tooltip_change_when_tooltip_differs", () => {

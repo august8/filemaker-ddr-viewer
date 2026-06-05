@@ -16,7 +16,7 @@ export function LayoutObjectDetail({ layoutObjectId, layoutId }: Props) {
   const { data: objects = [], isLoading } = useLayoutObjects(layoutId);
   const obj = objects.find((o) => o.id === layoutObjectId);
 
-  const { selectedProject, selectedElement, diffContext, setRightPanel } = useAppStore();
+  const { selectedProject, selectedElement, diffContext, setRightPanel2 } = useAppStore();
   const projectId = selectedProject?.id ?? null;
 
   const { data: conditions = [] } = useLayoutObjectConditions(obj?.id ?? null);
@@ -111,7 +111,7 @@ export function LayoutObjectDetail({ layoutObjectId, layoutId }: Props) {
             <button
               className="text-blue-700 font-medium hover:underline text-left"
               onClick={() =>
-                setRightPanel({
+                setRightPanel2({
                   kind: "field",
                   projectId,
                   fieldProjectId: fieldLocation.field_project_id,

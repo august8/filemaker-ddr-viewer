@@ -131,7 +131,8 @@ filemaker-ddr-viewer/
 | `selectedProject` | `ProjectRow \| null` | 現在選択中のプロジェクト |
 | `selectedElement` | `SelectedElement` | メインパネルに表示する要素（`null` を含むユニオン型） |
 | `searchQuery` | `string` | 検索バーのテキスト |
-| `rightPanel` | `RightPanelState` | 右パネルに表示する要素（`null` を含むユニオン型） |
+| `rightPanel` | `RightPanelState` | 右パネル1に表示する要素（`null` を含むユニオン型）。`setRightPanel` 呼び出し時に `rightPanel2` も自動クリア |
+| `rightPanel2` | `RightPanelState` | 右パネル2（フィールド詳細専用）。`LayoutObjectDetail` / `FieldCalcReferences` でフィールドリンクをクリックすると開く。パネル1が閉じると連動してクリア |
 | `navHistory` | `SelectedElement[]` | ←→ ナビゲーション履歴 |
 | `navIndex` | `number` | 履歴内の現在位置 |
 | `fontSize` | `number` | フォントサイズ（localStorage 永続化） |

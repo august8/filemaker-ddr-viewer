@@ -105,6 +105,8 @@ export type RightPanelState =
   | { kind: "layout_object"; layoutObjectId: number; layoutId: number }
   | null;
 
+export type FieldRightPanelState = Extract<RightPanelState, { kind: "field" }> | null;
+
 /** SelectedElement の同一性を O(1) で比較するためのキー文字列を返す。 */
 function elementKey(el: SelectedElement | undefined): string {
   if (el == null) return "null"; // null と undefined の両方を捕捉
@@ -167,6 +169,7 @@ interface AppState {
   showAbout: boolean;
   showUpgradeSettings: boolean;
   rightPanel: RightPanelState;
+  rightPanel2: FieldRightPanelState;
   navHistory: SelectedElement[];
   navIndex: number;
   diffState: DiffStateData;
@@ -193,6 +196,7 @@ interface AppState {
   setShowAbout: (show: boolean) => void;
   setShowUpgradeSettings: (show: boolean) => void;
   setRightPanel: (panel: RightPanelState) => void;
+  setRightPanel2: (panel: FieldRightPanelState) => void;
   navigateBack: () => void;
   navigateForward: () => void;
   purgeProjectFromHistory: (projectId: number) => void;
@@ -209,6 +213,7 @@ export const useAppStore = create<AppState>((set) => ({
   showAbout: false,
   showUpgradeSettings: false,
   rightPanel: null,
+  rightPanel2: null,
   navHistory: [],
   navIndex: -1,
   diffState: INITIAL_DIFF_STATE,
@@ -243,10 +248,12 @@ export const useAppStore = create<AppState>((set) => ({
       navIndex: dashboardEl ? 0 : -1,
       diffContext: null,
       diffState: { ...INITIAL_DIFF_STATE, solA: solution?.id ?? null },
+      rightPanel: null,
+      rightPanel2: null,
     });
   },
   selectProject: (project) =>
-    set({ selectedProject: project, selectedElement: null, diffContext: null }),
+    set({ selectedProject: project, selectedElement: null, diffContext: null, rightPanel: null, rightPanel2: null }),
   selectElement: (element) =>
     set((state) => {
       // 同じ要素なら履歴に積まない
@@ -282,6 +289,9 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: newHistory,
         navIndex: newHistory.length - 1,
         diffContext: null,
+        // Panel 2 があれば Panel 1 に昇格、なければ Panel 1 も閉じる
+        rightPanel: state.rightPanel2 ?? null,
+        rightPanel2: null,
       };
     }),
   navigateFromDiff: (element, compareProjectId) =>
@@ -313,6 +323,9 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: newHistory,
         navIndex: newHistory.length - 1,
         diffContext: { compareProjectId },
+        // Panel 2 があれば Panel 1 に昇格、なければ Panel 1 も閉じる
+        rightPanel: state.rightPanel2 ?? null,
+        rightPanel2: null,
       };
     }),
   setDiffState: (diffState) => set({ diffState }),
@@ -342,7 +355,8 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setShowAbout: (show) => set({ showAbout: show }),
   setShowUpgradeSettings: (show) => set({ showUpgradeSettings: show }),
-  setRightPanel: (panel) => set({ rightPanel: panel }),
+  setRightPanel: (panel) => set({ rightPanel: panel, rightPanel2: null }),
+  setRightPanel2: (panel) => set({ rightPanel2: panel }),
   navigateBack: () =>
     set((state) => {
       if (state.navIndex <= 0) return {};
@@ -398,6 +412,8 @@ export const useAppStore = create<AppState>((set) => ({
         navHistory: baseHistory,
         navIndex: baseHistory.length - 1,
         diffContext: null,
+        rightPanel: null,
+        rightPanel2: null,
       };
     }),
 }));

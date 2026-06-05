@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function FieldCalcReferences({ projectId, tableName, fieldName }: Props) {
-  const { setRightPanel } = useAppStore();
+  const { setRightPanel2 } = useAppStore();
   const { data: calcRefs = [], isLoading } = useFieldCalcRefs(
     projectId,
     tableName,
@@ -34,7 +34,7 @@ export function FieldCalcReferences({ projectId, tableName, fieldName }: Props) 
               <button
                 className="text-blue-600 hover:underline text-left break-all w-full"
                 onClick={() =>
-                  setRightPanel({
+                  setRightPanel2({
                     kind: "field",
                     projectId: ref.project_id,
                     fieldProjectId: ref.project_id,
