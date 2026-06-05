@@ -167,6 +167,7 @@ interface AppState {
   showAbout: boolean;
   showUpgradeSettings: boolean;
   rightPanel: RightPanelState;
+  rightPanel2: RightPanelState;
   navHistory: SelectedElement[];
   navIndex: number;
   diffState: DiffStateData;
@@ -193,6 +194,7 @@ interface AppState {
   setShowAbout: (show: boolean) => void;
   setShowUpgradeSettings: (show: boolean) => void;
   setRightPanel: (panel: RightPanelState) => void;
+  setRightPanel2: (panel: RightPanelState) => void;
   navigateBack: () => void;
   navigateForward: () => void;
   purgeProjectFromHistory: (projectId: number) => void;
@@ -209,6 +211,7 @@ export const useAppStore = create<AppState>((set) => ({
   showAbout: false,
   showUpgradeSettings: false,
   rightPanel: null,
+  rightPanel2: null,
   navHistory: [],
   navIndex: -1,
   diffState: INITIAL_DIFF_STATE,
@@ -342,7 +345,8 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   setShowAbout: (show) => set({ showAbout: show }),
   setShowUpgradeSettings: (show) => set({ showUpgradeSettings: show }),
-  setRightPanel: (panel) => set({ rightPanel: panel }),
+  setRightPanel: (panel) => set({ rightPanel: panel, rightPanel2: null }),
+  setRightPanel2: (panel) => set({ rightPanel2: panel }),
   navigateBack: () =>
     set((state) => {
       if (state.navIndex <= 0) return {};

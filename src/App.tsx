@@ -121,6 +121,23 @@ function FieldPanelInner({
   );
 }
 
+function RightPanel2Content({ width }: { width: number }) {
+  const { rightPanel2, setRightPanel2 } = useAppStore();
+  if (!rightPanel2 || rightPanel2.kind !== "field") return null;
+  const { projectId, fieldProjectId, tableId, tableName, fieldId } = rightPanel2;
+  return (
+    <FieldPanelInner
+      width={width}
+      projectId={projectId}
+      fieldProjectId={fieldProjectId}
+      tableId={tableId}
+      tableName={tableName}
+      fieldId={fieldId}
+      onClose={() => setRightPanel2(null)}
+    />
+  );
+}
+
 function App() {
   const {
     selectedElement,
@@ -128,6 +145,7 @@ function App() {
     showAbout,
     showUpgradeSettings,
     rightPanel,
+    rightPanel2,
     stepFontSize,
     setShowAbout,
     setShowUpgradeSettings,
@@ -140,7 +158,8 @@ function App() {
   } = useAppStore();
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
   const [rightPanelWidth, setRightPanelWidth] = useState(RIGHTPANEL_DEFAULT);
-  const isDragging = useRef<"left" | "right" | null>(null);
+  const [rightPanel2Width, setRightPanel2Width] = useState(RIGHTPANEL_DEFAULT);
+  const isDragging = useRef<"left" | "right" | "right2" | null>(null);
   const startX = useRef(0);
   const startWidth = useRef(0);
 
@@ -194,6 +213,14 @@ function App() {
     document.body.style.userSelect = "none";
   }, [rightPanelWidth]);
 
+  const onRight2DragStart = useCallback((e: React.MouseEvent) => {
+    isDragging.current = "right2";
+    startX.current = e.clientX;
+    startWidth.current = rightPanel2Width;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [rightPanel2Width]);
+
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
@@ -201,10 +228,13 @@ function App() {
       if (isDragging.current === "left") {
         const newWidth = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth.current + delta));
         setSidebarWidth(newWidth);
-      } else {
+      } else if (isDragging.current === "right") {
         // 右パネルは左へドラッグすると広がる（逆方向）
         const newWidth = Math.min(RIGHTPANEL_MAX, Math.max(RIGHTPANEL_MIN, startWidth.current - delta));
         setRightPanelWidth(newWidth);
+      } else if (isDragging.current === "right2") {
+        const newWidth = Math.min(RIGHTPANEL_MAX, Math.max(RIGHTPANEL_MIN, startWidth.current - delta));
+        setRightPanel2Width(newWidth);
       }
     };
     const onUp = () => {
@@ -302,6 +332,18 @@ function App() {
               <ErrorBoundary resetKey={rightPanel}>
                 <RightPanelContent width={rightPanelWidth} />
               </ErrorBoundary>
+              {/* パネル2（フィールド詳細） */}
+              {rightPanel2 && (
+                <>
+                  <div
+                    className="w-px cursor-col-resize bg-gray-200 hover:bg-blue-400 active:bg-blue-500 transition-colors shrink-0"
+                    onMouseDown={onRight2DragStart}
+                  />
+                  <ErrorBoundary resetKey={rightPanel2}>
+                    <RightPanel2Content width={rightPanel2Width} />
+                  </ErrorBoundary>
+                </>
+              )}
             </>
           )}
         </div>
