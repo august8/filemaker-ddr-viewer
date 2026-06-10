@@ -41,7 +41,7 @@ export function SearchBar() {
           value={localValue}
           onChange={(e) => setLocalValue(e.target.value)}
           placeholder="スクリプト、フィールド、レイアウトを検索..."
-          className="w-full pl-3 pr-8 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-400"
+          className="w-full pl-3 pr-8 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
         {localValue && (
           <button
