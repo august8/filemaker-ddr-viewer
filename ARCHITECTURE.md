@@ -87,7 +87,7 @@ filemaker-ddr-viewer/
 | `MainContent.tsx` | メインエリアのルーティング（`selectedElement.kind` で切り替え） |
 | `navigation/CategoryTree.tsx` | サイドバーツリー。カテゴリ展開時のみ IPC クエリを発行（遅延ロード）。カウントは `useProjectSummary` から取得し未展開時も正確な値を表示 |
 | `SearchBar.tsx` / `SearchResults.tsx` | 全文検索・カテゴリフィルター・クリック遷移 |
-| `SolutionList.tsx` | ソリューション一覧・削除 |
+| `SolutionList.tsx` | ソリューション一覧・削除・ソリューション名変更（ホバー鉛筆ボタン＋インライン編集） |
 | `ImportButton.tsx` | `概要.xml` インポート |
 | `ProjectSummaryCard.tsx` | 要素数サマリー（プロジェクト単位） |
 | `SolutionDashboard.tsx` | ソリューション選択時のサマリー（配下プロジェクト一覧） |
@@ -320,6 +320,7 @@ FM17〜22 の実 DDR サンプルを調査した結果、タグ名・構造に�
 | `delete_solution` | analysis.rs | `solution_id` | `()` |
 | `list_projects` | analysis.rs | — | `Vec<ProjectRow>` |
 | `delete_project` | analysis.rs | `project_id` | `()` |
+| `rename_solution` | analysis.rs | `solution_id, new_name` | `()` |
 | `get_project_summary` | analysis.rs | `project_id` | `ProjectSummary` |
 | `list_solution_project_summaries` | analysis.rs | `solution_id` | `Vec<ProjectSummary>` |
 | `get_broken_refs` | analysis.rs | `project_id` | `Vec<BrokenRef>` |

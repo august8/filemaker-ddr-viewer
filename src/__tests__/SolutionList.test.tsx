@@ -8,6 +8,8 @@ vi.mock("../hooks/solutions", () => ({
   useDeleteSolution: vi.fn(),
   useSolutionProjects: vi.fn(),
   useDeleteProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRenameProject: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useRenameSolution: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock("../stores/appStore", () => ({
@@ -19,7 +21,7 @@ vi.mock("../components/navigation/CategoryTree", () => ({
   CategoryTree: () => null,
 }));
 
-import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject } from "../hooks/solutions";
+import { useSolutions, useDeleteSolution, useSolutionProjects, useDeleteProject, useRenameSolution } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 
 const mockSolutions: SolutionRow[] = [
@@ -31,6 +33,7 @@ const mockSelectSolution = vi.fn();
 const mockSelectProject = vi.fn();
 const mockSelectElement = vi.fn();
 const mockSetRightPanel = vi.fn();
+const mockRenameSolutionInStore = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -41,6 +44,7 @@ beforeEach(() => {
     selectProject: mockSelectProject,
     selectElement: mockSelectElement,
     setRightPanel: mockSetRightPanel,
+    renameSolutionInStore: mockRenameSolutionInStore,
   } as unknown as ReturnType<typeof useAppStore>);
   vi.mocked(useDeleteSolution).mockReturnValue(
     { mutate: vi.fn(), isPending: false } as unknown as ReturnType<typeof useDeleteSolution>
@@ -260,5 +264,111 @@ describe("SolutionList", () => {
     const projectRow = screen.getByText(/MyDB/).closest("div[class*='cursor-pointer']")!;
     fireEvent.click(projectRow);
     expect(mockSelectProject).toHaveBeenCalledWith(mockProject);
+  });
+
+  it("rename_solution_button_shows_inline_input", () => {
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Solution A")).toBeInTheDocument();
+  });
+
+  it("rename_solution_escape_cancels_edit", () => {
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Escape" });
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("rename_solution_enter_calls_mutation", () => {
+    const mutateMock = vi.fn();
+    vi.mocked(useRenameSolution).mockReturnValue(
+      { mutate: mutateMock, isPending: false } as unknown as ReturnType<typeof useRenameSolution>
+    );
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "新しい名前" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(mutateMock).toHaveBeenCalledWith(
+      { solutionId: 1, newName: "新しい名前" },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    );
+  });
+
+  it("rename_blur_confirms_rename", () => {
+    const mutateMock = vi.fn();
+    vi.mocked(useRenameSolution).mockReturnValue(
+      { mutate: mutateMock, isPending: false } as unknown as ReturnType<typeof useRenameSolution>
+    );
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "新しい名前" } });
+    fireEvent.blur(input);
+    expect(mutateMock).toHaveBeenCalledWith(
+      { solutionId: 1, newName: "新しい名前" },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    );
+  });
+
+  it("rename_blur_without_change_does_not_mutate", () => {
+    const mutateMock = vi.fn();
+    vi.mocked(useRenameSolution).mockReturnValue(
+      { mutate: mutateMock, isPending: false } as unknown as ReturnType<typeof useRenameSolution>
+    );
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    const input = screen.getByRole("textbox");
+    fireEvent.blur(input);
+    expect(mutateMock).not.toHaveBeenCalled();
+  });
+
+  it("rename_pencil_hidden_during_edit", () => {
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    expect(screen.getAllByRole("button", { name: "名前を変更" })).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole("button", { name: "名前を変更" })[0]);
+    expect(screen.queryAllByRole("button", { name: "名前を変更" })).toHaveLength(1);
+  });
+
+  it("rename_escape_does_not_call_mutation", () => {
+    const mutateMock = vi.fn();
+    vi.mocked(useRenameSolution).mockReturnValue(
+      { mutate: mutateMock, isPending: false } as unknown as ReturnType<typeof useRenameSolution>
+    );
+    vi.mocked(useSolutions).mockReturnValue(
+      { data: mockSolutions, isLoading: false, isError: false } as unknown as ReturnType<typeof useSolutions>
+    );
+    render(<SolutionList />);
+    const renameButtons = screen.getAllByRole("button", { name: "名前を変更" });
+    fireEvent.click(renameButtons[0]);
+    const input = screen.getByRole("textbox");
+    fireEvent.change(input, { target: { value: "新しい名前" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(mutateMock).not.toHaveBeenCalled();
   });
 });

@@ -201,6 +201,7 @@ interface AppState {
   navigateForward: () => void;
   purgeProjectFromHistory: (projectId: number) => void;
   navigateToProject: (project: ProjectRow) => void;
+  renameSolutionInStore: (solutionId: number, newName: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -390,6 +391,13 @@ export const useAppStore = create<AppState>((set) => ({
         : filtered.indexOf(currentEntry);
       return { navHistory: filtered, navIndex: Math.max(-1, newIndex) };
     }),
+  renameSolutionInStore: (solutionId, newName) =>
+    set((state) => ({
+      selectedSolution:
+        state.selectedSolution?.id === solutionId
+          ? { ...state.selectedSolution, name: newName }
+          : state.selectedSolution,
+    })),
   navigateToProject: (project: ProjectRow) =>
     set((state) => {
       // 現在の要素を履歴に残しつつ、プロジェクト dashboard エントリを追加する

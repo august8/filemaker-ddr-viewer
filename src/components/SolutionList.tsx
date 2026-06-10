@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects } from "../hooks/solutions";
+import { useState, useRef } from "react";
+import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects, useRenameSolution } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { CategoryTree } from "./navigation/CategoryTree";
 import { Spinner } from "./Spinner";
@@ -41,7 +41,7 @@ function ProjectItems({ solution }: { solution: SolutionRow }) {
                 <Spinner className="w-3.5 h-3.5 ml-1" />
               ) : (
                 <button
-                  className="ml-1 text-gray-300 hover:text-red-500 flex-shrink-0 text-lg leading-none"
+                  className="ml-1 text-gray-400 hover:text-red-500 flex-shrink-0 text-lg leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmingProjectId(project.id);
@@ -96,9 +96,14 @@ function ProjectItems({ solution }: { solution: SolutionRow }) {
 export function SolutionList() {
   const { data: solutions, isLoading, isError } = useSolutions();
   const { mutate: deleteSolution, isPending: isDeletingSolution } = useDeleteSolution();
-  const { selectedSolution, selectSolution, selectProject, selectElement, setRightPanel } = useAppStore();
+  const { mutate: renameSolution } = useRenameSolution();
+  const { selectedSolution, selectSolution, selectProject, selectElement, setRightPanel, renameSolutionInStore } = useAppStore();
   const [confirmingSolutionId, setConfirmingSolutionId] = useState<number | null>(null);
   const [deletingSolutionId, setDeletingSolutionId] = useState<number | null>(null);
+  const [renamingSolutionId, setRenamingSolutionId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  // 同時に編集できるのは 1 件のみなので、Enter/blur の二重 mutation 防止に 1 つの ref で十分
+  const resolvedRef = useRef(false);
 
   if (isLoading) {
     return <div className="flex items-center gap-2 p-4 text-gray-500 text-sm"><Spinner className="w-4 h-4" />読み込み中...</div>;
@@ -120,39 +125,101 @@ export function SolutionList() {
     <ul className="divide-y divide-gray-100">
       {solutions.map((solution) => {
         const isDeleting = deletingSolutionId === solution.id && isDeletingSolution;
+        const isRenaming = renamingSolutionId === solution.id;
         return (
         <li key={solution.id} className={isDeleting ? "opacity-50 pointer-events-none" : ""}>
           {/* ソリューション行 */}
           <div
-            className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+            className={`group flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100 ${
               selectedSolution?.id === solution.id ? "bg-gray-100" : ""
             }`}
             onClick={() => {
-              setRightPanel(null);
-              selectSolution(solution);
+              if (!isRenaming) {
+                setRightPanel(null);
+                selectSolution(solution);
+              }
             }}
           >
             <div className="flex-1 min-w-0">
-              <div className="truncate text-sm font-medium text-gray-900" title={solution.name}>
-                🗂 {solution.name}
-              </div>
-              <div className="text-xs text-gray-400">
-                {solution.imported_at.slice(0, 16)}
-              </div>
+              {isRenaming ? (
+                <input
+                  className="w-full px-1 text-sm font-medium border border-blue-400 rounded outline-none"
+                  value={renameValue}
+                  autoFocus
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (!resolvedRef.current) {
+                        resolvedRef.current = true;
+                        const trimmed = renameValue.trim();
+                        if (trimmed && trimmed !== solution.name) {
+                          renameSolution(
+                            { solutionId: solution.id, newName: trimmed },
+                            { onSuccess: () => renameSolutionInStore(solution.id, trimmed) }
+                          );
+                        }
+                      }
+                      setRenamingSolutionId(null);
+                    } else if (e.key === "Escape") {
+                      resolvedRef.current = true;
+                      setRenamingSolutionId(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!resolvedRef.current) {
+                      resolvedRef.current = true;
+                      const trimmed = renameValue.trim();
+                      if (trimmed && trimmed !== solution.name) {
+                        renameSolution(
+                          { solutionId: solution.id, newName: trimmed },
+                          { onSuccess: () => renameSolutionInStore(solution.id, trimmed) }
+                        );
+                      }
+                    }
+                    setRenamingSolutionId(null);
+                  }}
+                />
+              ) : (
+                <>
+                  <div className="truncate text-sm font-medium text-gray-900" title={solution.name}>
+                    🗂 {solution.name}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {solution.imported_at.slice(0, 16)}
+                  </div>
+                </>
+              )}
             </div>
             {isDeleting ? (
               <Spinner className="w-4 h-4 ml-2" />
             ) : (
-              <button
-                className="ml-2 text-gray-300 hover:text-red-500 flex-shrink-0 text-lg leading-none"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirmingSolutionId(solution.id);
-                }}
-                aria-label="削除"
-              >
-                ×
-              </button>
+              <span className="flex items-center gap-2 flex-shrink-0 ml-2">
+                {!confirmingSolutionId && !isRenaming && (
+                  <button
+                    className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resolvedRef.current = false;
+                      setRenamingSolutionId(solution.id);
+                      setRenameValue(solution.name);
+                    }}
+                    aria-label="名前を変更"
+                  >
+                    ✏
+                  </button>
+                )}
+                <button
+                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingSolutionId(solution.id);
+                  }}
+                  aria-label="削除"
+                >
+                  ×
+                </button>
+              </span>
             )}
           </div>
           {confirmingSolutionId === solution.id && (
