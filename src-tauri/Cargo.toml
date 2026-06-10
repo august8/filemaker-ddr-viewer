@@ -1,6 +1,6 @@
 [package]
 name = "filemaker-ddr-viewer"
-version = "0.2.0"
+version = "0.3.0"
 description = "FileMaker DDR Viewer"
 authors = ["August8"]
 license = "MIT"

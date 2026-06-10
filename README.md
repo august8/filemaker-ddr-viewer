@@ -3,6 +3,10 @@
 [![CI](https://github.com/august8/filemaker-ddr-viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/august8/filemaker-ddr-viewer/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/august8/filemaker-ddr-viewer/branch/main/graph/badge.svg)](https://codecov.io/gh/august8/filemaker-ddr-viewer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tauri](https://img.shields.io/badge/Tauri-2.x-FFC131?logo=tauri&logoColor=white)](https://tauri.app/)
+[![Rust](https://img.shields.io/badge/Rust-CE422B?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 FileMaker Database Design Report (DDR) XML を解析・可視化するデスクトップツール。
 

@@ -4,6 +4,26 @@
 
 ---
 
+## [0.3.0] - 2026-06-10
+
+### 機能
+- 外部データソース一覧画面 + 分離モデル対応フィールド詳細表示
+- アップグレードチェックに「壊れた参照」セクションを追加 + UnknownRef 検出
+- 右パネルをデュアル化（パネル1・パネル2の独立スクロール＋自動昇格）
+- ソリューション名をホバー鉛筆ボタンからインライン変更
+
+### 修正
+- ソリューション選択時の空白画面を修正
+- 壊れたフィールド表示テキスト変更 + 全体検索にレイアウトオブジェクト追加
+- スティッキーヘッダー + カラム幅リサイズを全一覧パネルと詳細パネルに実装
+- WebView2 ページ未生成時の fixture TypeError を修正
+- グローバルデザイン整合性の修正
+
+### 改善
+- デザイントークン整理（インライン CSS を tokens.ts 定数に集約）
+
+---
+
 ## [0.2.0] - 2026-05-01
 
 ### 機能
@@ -69,6 +89,7 @@
 
 ---
 
+[0.3.0]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/august8/filemaker-ddr-viewer/compare/v0.1.0...v0.1.1
