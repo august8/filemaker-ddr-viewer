@@ -102,6 +102,7 @@ export function SolutionList() {
   const [deletingSolutionId, setDeletingSolutionId] = useState<number | null>(null);
   const [renamingSolutionId, setRenamingSolutionId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // 同時に編集できるのは 1 件のみなので、Enter/blur の二重 mutation 防止に 1 つの ref で十分
   const resolvedRef = useRef(false);
 
   if (isLoading) {
