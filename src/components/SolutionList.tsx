@@ -41,7 +41,7 @@ function ProjectItems({ solution }: { solution: SolutionRow }) {
                 <Spinner className="w-3.5 h-3.5 ml-1" />
               ) : (
                 <button
-                  className="ml-1 text-gray-300 hover:text-red-500 flex-shrink-0 text-lg leading-none"
+                  className="ml-1 text-gray-400 hover:text-red-500 flex-shrink-0 text-lg leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmingProjectId(project.id);
@@ -129,7 +129,7 @@ export function SolutionList() {
         <li key={solution.id} className={isDeleting ? "opacity-50 pointer-events-none" : ""}>
           {/* ソリューション行 */}
           <div
-            className={`group flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-50 ${
+            className={`group flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100 ${
               selectedSolution?.id === solution.id ? "bg-gray-100" : ""
             }`}
             onClick={() => {
