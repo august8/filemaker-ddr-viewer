@@ -1,5 +1,5 @@
 // src/styles/tokens.ts
-// ADR-017: UI スタイルトークン — 全コンポーネント共通のクラス定数
+// UI スタイルトークン — 全コンポーネント共通のクラス定数
 
 /** バッジの基底クラス（色クラスを別途追加する） */
 export const BADGE_BASE = "inline-block text-xs font-medium rounded px-2 py-0.5";
