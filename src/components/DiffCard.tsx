@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useAllProjects } from "../hooks/solutions";
 import { useCompareSolutions } from "../hooks/diff";
 import { useAppStore } from "../stores/appStore";
+import { useResolveElementByName } from "../hooks/analysis";
 import type { DiffItem, DiffKind } from "../types/ddr";
 import { Spinner } from "./Spinner";
 
@@ -37,6 +37,7 @@ const NAVIGABLE_TYPES = new Set([
 
 export function DiffCard() {
   const { selectElement, navigateFromDiff, diffState, setDiffState } = useAppStore();
+  const resolveElement = useResolveElementByName();
   const { solA, solB, committedA, committedB, expandedTypes: expandedTypesArr } = diffState;
   const expandedTypes = useMemo(() => new Set(expandedTypesArr), [expandedTypesArr]);
 
@@ -84,12 +85,7 @@ export function DiffCard() {
     if (!item.project_id) return;
     if (!NAVIGABLE_TYPES.has(item.element_type)) return;
 
-    type ElementRef = { id: number; name: string };
-    const ref = await invoke<ElementRef | null>("resolve_element_by_name", {
-      projectId: item.project_id,
-      elementType: item.element_type,
-      name: item.name,
-    }).catch(() => null);
+    const ref = await resolveElement(item.project_id, item.element_type, item.name);
     if (!ref) return;
 
     const projectId = item.project_id;

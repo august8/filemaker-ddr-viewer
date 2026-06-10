@@ -5,6 +5,11 @@ export interface CommandError {
   message: string;
 }
 
+export interface ElementRef {
+  id: number;
+  name: string;
+}
+
 export interface SolutionRow {
   id: number;
   name: string;

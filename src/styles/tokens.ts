@@ -1,5 +1,5 @@
 // src/styles/tokens.ts
-// ADR-017: UI スタイルトークン — 全コンポーネント共通のクラス定数
+// UI スタイルトークン — 全コンポーネント共通のクラス定数
 
 /** バッジの基底クラス（色クラスを別途追加する） */
 export const BADGE_BASE = "inline-block text-xs font-medium rounded px-2 py-0.5";
@@ -40,3 +40,11 @@ export const LIST_ROW = "w-full text-left px-3 py-2 text-sm hover:bg-blue-50 tra
 /** セレクト・インプット標準スタイル */
 export const SELECT_INPUT =
   "border border-gray-300 rounded px-3 py-1.5 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400";
+
+/** All*Panel 系フィルタ入力（flex-1 + text-sm 込み） */
+export const FILTER_INPUT =
+  "flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400";
+
+/** ページネーションボタン（前ページ・次ページ共通） */
+export const PAGINATION_BUTTON =
+  "px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed";

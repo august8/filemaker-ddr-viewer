@@ -1,6 +1,7 @@
 import { useProjectSummary } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { Spinner } from "./Spinner";
+import { CARD } from "../styles/tokens";
 
 interface Props {
   projectId: number | null;
@@ -33,7 +34,7 @@ export function ProjectSummaryCard({ projectId }: Props) {
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className={CARD}>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-semibold text-gray-800">{summary.project.name}</h2>
         <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useUnusedFields } from "../hooks/analysis";
 import { useTableList } from "../hooks/table";
 import { useAppStore } from "../stores/appStore";
-import { BADGE_VARIANTS } from "../styles/tokens";
+import { BADGE_VARIANTS, CARD } from "../styles/tokens";
 import { Spinner } from "./Spinner";
 
 interface Props {
@@ -21,7 +21,7 @@ export function UnusedFieldsList({ projectId }: Props) {
 
   if (unused.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className={CARD}>
         <h3 className="font-semibold text-gray-800 mb-2">未参照フィールド</h3>
         <div className="text-sm text-green-600">未参照フィールドはありません</div>
       </div>
@@ -45,7 +45,7 @@ export function UnusedFieldsList({ projectId }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className={CARD}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-800">
           未参照フィールド

@@ -4,6 +4,7 @@ import type { RelationshipRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
 import { PAGE_SIZE } from "../../constants";
 import { useColumnResize } from "../../hooks/useColumnResize";
+import { FILTER_INPUT, PAGINATION_BUTTON } from "../../styles/tokens";
 
 interface Props {
   projectId: number;
@@ -70,12 +71,12 @@ export function AllRelationshipsPanel({ projectId, highlightId }: Props) {
             placeholder="テーブル名・フィールド名で絞り込み..."
             value={filter}
             onChange={handleFilterChange}
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className={FILTER_INPUT}
           />
           <button
             onClick={() => setPage((p) => p - 1)}
             disabled={page === 0}
-            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={PAGINATION_BUTTON}
           >
             &lt; 前
           </button>
@@ -85,7 +86,7 @@ export function AllRelationshipsPanel({ projectId, highlightId }: Props) {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={isLastPage}
-            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={PAGINATION_BUTTON}
           >
             次 &gt;
           </button>

@@ -1,7 +1,7 @@
 import { useBrokenRefs } from "../hooks/analysis";
 import { useAppStore } from "../stores/appStore";
 import type { BrokenRef } from "../types/ddr";
-import { BADGE_VARIANTS, LIST_ROW } from "../styles/tokens";
+import { BADGE_VARIANTS, CARD, LIST_ROW } from "../styles/tokens";
 import { Spinner } from "./Spinner";
 
 interface Props {
@@ -26,7 +26,7 @@ export function BrokenRefsList({ projectId }: Props) {
 
   if (!brokenRefs || brokenRefs.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className={CARD}>
         <h3 className="font-semibold text-gray-800 mb-2">壊れた参照</h3>
         <div className="text-sm text-green-600">壊れた参照はありません</div>
       </div>
@@ -44,7 +44,7 @@ export function BrokenRefsList({ projectId }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className={CARD}>
       <h3 className="font-semibold text-gray-800 mb-3">
         壊れた参照
         <span className={`ml-2 ${BADGE_VARIANTS.red}`}>{brokenRefs.length}</span>

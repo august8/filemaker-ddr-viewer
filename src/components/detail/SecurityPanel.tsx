@@ -1,5 +1,6 @@
 import { useAccountList, usePrivilegeSetList } from "../../hooks/security";
 import { Spinner } from "../Spinner";
+import { SECTION_HEADER } from "../../styles/tokens";
 
 interface Props {
   projectId: number;
@@ -19,7 +20,7 @@ export function SecurityPanel({ projectId }: Props) {
     <div className="p-4 space-y-6">
       {/* アカウント */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-700 mb-2">
+        <h2 className={SECTION_HEADER}>
           アカウント ({accounts?.length ?? 0})
         </h2>
         {!accounts || accounts.length === 0 ? (
@@ -51,7 +52,7 @@ export function SecurityPanel({ projectId }: Props) {
 
       {/* 権限セット */}
       <section>
-        <h2 className="text-sm font-semibold text-gray-700 mb-2">
+        <h2 className={SECTION_HEADER}>
           権限セット ({privilegeSets?.length ?? 0})
         </h2>
         {!privilegeSets || privilegeSets.length === 0 ? (

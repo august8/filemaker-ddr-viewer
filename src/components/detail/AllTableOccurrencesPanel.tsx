@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { BADGE_VARIANTS } from "../../styles/tokens";
+import { BADGE_VARIANTS, FILTER_INPUT, PAGINATION_BUTTON } from "../../styles/tokens";
 import { Spinner } from "../Spinner";
 import { useTableOccurrenceList, useTableList } from "../../hooks/table";
 import { useLayoutList } from "../../hooks/layout";
@@ -78,12 +78,12 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
             placeholder="オカレンス名・ベーステーブル名で絞り込み..."
             value={filter}
             onChange={handleFilterChange}
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className={FILTER_INPUT}
           />
           <button
             onClick={() => setPage((p) => p - 1)}
             disabled={page === 0}
-            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={PAGINATION_BUTTON}
           >
             &lt; 前
           </button>
@@ -93,7 +93,7 @@ export function AllTableOccurrencesPanel({ projectId }: Props) {
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={isLastPage}
-            className="px-2 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            className={PAGINATION_BUTTON}
           >
             次 &gt;
           </button>
