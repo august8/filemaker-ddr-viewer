@@ -2,6 +2,7 @@
 import { useValueListItems } from "../../hooks/catalog";
 import type { ValueListRow } from "../../types/ddr";
 import { Spinner } from "../Spinner";
+import { SECTION_HEADER } from "../../styles/tokens";
 
 interface Props {
   valueList: ValueListRow;
@@ -29,7 +30,7 @@ export function ValueListDetail({ valueList }: Props) {
       {/* カスタム値一覧 */}
       {valueList.source === "Custom" && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">値一覧</h3>
+          <h3 className={SECTION_HEADER}>値一覧</h3>
           {items.length === 0 ? (
             <p className="text-gray-500 text-sm">値なし</p>
           ) : (

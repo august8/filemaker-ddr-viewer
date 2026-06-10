@@ -1,7 +1,7 @@
 import { useOrphanScripts } from "../hooks/analysis";
 import { useScriptList } from "../hooks/script";
 import { useAppStore } from "../stores/appStore";
-import { BADGE_VARIANTS } from "../styles/tokens";
+import { BADGE_VARIANTS, CARD } from "../styles/tokens";
 import { Spinner } from "./Spinner";
 
 interface Props {
@@ -18,7 +18,7 @@ export function OrphanScriptsList({ projectId }: Props) {
 
   if (!orphans || orphans.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className={CARD}>
         <h3 className="font-semibold text-gray-800 mb-2">未使用スクリプト</h3>
         <div className="text-sm text-green-600">未使用スクリプトはありません</div>
       </div>
@@ -26,7 +26,7 @@ export function OrphanScriptsList({ projectId }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className={CARD}>
       <h3 className="font-semibold text-gray-800 mb-3">
         未使用スクリプト
         <span className={`ml-2 ${BADGE_VARIANTS.yellow}`}>{orphans.length}</span>
