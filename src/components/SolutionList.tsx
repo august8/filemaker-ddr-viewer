@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSolutions, useDeleteSolution, useDeleteProject, useSolutionProjects, useRenameSolution } from "../hooks/solutions";
 import { useAppStore } from "../stores/appStore";
 import { CategoryTree } from "./navigation/CategoryTree";
@@ -102,6 +102,7 @@ export function SolutionList() {
   const [deletingSolutionId, setDeletingSolutionId] = useState<number | null>(null);
   const [renamingSolutionId, setRenamingSolutionId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const resolvedRef = useRef(false);
 
   if (isLoading) {
     return <div className="flex items-center gap-2 p-4 text-gray-500 text-sm"><Spinner className="w-4 h-4" />読み込み中...</div>;
@@ -148,6 +149,25 @@ export function SolutionList() {
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
+                      if (!resolvedRef.current) {
+                        resolvedRef.current = true;
+                        const trimmed = renameValue.trim();
+                        if (trimmed && trimmed !== solution.name) {
+                          renameSolution(
+                            { solutionId: solution.id, newName: trimmed },
+                            { onSuccess: () => renameSolutionInStore(solution.id, trimmed) }
+                          );
+                        }
+                      }
+                      setRenamingSolutionId(null);
+                    } else if (e.key === "Escape") {
+                      resolvedRef.current = true;
+                      setRenamingSolutionId(null);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!resolvedRef.current) {
+                      resolvedRef.current = true;
                       const trimmed = renameValue.trim();
                       if (trimmed && trimmed !== solution.name) {
                         renameSolution(
@@ -155,10 +175,8 @@ export function SolutionList() {
                           { onSuccess: () => renameSolutionInStore(solution.id, trimmed) }
                         );
                       }
-                      setRenamingSolutionId(null);
-                    } else if (e.key === "Escape") {
-                      setRenamingSolutionId(null);
                     }
+                    setRenamingSolutionId(null);
                   }}
                 />
               ) : (
@@ -176,11 +194,12 @@ export function SolutionList() {
               <Spinner className="w-4 h-4 ml-2" />
             ) : (
               <span className="flex items-center gap-0.5 flex-shrink-0 ml-2">
-                {!confirmingSolutionId && (
+                {!confirmingSolutionId && !isRenaming && (
                   <button
                     className="text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 text-sm leading-none"
                     onClick={(e) => {
                       e.stopPropagation();
+                      resolvedRef.current = false;
                       setRenamingSolutionId(solution.id);
                       setRenameValue(solution.name);
                     }}
