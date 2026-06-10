@@ -193,10 +193,10 @@ export function SolutionList() {
             {isDeleting ? (
               <Spinner className="w-4 h-4 ml-2" />
             ) : (
-              <span className="flex items-center gap-0.5 flex-shrink-0 ml-2">
+              <span className="flex items-center gap-2 flex-shrink-0 ml-2">
                 {!confirmingSolutionId && !isRenaming && (
                   <button
-                    className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-base leading-none"
+                    className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
                     onClick={(e) => {
                       e.stopPropagation();
                       resolvedRef.current = false;
@@ -209,7 +209,7 @@ export function SolutionList() {
                   </button>
                 )}
                 <button
-                  className="ml-0.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
+                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmingSolutionId(solution.id);
