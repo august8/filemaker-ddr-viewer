@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DiffView } from "../components/DiffView";
 import type { ProjectWithSolution, DiffResult } from "../types/ddr";
 
@@ -14,9 +14,14 @@ vi.mock("../stores/appStore", () => ({
   useAppStore: vi.fn(),
 }));
 
+vi.mock("../hooks/analysis", () => ({
+  useResolveElementByName: vi.fn(),
+}));
+
 import { useAllProjects } from "../hooks/solutions";
 import { useCompareSolutions } from "../hooks/diff";
 import { useAppStore } from "../stores/appStore";
+import { useResolveElementByName } from "../hooks/analysis";
 import type { DiffStateData } from "../stores/appStore";
 
 const mockProjects: ProjectWithSolution[] = [
@@ -57,9 +62,12 @@ const INITIAL_DIFF_STATE: DiffStateData = {
 const mockSetDiffState = vi.fn();
 const mockSelectElement = vi.fn();
 const mockNavigateFromDiff = vi.fn();
+const mockResolve = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockResolve.mockResolvedValue({ id: 1, name: "NewScript" });
+  vi.mocked(useResolveElementByName).mockReturnValue(mockResolve);
   vi.mocked(useAllProjects).mockReturnValue({
     data: mockProjects,
     isLoading: false,
@@ -143,5 +151,32 @@ describe("DiffView", () => {
   it("shows_placeholder_when_no_compare_committed", () => {
     render(<DiffView />);
     expect(screen.getByText(/Primary.*Target.*選択/)).toBeInTheDocument();
+  });
+
+  it("resolve_element_called_when_navigable_item_clicked", async () => {
+    vi.mocked(useAppStore).mockReturnValue({
+      diffState: {
+        solA: 1,
+        solB: 2,
+        committedA: 1,
+        committedB: 2,
+        expandedTypes: ["script"],
+      } as DiffStateData,
+      setDiffState: mockSetDiffState,
+      selectElement: mockSelectElement,
+      navigateFromDiff: mockNavigateFromDiff,
+      selectedElement: { kind: "diff" },
+    } as unknown as ReturnType<typeof useAppStore>);
+    vi.mocked(useCompareSolutions).mockReturnValue({
+      data: mockDiffResult,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useCompareSolutions>);
+
+    render(<DiffView />);
+    fireEvent.click(screen.getByText("NewScript"));
+
+    await waitFor(() => {
+      expect(mockResolve).toHaveBeenCalledWith(2, "script", "NewScript");
+    });
   });
 });

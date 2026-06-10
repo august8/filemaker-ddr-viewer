@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   BrokenRef,
   BrokenRefWithProject,
+  ElementRef,
   ProjectRow,
   ReportCard,
   OrphanScript,
@@ -63,6 +64,13 @@ export function useSolutionBrokenRefs(solutionId: number | null) {
     },
     enabled: solutionId !== null,
   });
+}
+
+// 要素名からIDを解決（差分ビューのナビゲーション用）
+export function useResolveElementByName() {
+  return (projectId: number, elementType: string, name: string): Promise<ElementRef | null> =>
+    invoke<ElementRef | null>("resolve_element_by_name", { projectId, elementType, name })
+      .catch(() => null);
 }
 
 // アップグレードチェック

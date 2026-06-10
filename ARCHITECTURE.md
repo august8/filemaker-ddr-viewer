@@ -113,7 +113,7 @@ filemaker-ddr-viewer/
 | `detail/field/FieldBasicProperties.tsx` 他 | FieldDetail のサブコンポーネント群（FieldAutoEnter / FieldCalcReferences / FieldLayoutReferences / FieldRelationshipReferences / FieldScriptReferences / FieldStorage / FieldValidationRules） |
 | `DiffView.tsx` | 差分比較ビュー |
 | `stores/appStore.ts` | グローバル状態（zustand） |
-| `hooks/` | ドメイン別 Tauri IPC フック（analysis / catalog / diff / fieldRefs / layout / script / search / security / solutions / table）。`hooks/analysis.ts` の `useSolutionBrokenRefs` はソリューション全プロジェクトの壊れた参照を `Promise.all` で集約 |
+| `hooks/` | ドメイン別 Tauri IPC フック（analysis / catalog / diff / fieldRefs / layout / script / search / security / solutions / table）。`hooks/analysis.ts` の `useSolutionBrokenRefs` はソリューション全プロジェクトの壊れた参照を `Promise.all` で集約。`useResolveElementByName` は差分ビューのナビゲーション用に要素名から ID を解決する命令型関数を返す hook |
 | `hooks/useColumnResize.ts` | テーブルのカラム幅ドラッグリサイズフック。`table-layout:fixed` + `<colgroup>` と組み合わせて使用。ドラッグ開始時に全列幅を DOM から実測して固定し、N 列を広げると N+1 列が縮む（合計幅一定）。最終列のみ単独変更 |
 | `hooks/useSearchFiltering.ts` | 検索フィルタリングロジック |
 | `styles/tokens.ts` | デザイントークン定数 |

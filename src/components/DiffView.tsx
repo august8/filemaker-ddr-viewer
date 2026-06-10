@@ -1,9 +1,9 @@
 // src/components/DiffView.tsx
 import { useMemo } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useAllProjects } from "../hooks/solutions";
 import { useCompareSolutions } from "../hooks/diff";
 import { useAppStore } from "../stores/appStore";
+import { useResolveElementByName } from "../hooks/analysis";
 import type { DiffItem, DiffKind } from "../types/ddr";
 import { DIFF_BADGE_VARIANTS, CARD, SELECT_INPUT } from "../styles/tokens";
 import { Spinner } from "./Spinner";
@@ -53,6 +53,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export function DiffView() {
   const { selectElement, navigateFromDiff, diffState, setDiffState, selectedElement } = useAppStore();
+  const resolveElement = useResolveElementByName();
   const { solA, solB, committedA, committedB, expandedTypes: expandedTypesArr } = diffState;
   const expandedTypes = useMemo(() => new Set(expandedTypesArr), [expandedTypesArr]);
 
@@ -120,12 +121,7 @@ export function DiffView() {
       return;
     }
 
-    type ElementRef = { id: number; name: string };
-    const ref = await invoke<ElementRef | null>("resolve_element_by_name", {
-      projectId,
-      elementType: item.element_type,
-      name: item.name,
-    }).catch(() => null);
+    const ref = await resolveElement(projectId, item.element_type, item.name);
     if (!ref) return;
 
     const el = { projectId, id: ref.id, name: ref.name };
