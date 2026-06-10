@@ -196,7 +196,7 @@ export function SolutionList() {
               <span className="flex items-center gap-0.5 flex-shrink-0 ml-2">
                 {!confirmingSolutionId && !isRenaming && (
                   <button
-                    className="text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100 text-sm leading-none"
+                    className="text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-base leading-none"
                     onClick={(e) => {
                       e.stopPropagation();
                       resolvedRef.current = false;
@@ -209,7 +209,7 @@ export function SolutionList() {
                   </button>
                 )}
                 <button
-                  className="ml-0.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 text-lg leading-none"
+                  className="ml-0.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-100 text-lg leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
                     setConfirmingSolutionId(solution.id);
