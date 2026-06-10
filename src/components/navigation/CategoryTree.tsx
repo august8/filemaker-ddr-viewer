@@ -58,7 +58,7 @@ const ItemRow = forwardRef<HTMLButtonElement, ItemRowProps>(
     <button
       ref={ref}
       className={`w-full text-left px-12 py-1.5 text-sm truncate hover:bg-blue-50 transition-colors ${
-        isSelected ? "bg-blue-100 text-blue-800 font-medium" : "text-gray-600"
+        isSelected ? "bg-blue-100 text-blue-700 font-medium" : "text-gray-600"
       }`}
       onClick={onClick}
       title={name}
@@ -161,7 +161,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center justify-between px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "all_fields", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
@@ -204,7 +204,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center justify-between px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "all_table_occurrences", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
@@ -222,7 +222,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center justify-between px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "all_relationships", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
@@ -340,7 +340,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center gap-1.5 px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "relationship_graph", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
@@ -356,7 +356,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center justify-between px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "all_external_data_sources", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
@@ -377,7 +377,7 @@ export function CategoryTree({ projectId }: Props) {
       <button
         className={`w-full flex items-center gap-1.5 px-9 py-1.5 text-sm font-semibold transition-colors ${
           isSelected({ kind: "security", projectId })
-            ? "bg-blue-100 text-blue-800"
+            ? "bg-blue-100 text-blue-700"
             : "text-gray-700 hover:bg-gray-100"
         }`}
         onClick={() => {
