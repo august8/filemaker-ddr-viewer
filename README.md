@@ -10,6 +10,8 @@
 
 FileMaker Database Design Report (DDR) XML を解析・可視化するデスクトップツール。
 
+![overview](images/overview.png)
+
 ---
 
 ## 動作環境
